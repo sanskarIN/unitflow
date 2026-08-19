@@ -67,7 +67,7 @@ jobs:
       - name: Commit normalized generated sources when needed
         shell: bash
         run: |
-          if git diff --quiet && test -f Cargo.lock && test -f apps/unitflow_app/pubspec.lock; then
+          if [[ -z "$(git status --porcelain --untracked-files=all)" ]] && test -f Cargo.lock && test -f apps/unitflow_app/pubspec.lock; then
             echo "Platform shells, native bridge scaffolding, generated sources, formatting, and lockfiles are already clean."
             exit 0
           fi
@@ -75,8 +75,9 @@ jobs:
           git config user.email "sanskarin@outlook.in"
           git add Cargo.lock apps/unitflow_app crates
           if git diff --cached --quiet; then
-            echo "No tracked normalization changes to commit."
-            exit 0
+            echo "No normalization changes were stageable; refusing to hide untracked drift." >&2
+            git status --short >&2
+            exit 1
           fi
           git commit -m "build: normalize platform shells bridge and generated sources"
           git push origin HEAD:${{ github.event.pull_request.head.ref }}
