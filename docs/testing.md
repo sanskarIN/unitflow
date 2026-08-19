@@ -1,6 +1,6 @@
 # Testing Strategy
 
-UnitFlow treats conversion correctness, persistence integrity, and repository/documentation integrity as core product requirements.
+UnitFlow treats conversion correctness, persistence integrity, bridge-contract parity, and repository/documentation integrity as core product requirements.
 
 ## One-command verification
 
@@ -36,19 +36,20 @@ These checks cover:
 - exact `git ls-files` parity with the exhaustive documented repository inventory;
 - repository-local Markdown file targets;
 - Cargo/Flutter/About version consistency;
+- Cargo minimum-Rust-version versus setup-documentation parity;
 - changelog coverage for the current version;
 - local-state schema documentation parity;
 - Rust↔Flutter bridge protocol fixture/documentation parity;
 - complete critical repository/configuration/documentation file presence;
 - tracked `.env`, signing material, generated localization output, and build-output hygiene.
 
-For a tagged release, also run:
+For the current source target, validate the intended release tag with:
 
 ```bash
-python3 scripts/check_release_tag.py v0.1.0-alpha.1
+python3 scripts/check_release_tag.py v2.0.12
 ```
 
-Use the actual intended tag. The validator requires it to equal `v` plus the Cargo workspace version exactly.
+Use the actual intended tag for future versions. The validator requires it to equal `v` plus the Cargo workspace version exactly.
 
 ## Rust quality gates
 
@@ -68,12 +69,14 @@ Coverage priorities:
 - zero/negative/large/small decimal values;
 - round-trip conversion tolerances where exact decimal factors permit it;
 - search by name, symbol, and alias;
-- custom-unit validation;
+- custom-unit validation and alias resource bounds;
 - scientific/engineering notation edge cases;
 - batch conversion order and error behavior;
-- educational metadata references real base units.
+- educational metadata references real base units;
+- bridge rounding-mode serialization identifiers;
+- direct execution of the shared versioned bridge parity fixture.
 
-The Rust suite includes catalog-wide identity and round-trip invariants plus search-ranking regression tests.
+The Rust suite includes catalog-wide identity and round-trip invariants plus search-ranking regression tests. The dense built-in catalog data table is deliberately excluded from rustfmt rewriting so conversion constants remain compact and reviewable; executable logic and tests remain under normal formatting checks.
 
 ## Flutter quality gates
 
@@ -100,8 +103,10 @@ Coverage priorities:
 - semantics for major controls;
 - custom-unit validation;
 - import/export failure states and consistent import bounds across repositories;
-- persistence ordering for reset/save operations;
+- persistence ordering for reset/save operations and safe reset-failure reporting;
 - recent-history reference/category/input bounds while retaining locale-formatted original text;
+- canonical native-bridge decimal/unit/precision DTO validation;
+- execution of the shared bridge parity fixture across every supported rounding mode;
 - CSV/TSV batch export escaping;
 - structured-log redaction;
 - schema migration and local collection cleanup.
@@ -109,6 +114,12 @@ Coverage priorities:
 `exact_decimal_properties_test.dart` uses deterministic generated inputs to exercise canonical round trips, comparison antisymmetry, rounding idempotence, and malformed-input bounds without adding a fuzzing dependency to the normal test suite.
 
 `navigation_smoke_test.dart` checks that the main Convert, Batch, Library, History, and Settings destinations remain reachable through the adaptive shell.
+
+## Shared bridge parity
+
+`fixtures/bridge_parity_v1.json` is the common executable fixture for both Rust and Dart. The two test suites must deserialize that file directly rather than copying its vectors into language-specific tests. The fixture currently includes representative SI/affine/data/time conversions and every supported rounding mode.
+
+The fixture protocol version must match `docs/bridge-protocol.md`; `scripts/check_release_consistency.py` enforces that relationship.
 
 ## Integration and end-to-end tests
 
