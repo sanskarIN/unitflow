@@ -27,7 +27,8 @@ A backup is a UTF-8 JSON object. The root `schemaVersion` field is mandatory. Un
 Current safety bounds include:
 
 - file/import text size: at most 1 MB;
-- recent conversions: at most 100 accepted from an imported document, with the app normally retaining a smaller recent set;
+- recent conversions: at most 100 accepted from an imported document, with the app normally retaining at most 50 active recents;
+- pinned pairs: at most 20 active pairs;
 - custom units: at most 200 accepted from an imported document;
 - custom aliases: at most 32 per unit;
 - decimal precision preference: 0–28 places;
@@ -60,6 +61,22 @@ base_value = input_value * scale + offset
 
 The scale must be strictly positive. This design covers ordinary multiplicative units and temperature-like offsets without introducing an expression interpreter into imported user data.
 
+## Referential normalization
+
+Favorites, pinned pairs, and recent conversions store stable unit IDs. A previously valid ID can become stale if a custom unit is removed or a future catalog migration retires an identifier.
+
+When state is loaded or imported, UnitFlow rebuilds the current catalog and normalizes convenience references against it:
+
+- favorites referencing an unavailable unit are removed;
+- pinned pairs are kept only when both units exist and still belong to the stored category;
+- recent conversions are kept only when both units exist and belong to the same category;
+- active pins are bounded to 20 and active recents to 50;
+- custom units themselves are not silently dropped by this normalization step; invalid or duplicate custom-unit definitions reject the load/import instead.
+
+Removing a custom unit also removes favorites, pins, and recent-history rows that reference that unit. This prevents an otherwise valid backup from accumulating inaccessible convenience data.
+
+Normalization diagnostics record only removed item counts, not unit names, values, backup payloads, or conversion history contents.
+
 ## Import behavior
 
 An import is rejected when, among other validation failures:
@@ -72,7 +89,7 @@ An import is rejected when, among other validation failures:
 - duplicate identifiers would collide with built-in or imported custom units;
 - the import exceeds configured size/count limits.
 
-The application preserves the existing state when validation fails.
+The application preserves the existing state when validation fails. A structurally valid import may have stale convenience references normalized as described above after its catalog is successfully rebuilt.
 
 ## Export behavior
 
