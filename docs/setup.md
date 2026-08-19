@@ -52,7 +52,7 @@ The inventory check requires every tracked file to be documented exactly once in
 
 ## 3. Rust
 
-Install Rust using `rustup`, the Rust project's toolchain manager. UnitFlow tracks stable Rust unless the repository later pins a narrower toolchain.
+Install Rust using `rustup`, the Rust project's toolchain manager. UnitFlow `2.0.12` declares Rust `1.82` as its minimum supported Rust version and otherwise follows the stable toolchain configured by `rust-toolchain.toml`.
 
 Verify:
 
@@ -175,7 +175,7 @@ flutter devices
 
 ## 7. Native Flutter project scaffolding
 
-The alpha repository currently keeps portable Flutter feature code separate from generated native scaffolding. Before claiming a platform release build, generate and review the native projects with the release Flutter SDK from `apps/unitflow_app`:
+The development repository currently keeps portable Flutter feature code separate from reviewed native scaffolding. Before claiming a platform release build, generate and review the native projects with the release Flutter SDK from `apps/unitflow_app`:
 
 ```bash
 flutter create \
@@ -210,7 +210,7 @@ Install a supported Python 3 distribution, reopen the terminal, and verify `pyth
 
 ### `cargo` or `rustc` is not found
 
-Restart the terminal after installing Rust and verify the rustup-managed Cargo bin directory is on `PATH`.
+Restart the terminal after installing Rust and verify the rustup-managed Cargo bin directory is on `PATH`. UnitFlow `2.0.12` requires Rust `1.82` or newer.
 
 ### `flutter` is not found
 
