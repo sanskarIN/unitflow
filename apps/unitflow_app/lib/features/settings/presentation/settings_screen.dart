@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/app_controller.dart';
 import '../../../app/theme/app_theme.dart';
+import '../../../core/errors/user_safe_error.dart';
 import '../../../core/format/decimal_format.dart';
 import '../../../core/io/backup_file_service.dart';
 import '../../../core/math/exact_decimal.dart';
@@ -247,11 +248,16 @@ final class SettingsScreen extends StatelessWidget {
         ),
       );
     } on Object catch (error) {
+      final message = userSafeFailure(
+        error,
+        event: 'backup_export_failed',
+        fallback: strings.backupExportFailed,
+      );
       if (!context.mounted) {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Backup export failed: $error')),
+        SnackBar(content: Text(message)),
       );
     }
   }
@@ -271,11 +277,16 @@ final class SettingsScreen extends StatelessWidget {
         SnackBar(content: Text(strings.backupImported)),
       );
     } on Object catch (error) {
+      final message = userSafeFailure(
+        error,
+        event: 'backup_file_import_rejected',
+        fallback: strings.backupImportRejected,
+      );
       if (!context.mounted) {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${strings.importRejected}: $error')),
+        SnackBar(content: Text(message)),
       );
     }
   }
@@ -308,11 +319,16 @@ final class SettingsScreen extends StatelessWidget {
     try {
       await appController.importState(content);
     } on Object catch (error) {
+      final message = userSafeFailure(
+        error,
+        event: 'backup_clipboard_import_rejected',
+        fallback: strings.backupImportRejected,
+      );
       if (!context.mounted) {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${strings.importRejected}: $error')),
+        SnackBar(content: Text(message)),
       );
       return;
     }
@@ -331,8 +347,9 @@ final class SettingsScreen extends StatelessWidget {
     if (!context.mounted) {
       return;
     }
+    final strings = AppLocalizations.of(context);
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Could not open UnitFlow releases.')),
+      SnackBar(content: Text(strings.releaseOpenFailed)),
     );
   }
 
