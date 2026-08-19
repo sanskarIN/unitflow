@@ -126,8 +126,8 @@ final class AppController extends ChangeNotifier {
       next.removeAt(index);
     } else {
       next.insert(0, pair);
-      if (next.length > 20) {
-        next.removeRange(20, next.length);
+      if (next.length > UserState.maxPinnedPairs) {
+        next.removeRange(UserState.maxPinnedPairs, next.length);
       }
     }
     return _update(_state.copyWith(pinnedPairs: next));
@@ -159,8 +159,8 @@ final class AppController extends ChangeNotifier {
         createdAt: DateTime.now(),
       ),
     );
-    if (next.length > 50) {
-      next.removeRange(50, next.length);
+    if (next.length > UserState.maxActiveRecents) {
+      next.removeRange(UserState.maxActiveRecents, next.length);
     }
     return _update(_state.copyWith(recents: next));
   }
@@ -169,11 +169,18 @@ final class AppController extends ChangeNotifier {
       _update(_state.copyWith(recents: <RecentConversion>[]));
 
   Future<void> restoreHistory(List<RecentConversion> recents) {
-    final restored = _state.copyWith(recents: recents.take(50).toList());
+    final restored = _state.copyWith(
+      recents: recents.take(UserState.maxActiveRecents).toList(),
+    );
     return _update(_normalizeStateReferences(restored, _engine));
   }
 
   Future<void> addCustomUnit(CustomUnitData customUnit) {
+    if (_state.customUnits.length >= UserState.maxCustomUnits) {
+      throw StateError(
+        'UnitFlow supports up to ${UserState.maxCustomUnits} custom units.',
+      );
+    }
     final definition = customUnit.toUnitDefinition();
     if (_engine.catalog.byId(definition.id) != null) {
       throw ArgumentError.value(
@@ -182,7 +189,17 @@ final class AppController extends ChangeNotifier {
         'unit identifier already exists',
       );
     }
-    final next = <CustomUnitData>[..._state.customUnits, customUnit];
+    final normalizedCustomUnit = CustomUnitData(
+      id: definition.id,
+      category: definition.category,
+      name: definition.name,
+      symbol: definition.symbol,
+      scale: definition.scale.toCanonicalString(),
+      offset: definition.offset.toCanonicalString(),
+      aliases: definition.aliases,
+      description: definition.description,
+    );
+    final next = <CustomUnitData>[..._state.customUnits, normalizedCustomUnit];
     final newState = _state.copyWith(customUnits: next);
     final newEngine = _buildEngine(newState);
     return _update(newState, engine: newEngine);
@@ -230,6 +247,11 @@ final class AppController extends ChangeNotifier {
   }
 
   Future<void> restoreCustomUnit(RemovedCustomUnitSnapshot snapshot) {
+    if (_state.customUnits.length >= UserState.maxCustomUnits) {
+      throw StateError(
+        'UnitFlow supports up to ${UserState.maxCustomUnits} custom units.',
+      );
+    }
     if (_engine.catalog.byId(snapshot.unit.id) != null) {
       throw ArgumentError.value(
         snapshot.unit.id,
@@ -258,8 +280,8 @@ final class AppController extends ChangeNotifier {
 
     final restored = provisional.copyWith(
       favoriteUnitIds: favorites,
-      pinnedPairs: uniquePins.values.take(20).toList(),
-      recents: recents.take(50).toList(),
+      pinnedPairs: uniquePins.values.take(UserState.maxPinnedPairs).toList(),
+      recents: recents.take(UserState.maxActiveRecents).toList(),
     );
     return _update(
       _normalizeStateReferences(restored, restoredEngine),
@@ -328,12 +350,12 @@ final class AppController extends ChangeNotifier {
           to != null &&
           from.category == pair.category &&
           to.category == pair.category;
-    }).take(20).toList();
+    }).take(UserState.maxPinnedPairs).toList();
     final recents = state.recents.where((recent) {
       final from = engine.catalog.byId(recent.fromUnitId);
       final to = engine.catalog.byId(recent.toUnitId);
       return from != null && to != null && from.category == to.category;
-    }).take(50).toList();
+    }).take(UserState.maxActiveRecents).toList();
 
     final removedFavorites = state.favoriteUnitIds.length - favorites.length;
     final removedPins = state.pinnedPairs.length - pins.length;
