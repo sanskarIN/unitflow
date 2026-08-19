@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:unitflow/core/format/decimal_format.dart';
+import 'package:unitflow/core/math/exact_decimal.dart';
 import 'package:unitflow/core/persistence/user_state.dart';
 import 'package:unitflow/core/persistence/user_state_repository.dart';
 import 'package:unitflow/features/converter/domain/unit_models.dart';
@@ -10,6 +11,7 @@ void main() {
     final state = UserState(
       theme: ThemePreference.dark,
       notation: DecimalNotation.engineering,
+      roundingMode: DecimalRoundingMode.halfAwayFromZero,
       decimalPlaces: 8,
       onboardingComplete: true,
       favoriteUnitIds: <String>{'meter'},
@@ -37,10 +39,32 @@ void main() {
 
     expect(restored.theme, ThemePreference.dark);
     expect(restored.notation, DecimalNotation.engineering);
+    expect(restored.roundingMode, DecimalRoundingMode.halfAwayFromZero);
     expect(restored.decimalPlaces, 8);
     expect(restored.favoriteUnitIds, contains('meter'));
     expect(restored.pinnedPairs.single.toUnitId, 'kilometer');
     expect(restored.customUnits.single.id, 'double_meter');
+  });
+
+  test('schema version one backups migrate to nearest-even rounding', () {
+    final repository = MemoryUserStateRepository();
+    const legacy = '{'
+        '"schemaVersion":1,'
+        '"theme":"system",'
+        '"notation":"plain",'
+        '"decimalPlaces":12,'
+        '"useGrouping":true,'
+        '"onboardingComplete":true,'
+        '"favoriteUnitIds":[],'
+        '"pinnedPairs":[],'
+        '"recents":[],'
+        '"customUnits":[]'
+        '}';
+
+    final restored = repository.importJson(legacy);
+
+    expect(restored.roundingMode, DecimalRoundingMode.nearestEven);
+    expect(restored.toJson()['schemaVersion'], UserState.schemaVersion);
   });
 
   test('invalid schema version is rejected', () {
