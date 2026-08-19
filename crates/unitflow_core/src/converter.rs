@@ -7,7 +7,7 @@ use crate::model::{Category, UnitDefinition};
 
 /// Explicit rounding modes exposed by the domain API.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
-#[serde(rename_all = "snake_case")]
+#[serde(rename_all = "camelCase")]
 pub enum RoundMode {
     /// Banker's rounding: ties go to the nearest even digit.
     #[default]
