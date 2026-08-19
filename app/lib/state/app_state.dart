@@ -129,7 +129,7 @@ class AppState extends ChangeNotifier {
   }
 
   void setDecimalPlaces(int value) {
-    final int clamped = value.clamp(0, 15);
+    final int clamped = value.clamp(0, 15).toInt();
     if (_decimalPlaces == clamped) {
       return;
     }
@@ -168,7 +168,9 @@ class AppState extends ChangeNotifier {
         continue;
       }
       final double converted = _converter.convert(value: value, from: _from, to: _to);
-      output.add('$trimmed ${_from.symbol} → ${_converter.format(converted, decimalPlaces: _decimalPlaces, scientific: _scientific)} ${_to.symbol}');
+      output.add(
+        '$trimmed ${_from.symbol} → ${_converter.format(converted, decimalPlaces: _decimalPlaces, scientific: _scientific)} ${_to.symbol}',
+      );
     }
     return output;
   }
