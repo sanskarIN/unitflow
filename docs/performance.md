@@ -22,19 +22,31 @@ Likely measurable paths:
 - batch conversion;
 - notation formatting.
 
-Prefer indexed maps for repeated stable-ID lookup after the catalog grows enough to justify them. Keep correctness and deterministic decimal behavior before micro-optimization.
+The catalog already uses a stable-ID hash map for direct lookup. Keep correctness and deterministic decimal behavior before micro-optimization.
 
 ## Flutter hot paths
 
-- Avoid rebuilding the entire app on each numeric keystroke.
+- Avoid rebuilding the entire app on each numeric keystroke where a smaller listener boundary is practical.
 - Debounce only work that is actually expensive; do not add artificial delays.
 - Virtualize large search/history lists.
 - Keep persistence off critical frame work where platform APIs are asynchronous.
 - Cache immutable catalog metadata at an appropriate service boundary.
 
-## Benchmarks
+## Developer micro-benchmark
 
-Rust benchmark targets should be added once the core is stable, with representative catalog and batch sizes. Record machine/toolchain context alongside performance conclusions.
+A dependency-free Rust smoke benchmark lives at `crates/unitflow_core/examples/benchmark.rs`.
+
+Run it with:
+
+```bash
+cargo run --release -p unitflow_core --example benchmark
+```
+
+It performs a warmup and then measures 100,000 representative mile-to-kilometer conversions. The output reports elapsed time and an approximate nanoseconds-per-conversion value.
+
+This result is intentionally not committed as a universal performance claim. Record CPU, operating system, Rust version, power mode, and commit when comparing measurements across changes.
+
+For statistically rigorous performance work, add a dedicated benchmark harness only when there is a concrete regression or optimization question to answer.
 
 ## Memory
 
