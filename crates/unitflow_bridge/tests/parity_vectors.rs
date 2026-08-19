@@ -1,45 +1,39 @@
-use std::str::FromStr;
-
-use rust_decimal::Decimal;
+use serde::Deserialize;
 use unitflow_bridge::api::converter::{convert_value, BridgeRoundMode};
-use unitflow_core::{ConversionRequest, Converter, RoundMode};
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct Vector {
+    name: String,
+    input: String,
+    from: String,
+    to: String,
+    decimal_places: u32,
+    rounding_mode: String,
+    expected: String,
+}
 
 #[test]
-fn representative_bridge_vectors_match_core_results() {
-    let core = Converter::with_built_in_catalog().expect("catalog");
-    let vectors = [
-        ("123.456", "meter", "foot", 12_u32),
-        ("-40", "celsius", "fahrenheit", 8_u32),
-        ("1", "gallon_us", "liter", 12_u32),
-        ("1024", "byte", "kibibyte", 12_u32),
-        ("60", "revolution_per_minute", "hertz", 12_u32),
-        ("180", "degree", "radian", 18_u32),
-    ];
+fn bridge_matches_shared_conversion_vectors() {
+    let vectors: Vec<Vector> = serde_json::from_str(include_str!(
+        "../../../test_vectors/conversions.json"
+    ))
+    .expect("shared conversion vectors must be valid JSON");
 
-    for (input, from, to, places) in vectors {
-        let core_result = core
-            .convert(&ConversionRequest {
-                value: Decimal::from_str(input).expect("test decimal"),
-                from_unit_id: from.to_owned(),
-                to_unit_id: to.to_owned(),
-                decimal_places: Some(places),
-                round_mode: RoundMode::NearestEven,
-            })
-            .expect("core conversion");
-
+    for vector in vectors {
         let bridge_result = convert_value(
-            input.to_owned(),
-            from.to_owned(),
-            to.to_owned(),
-            Some(places),
-            BridgeRoundMode::NearestEven,
+            vector.input.clone(),
+            vector.from.clone(),
+            vector.to.clone(),
+            Some(vector.decimal_places),
+            bridge_round_mode(&vector.rounding_mode),
         )
-        .expect("bridge conversion");
+        .unwrap_or_else(|error| panic!("{} failed: {error}", vector.name));
 
         assert_eq!(
-            bridge_result.output,
-            core_result.output.normalize().to_string(),
-            "bridge parity failed for {input} {from} -> {to}"
+            bridge_result.output, vector.expected,
+            "shared bridge vector mismatch: {}",
+            vector.name
         );
     }
 }
@@ -56,4 +50,16 @@ fn bridge_rejects_invalid_decimal_text() {
     .expect_err("malformed decimal must fail");
 
     assert_eq!(error, "invalid decimal input");
+}
+
+fn bridge_round_mode(value: &str) -> BridgeRoundMode {
+    match value {
+        "nearestEven" => BridgeRoundMode::NearestEven,
+        "halfAwayFromZero" => BridgeRoundMode::HalfAwayFromZero,
+        "towardZero" => BridgeRoundMode::TowardZero,
+        "awayFromZero" => BridgeRoundMode::AwayFromZero,
+        "floor" => BridgeRoundMode::Floor,
+        "ceiling" => BridgeRoundMode::Ceiling,
+        other => panic!("unsupported shared vector round mode: {other}"),
+    }
 }
