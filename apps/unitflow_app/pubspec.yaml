@@ -16,6 +16,7 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
+  flutter_rust_bridge: 2.12.0
   intl: ^0.20.2
   shared_preferences: ^2.5.5
   url_launcher: ^6.3.2
@@ -26,4 +27,5 @@ dev_dependencies:
   flutter_lints: ^6.0.0
 
 flutter:
+  generate: true
   uses-material-design: true
