@@ -1,0 +1,83 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  verify-and-package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Verify Rust
+        run: |
+          cargo fmt --all -- --check
+          cargo clippy --workspace --all-targets --all-features -- -D warnings
+          cargo test --workspace --all-features
+
+      - name: Verify Flutter
+        working-directory: apps/unitflow_app
+        run: |
+          flutter pub get
+          dart format --output=none --set-exit-if-changed lib test
+          flutter analyze --fatal-infos --fatal-warnings
+          flutter test
+
+      - name: Package Rust crate
+        run: cargo package -p unitflow_core --allow-dirty
+
+      - name: Package Flutter source
+        run: |
+          mkdir -p dist
+          tar \
+            --sort=name \
+            --mtime='UTC 2026-01-01' \
+            --owner=0 \
+            --group=0 \
+            --numeric-owner \
+            -czf dist/unitflow-flutter-source.tar.gz \
+            apps/unitflow_app/lib \
+            apps/unitflow_app/test \
+            apps/unitflow_app/pubspec.yaml \
+            apps/unitflow_app/analysis_options.yaml
+          cp target/package/unitflow_core-*.crate dist/
+          (cd dist && sha256sum * > SHA256SUMS)
+
+      - name: Upload verification artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: unitflow-release-${{ github.ref_name }}
+          path: dist/*
+          if-no-files-found: error
+
+      - name: Create GitHub release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            dist/* \
+            --repo "${GITHUB_REPOSITORY}" \
+            --title "UnitFlow ${GITHUB_REF_NAME}" \
+            --generate-notes \
+            --verify-tag
