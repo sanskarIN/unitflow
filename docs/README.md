@@ -11,16 +11,17 @@ This directory contains the engineering and maintainer documentation for UnitFlo
 - [Local data format](data-format.md) — backup schema, migration, validation, and reset behavior.
 - [Platform support](platform-support.md) — target/support terminology.
 - [Native platform completion](native-platforms.md) — required scaffolding/build review per platform.
+- [Generated platform smoke builds](platform-smoke.md) — what temporary CI scaffolds prove and what remains unverified.
 
 ## Development
 
-- [Setup](setup.md) — Git, Rust, Flutter, platform prerequisites, and troubleshooting.
-- [Testing](testing.md) — quality gates and regression strategy.
+- [Setup](setup.md) — Git, Python, Rust, Flutter, platform prerequisites, and troubleshooting.
+- [Testing](testing.md) — repository validators, language quality gates, and regression strategy.
 - [Performance](performance.md) — measurement policy and benchmark entry point.
 - [Localization](localization.md) — ARB/gen-l10n workflow and locale-review rules.
 - [Keyboard shortcuts](keyboard-shortcuts.md) — desktop navigation shortcuts and accessibility expectations.
 - [Diagnostics](diagnostics.md) — privacy-preserving structured debug logging.
-- [Dependency maintenance](dependencies.md) — dependency review/update policy.
+- [Dependency maintenance](dependencies.md) — Dependabot and manual dependency review/update policy.
 
 ## Security and operations
 
@@ -50,13 +51,15 @@ The repository root also contains:
 - [`CODE_OF_CONDUCT.md`](../CODE_OF_CONDUCT.md)
 - [`what_changed.md`](../what_changed.md)
 
-## Automated documentation checks
+## Automated documentation and repository checks
 
 Run from the repository root:
 
 ```bash
+python3 -m unittest discover -s scripts/tests -p 'test_*.py'
 python3 scripts/check_markdown_links.py
 python3 scripts/check_release_consistency.py
+python3 scripts/check_repository_hygiene.py
 ```
 
-The first command validates repository-local Markdown targets. The second guards version/schema/protocol declarations against drift. Both are part of CI/release verification.
+These commands test the validators themselves, validate repository-local Markdown targets, guard version/schema/protocol declarations against drift, and reject missing critical files or commonly accidental tracked artifacts. They are part of normal CI and release verification.
