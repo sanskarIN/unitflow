@@ -48,4 +48,17 @@ void main() {
     );
     expect(controller.state.recents, isEmpty);
   });
+
+  test('recordRecent preserves locale-formatted original input text', () async {
+    final controller = AppController(repository: MemoryUserStateRepository());
+    await controller.initialize();
+
+    await controller.recordRecent(
+      input: '1,5',
+      fromUnitId: 'meter',
+      toUnitId: 'kilometer',
+    );
+
+    expect(controller.state.recents.single.input, '1,5');
+  });
 }
