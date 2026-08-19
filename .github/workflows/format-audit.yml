@@ -37,6 +37,12 @@ jobs:
       - name: Install bridge generator
         run: cargo install flutter_rust_bridge_codegen --version 2.12.0 --locked
 
+      - name: Bootstrap Flutter platform shells
+        run: bash tool/bootstrap_platforms.sh
+
+      - name: Integrate native Rust bridge scaffolding
+        run: bash tool/integrate_native_bridge.sh
+
       - name: Generate Rust lockfile
         run: cargo generate-lockfile
 
@@ -58,19 +64,19 @@ jobs:
         working-directory: apps/unitflow_app
         run: dart format lib test
 
-      - name: Commit normalized sources when needed
+      - name: Commit normalized generated sources when needed
         shell: bash
         run: |
           if git diff --quiet && test -f Cargo.lock && test -f apps/unitflow_app/pubspec.lock; then
-            echo "Generated sources, formatting, and lockfiles are already clean."
+            echo "Platform shells, native bridge scaffolding, generated sources, formatting, and lockfiles are already clean."
             exit 0
           fi
           git config user.name "Sanskar"
           git config user.email "sanskarin@outlook.in"
-          git add Cargo.lock apps/unitflow_app/pubspec.lock crates apps/unitflow_app/lib apps/unitflow_app/test
+          git add Cargo.lock apps/unitflow_app crates
           if git diff --cached --quiet; then
             echo "No tracked normalization changes to commit."
             exit 0
           fi
-          git commit -m "style: normalize generated sources and lock dependencies"
+          git commit -m "build: normalize platform shells bridge and generated sources"
           git push origin HEAD:${{ github.event.pull_request.head.ref }}
