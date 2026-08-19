@@ -72,6 +72,7 @@ final class _BatchScreenState extends State<BatchScreen> {
                       ),
                       Wrap(
                         spacing: AppSpacing.xs,
+                        runSpacing: AppSpacing.xs,
                         children: <Widget>[
                           OutlinedButton.icon(
                             onPressed: results.isEmpty
@@ -86,6 +87,13 @@ final class _BatchScreenState extends State<BatchScreen> {
                                 : () => _copyExport(BatchExportFormat.tsv),
                             icon: const Icon(Icons.table_view_outlined),
                             label: Text(strings.copyTsv),
+                          ),
+                          OutlinedButton.icon(
+                            onPressed: results.isEmpty
+                                ? null
+                                : () => _copyExport(BatchExportFormat.json),
+                            icon: const Icon(Icons.data_object_outlined),
+                            label: Text(strings.copyJson),
                           ),
                         ],
                       ),
@@ -232,7 +240,11 @@ final class _BatchScreenState extends State<BatchScreen> {
     if (!mounted) {
       return;
     }
-    final label = format == BatchExportFormat.csv ? 'CSV' : 'TSV';
+    final label = switch (format) {
+      BatchExportFormat.csv => 'CSV',
+      BatchExportFormat.tsv => 'TSV',
+      BatchExportFormat.json => 'JSON',
+    };
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(AppLocalizations.of(context).batchCopied(label))),
     );
