@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'strict_json.dart';
 import 'user_state.dart';
 
 abstract interface class UserStateRepository {
@@ -90,14 +91,7 @@ UserState _decodeState(String content) {
     throw const FormatException('UnitFlow import size is invalid.');
   }
 
-  final Object? decoded;
-  try {
-    decoded = jsonDecode(content);
-  } on FormatException {
-    rethrow;
-  } on Object {
-    throw const FormatException('UnitFlow import is not valid JSON.');
-  }
+  final decoded = decodeStrictJson(content);
   if (decoded is! Map<Object?, Object?>) {
     throw const FormatException('UnitFlow import must be a JSON object.');
   }
