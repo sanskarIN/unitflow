@@ -18,6 +18,21 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Verify repository integrity
+        run: |
+          python3 scripts/check_markdown_links.py
+          python3 scripts/check_release_consistency.py
+          python3 scripts/check_repository_hygiene.py
+
+      - name: Verify release tag
+        if: startsWith(github.ref, 'refs/tags/')
+        run: python3 scripts/check_release_tag.py "${GITHUB_REF_NAME}"
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
