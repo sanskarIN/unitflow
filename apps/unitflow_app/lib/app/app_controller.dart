@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../core/logging/app_log.dart';
 import '../core/persistence/user_state.dart';
 import '../core/persistence/user_state_repository.dart';
 import '../features/converter/data/unit_catalog.dart';
@@ -29,7 +30,10 @@ final class AppController extends ChangeNotifier {
       _engine = rebuilt;
     } on Object catch (error) {
       _warning = 'Saved preferences could not be loaded. Defaults are being used; existing saved data was not overwritten.';
-      debugPrint('UnitFlow state load failed: $error');
+      AppLog.error(
+        'state_load_failed',
+        metadata: <String, Object?>{'errorType': error.runtimeType.toString()},
+      );
       _state = UserState();
       _engine = ExactConversionEngine();
     } finally {
@@ -222,7 +226,10 @@ final class AppController extends ChangeNotifier {
     final snapshot = state;
     final operation = _writeChain.then((_) => _repository.save(snapshot));
     _writeChain = operation.catchError((Object error) {
-      debugPrint('UnitFlow state save failed: $error');
+      AppLog.error(
+        'state_save_failed',
+        metadata: <String, Object?>{'errorType': error.runtimeType.toString()},
+      );
     });
     return operation;
   }
