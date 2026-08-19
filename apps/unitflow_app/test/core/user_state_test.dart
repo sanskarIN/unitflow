@@ -50,7 +50,7 @@ void main() {
 
   test('memory repository enforces production import size bound', () {
     final repository = MemoryUserStateRepository();
-    final oversized = ' ' * 1_000_001;
+    final oversized = ''.padRight(1_000_001, ' ');
 
     expect(() => repository.importJson(oversized), throwsFormatException);
   });
