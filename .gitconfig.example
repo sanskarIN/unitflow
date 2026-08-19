@@ -1,0 +1,7 @@
+[user]
+    name = Sanskar
+    email = sanskarin@outlook.in
+
+# Apply locally with:
+# git config user.name "Sanskar"
+# git config user.email "sanskarin@outlook.in"
