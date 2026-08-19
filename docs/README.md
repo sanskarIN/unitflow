@@ -1,6 +1,6 @@
 # UnitFlow documentation
 
-This directory contains the engineering and maintainer documentation for UnitFlow. Start with the topic that matches the work you are doing rather than treating the docs as a linear book.
+This directory contains the engineering and maintainer documentation for UnitFlow. Start with the topic that matches the work you are doing rather than treating the docs as a linear book. Every tracked file and its ownership/purpose is also documented in the repository inventory.
 
 ## Product and architecture
 
@@ -16,12 +16,16 @@ This directory contains the engineering and maintainer documentation for UnitFlo
 ## Development
 
 - [Setup](setup.md) — Git, Python, Rust, Flutter, platform prerequisites, and troubleshooting.
+- [Development guide](development.md) — implementation conventions, persistence rules, and contributor workflow.
 - [Testing](testing.md) — repository validators, language quality gates, and regression strategy.
 - [Performance](performance.md) — measurement policy and benchmark entry point.
+- [Accessibility](accessibility.md) — semantics, keyboard, text scaling, contrast, motion, and manual-review expectations.
 - [Localization](localization.md) — ARB/gen-l10n workflow and locale-review rules.
 - [Keyboard shortcuts](keyboard-shortcuts.md) — desktop navigation shortcuts and accessibility expectations.
 - [Diagnostics](diagnostics.md) — privacy-preserving structured debug logging.
 - [Dependency maintenance](dependencies.md) — Dependabot and manual dependency review/update policy.
+- [Troubleshooting](troubleshooting.md) — common repository, Flutter, platform, and runtime troubleshooting.
+- [Repository inventory](repository-inventory.md) — exhaustive purpose/ownership record for every tracked first-party file.
 
 ## Security and operations
 
@@ -57,9 +61,10 @@ Run from the repository root:
 
 ```bash
 python3 -m unittest discover -s scripts/tests -p 'test_*.py'
+python3 scripts/check_repository_inventory.py
 python3 scripts/check_markdown_links.py
 python3 scripts/check_release_consistency.py
 python3 scripts/check_repository_hygiene.py
 ```
 
-These commands test the validators themselves, validate repository-local Markdown targets, guard version/schema/protocol declarations against drift, and reject missing critical files or commonly accidental tracked artifacts. They are part of normal CI and release verification.
+These commands test the validators themselves, require every tracked file to be documented exactly once in the inventory, validate repository-local Markdown targets, guard version/schema/protocol declarations against drift, and reject missing critical files or commonly accidental tracked artifacts. They are part of normal CI and release verification.
