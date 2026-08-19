@@ -1,0 +1,56 @@
+[
+  {
+    "name": "meters to kilometers",
+    "input": "1000",
+    "from": "meter",
+    "to": "kilometer",
+    "decimalPlaces": 12,
+    "roundingMode": "nearestEven",
+    "expected": "1"
+  },
+  {
+    "name": "kilometers to meters",
+    "input": "1",
+    "from": "kilometer",
+    "to": "meter",
+    "decimalPlaces": 12,
+    "roundingMode": "nearestEven",
+    "expected": "1000"
+  },
+  {
+    "name": "freezing Celsius to Fahrenheit",
+    "input": "0",
+    "from": "celsius",
+    "to": "fahrenheit",
+    "decimalPlaces": 8,
+    "roundingMode": "nearestEven",
+    "expected": "32"
+  },
+  {
+    "name": "freezing Fahrenheit to Celsius",
+    "input": "32",
+    "from": "fahrenheit",
+    "to": "celsius",
+    "decimalPlaces": 8,
+    "roundingMode": "nearestEven",
+    "expected": "0"
+  },
+  {
+    "name": "inches to centimeters",
+    "input": "1",
+    "from": "inch",
+    "to": "centimeter",
+    "decimalPlaces": 12,
+    "roundingMode": "nearestEven",
+    "expected": "2.54"
+  },
+  {
+    "name": "hours to seconds",
+    "input": "1",
+    "from": "hour",
+    "to": "second",
+    "decimalPlaces": 12,
+    "roundingMode": "nearestEven",
+    "expected": "3600"
+  }
+]
