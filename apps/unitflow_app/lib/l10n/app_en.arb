@@ -69,11 +69,7 @@
   "batchValueColumn": "Value",
   "batchEmpty": "Enter a valid value to generate the batch table.",
   "batchCopied": "{format} batch table copied.",
-  "@batchCopied": {
-    "placeholders": {
-      "format": {"type": "String"}
-    }
-  },
+  "@batchCopied": {"placeholders": {"format": {"type": "String"}}},
   "historyTitle": "History",
   "historyDescription": "Your most recent conversions stay on this device and can be reopened instantly.",
   "clearAction": "Clear",
@@ -91,28 +87,77 @@
   "pinnedPairsTitle": "Pinned pairs",
   "allFilter": "All",
   "unitCount": "{count, plural, =1{1 unit} other{{count} units}}",
-  "@unitCount": {
-    "placeholders": {
-      "count": {"type": "int"}
-    }
-  },
+  "@unitCount": {"placeholders": {"count": {"type": "int"}}},
   "couldNotCreateUnit": "Could not create the custom unit. Check the values and try again.",
   "unitAdded": "{name} added.",
-  "@unitAdded": {
-    "placeholders": {
-      "name": {"type": "String"}
-    }
-  },
+  "@unitAdded": {"placeholders": {"name": {"type": "String"}}},
   "unitRemoved": "{name} removed.",
-  "@unitRemoved": {
-    "placeholders": {
-      "name": {"type": "String"}
-    }
-  },
+  "@unitRemoved": {"placeholders": {"name": {"type": "String"}}},
   "undo": "Undo",
   "customLabel": "Custom",
   "removeFromFavorites": "Remove from favorites",
   "addToFavorites": "Add to favorites",
   "removeCustomUnit": "Remove custom unit",
-  "noUnitsMatch": "No units match this search."
+  "noUnitsMatch": "No units match this search.",
+  "convertTitle": "Convert units",
+  "convertSubtitle": "Precise, local, and distraction-free.",
+  "pinUnitPair": "Pin unit pair",
+  "unpinUnitPair": "Unpin unit pair",
+  "scientificNotationHelper": "Scientific notation such as 1.2e6 is supported.",
+  "fromLabel": "From",
+  "toLabel": "To",
+  "swapUnits": "Swap source and target units",
+  "noConversionResult": "No conversion result",
+  "conversionResultSemantics": "Conversion result {value} {symbol}",
+  "@conversionResultSemantics": {"placeholders": {"value": {"type": "String"}, "symbol": {"type": "String"}}},
+  "resultLabel": "Result",
+  "copyResult": "Copy result",
+  "viewBatchTable": "View batch table",
+  "conversionResultCopied": "Conversion result copied.",
+  "batchFromUnit": "From {unit}",
+  "@batchFromUnit": {"placeholders": {"unit": {"type": "String"}}},
+  "selectedUnit": "selected unit",
+  "learnTitle": "Learn",
+  "currentPairTitle": "Current pair",
+  "pinPair": "Pin pair",
+  "unpinPair": "Unpin pair",
+  "categoryLength": "Length",
+  "categoryArea": "Area",
+  "categoryVolume": "Volume",
+  "categoryMass": "Mass",
+  "categorySpeed": "Speed",
+  "categoryPressure": "Pressure",
+  "categoryEnergy": "Energy",
+  "categoryPower": "Power",
+  "categoryAngle": "Angle",
+  "categoryDataSize": "Data size",
+  "categoryFrequency": "Frequency",
+  "categoryTime": "Time",
+  "categoryTemperature": "Temperature",
+  "educationLength": "Length measures distance between points. UnitFlow uses the meter as its base.",
+  "educationArea": "Area measures two-dimensional surface size. UnitFlow uses the square meter as its base.",
+  "educationVolume": "Volume measures three-dimensional capacity. UnitFlow uses the liter as its base.",
+  "educationMass": "Mass measures the amount of matter. UnitFlow uses the kilogram as its base.",
+  "educationSpeed": "Speed measures distance traveled per unit time. UnitFlow uses meters per second as its base.",
+  "educationPressure": "Pressure measures force per area. UnitFlow uses the pascal as its base.",
+  "educationEnergy": "Energy measures capacity to do work. UnitFlow uses the joule as its base.",
+  "educationPower": "Power measures energy transferred per unit time. UnitFlow uses the watt as its base.",
+  "educationAngle": "Plane angle describes rotation. UnitFlow uses the radian as its base.",
+  "educationDataSize": "Data size measures digital information. UnitFlow uses the byte as its base and distinguishes decimal from binary prefixes.",
+  "educationFrequency": "Frequency counts repeated events per second. UnitFlow uses the hertz as its base.",
+  "educationTime": "Time measures duration. UnitFlow uses the second as its base.",
+  "educationTemperature": "Temperature conversions are affine rather than purely multiplicative. UnitFlow uses kelvin as its base.",
+  "exampleLength": "Example: 1 km = 1000 m",
+  "exampleArea": "Example: 1 ha = 10,000 m²",
+  "exampleVolume": "Example: 1 L = 1000 mL",
+  "exampleMass": "Example: 1 kg = 1000 g",
+  "exampleSpeed": "Example: 36 km/h = 10 m/s",
+  "examplePressure": "Example: 1 bar = 100,000 Pa",
+  "exampleEnergy": "Example: 1 kWh = 3,600,000 J",
+  "examplePower": "Example: 1 kW = 1000 W",
+  "exampleAngle": "Example: 180° = π rad",
+  "exampleDataSize": "Example: 1 KiB = 1024 B",
+  "exampleFrequency": "Example: 1 kHz = 1000 Hz",
+  "exampleTime": "Example: 1 h = 3600 s",
+  "exampleTemperature": "Example: 0 °C = 32 °F"
 }
