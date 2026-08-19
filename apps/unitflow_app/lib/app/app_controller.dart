@@ -65,6 +65,9 @@ final class AppController extends ChangeNotifier {
   Future<void> setUseGrouping(bool enabled) =>
       _update(_state.copyWith(useGrouping: enabled));
 
+  Future<void> setReduceMotion(bool enabled) =>
+      _update(_state.copyWith(reduceMotion: enabled));
+
   Future<void> completeOnboarding() =>
       _update(_state.copyWith(onboardingComplete: true));
 
