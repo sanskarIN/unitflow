@@ -35,10 +35,11 @@ void main() {
     expect(recent.toUnitId, 'kilometer');
   });
 
-  test('oversized canonical exact input is not persisted to history', () async {
+  test('out-of-domain exact input cannot enter history', () async {
     final hugeInput = '${''.padRight(1018, '9')}e1000';
     converter.setInput(hugeInput);
-    expect(converter.result, isNotNull);
+    expect(converter.result, isNull);
+    expect(converter.error, isNotNull);
 
     await converter.recordCurrentConversion();
 
