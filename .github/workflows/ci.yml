@@ -115,8 +115,11 @@ jobs:
       - name: Install bridge generator
         run: cargo install flutter_rust_bridge_codegen --version 2.12.0 --locked
 
-      - name: Generate bridge
-        run: bash tool/generate_bridge.sh
+      - name: Bootstrap Flutter platform shells
+        run: bash tool/bootstrap_platforms.sh
+
+      - name: Integrate native bridge and generate bindings
+        run: bash tool/integrate_native_bridge.sh
 
       - name: Verify generated Rust
         run: cargo check --workspace --all-features
@@ -124,3 +127,6 @@ jobs:
       - name: Verify generated Dart
         working-directory: apps/unitflow_app
         run: flutter analyze --fatal-infos --fatal-warnings
+
+      - name: Verify generated integration is committed
+        run: git diff --exit-code
