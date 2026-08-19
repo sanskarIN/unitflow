@@ -96,17 +96,17 @@ extension UnitCategoryInfo on UnitCategory {
 }
 
 final class UnitDefinition {
-  const UnitDefinition({
+  UnitDefinition({
     required this.id,
     required this.category,
     required this.name,
     required this.symbol,
     required this.scale,
-    this.offset = ExactDecimal.zero,
+    ExactDecimal? offset,
     this.aliases = const <String>[],
     this.description = '',
     this.isBuiltIn = true,
-  });
+  }) : offset = offset ?? ExactDecimal.zero;
 
   final String id;
   final UnitCategory category;
