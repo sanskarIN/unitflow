@@ -296,7 +296,12 @@ final class SettingsScreen extends StatelessWidget {
     if (confirmed != true) {
       return;
     }
-    await appController.resetLocalData();
+
+    try {
+      await appController.resetLocalData();
+    } on Object {
+      return;
+    }
     if (!context.mounted) {
       return;
     }
