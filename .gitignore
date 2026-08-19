@@ -11,6 +11,7 @@
 .pub/
 build/
 coverage/
+apps/unitflow_app/lib/l10n/generated/
 
 # Generated Rust-Flutter bridge files
 **/frb_generated.dart
