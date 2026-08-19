@@ -10,6 +10,11 @@ if ! command -v flutter_rust_bridge_codegen >/dev/null 2>&1; then
   exit 1
 fi
 
+python3 -m py_compile tool/*.py
+(
+  cd tool
+  python3 -m unittest discover -p 'test_*.py'
+)
 python3 tool/check_secrets.py
 python3 tool/check_data_files.py
 python3 tool/check_docs_links.py
