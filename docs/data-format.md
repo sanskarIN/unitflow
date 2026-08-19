@@ -41,7 +41,7 @@ Each item contains:
 }
 ```
 
-The original input is retained as text so decimal intent is not lost through binary floating-point conversion.
+The original input is retained as text so decimal intent is not lost through binary floating-point conversion. Recent conversion unit identifiers are bounded to 64 characters each, and the stored input string is bounded to 1,024 characters.
 
 ## Custom unit
 
@@ -72,9 +72,22 @@ base = input × scale + offset
 
 The Shared Preferences repository rejects empty imports and files larger than 1,000,000 characters. JSON must decode to an object. A malformed, unsupported, or unsafe document is rejected before replacing active state.
 
+Versioned user-state validation also bounds collection sizes before iterating or constructing active state:
+
+| Collection | Maximum imported items |
+| --- | ---: |
+| Favorites | 500 |
+| Pinned pairs | 100 |
+| Recent conversions | 100 |
+| Custom units | 200 |
+
+These are defensive import ceilings rather than UI promises. Normal product workflows keep smaller working sets where appropriate, such as recent-history and pin retention limits enforced by the app controller.
+
 ## Backup behavior
 
 Export produces human-readable JSON. Import first validates the complete document and rebuilds the conversion engine with all custom units. Only after those checks pass is the in-memory state replaced and persisted.
+
+The Shared Preferences storage key remains `unitflow.user_state.v1` even though the document schema is version `2`. The key identifies the application-state slot, while `schemaVersion` identifies the payload format. Keeping the slot stable allows the migration logic to read existing version-1 documents instead of orphaning them under a new key.
 
 ## Compatibility policy
 
