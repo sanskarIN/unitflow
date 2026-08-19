@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../app/app_controller.dart';
 import '../../../app/theme/app_theme.dart';
+import '../../../core/errors/user_safe_error.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../converter/domain/unit_models.dart';
 import 'custom_unit_dialog.dart';
 
@@ -40,8 +42,12 @@ final class _LibraryScreenState extends State<LibraryScreen> {
         limit: 200,
       );
       results.sort((left, right) {
-        final leftFavorite = widget.appController.state.favoriteUnitIds.contains(left.id);
-        final rightFavorite = widget.appController.state.favoriteUnitIds.contains(right.id);
+        final leftFavorite = widget.appController.state.favoriteUnitIds.contains(
+          left.id,
+        );
+        final rightFavorite = widget.appController.state.favoriteUnitIds.contains(
+          right.id,
+        );
         if (leftFavorite != rightFavorite) {
           return leftFavorite ? -1 : 1;
         }
@@ -130,7 +136,9 @@ final class _LibraryScreenState extends State<LibraryScreen> {
                       isFavorite: widget.appController.state.favoriteUnitIds.contains(
                         results[index].id,
                       ),
-                      onFavorite: () => widget.appController.toggleFavorite(results[index].id),
+                      onFavorite: () => widget.appController.toggleFavorite(
+                        results[index].id,
+                      ),
                       onDeleteCustom: results[index].isBuiltIn
                           ? null
                           : () => _deleteCustomUnit(results[index]),
@@ -155,11 +163,17 @@ final class _LibraryScreenState extends State<LibraryScreen> {
     try {
       await widget.appController.addCustomUnit(data);
     } on Object catch (error) {
+      final strings = AppLocalizations.of(context);
+      final message = userSafeFailure(
+        error,
+        event: 'custom_unit_create_failed',
+        fallback: strings.customUnitCreateFailed,
+      );
       if (!mounted) {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not create unit: $error')),
+        SnackBar(content: Text(message)),
       );
       return;
     }
@@ -182,12 +196,13 @@ final class _LibraryScreenState extends State<LibraryScreen> {
     if (!mounted) {
       return;
     }
+    final strings = AppLocalizations.of(context);
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('${unit.name} removed.'),
         action: SnackBarAction(
-          label: 'Undo',
+          label: strings.undo,
           onPressed: () => widget.appController.addCustomUnit(data),
         ),
       ),
@@ -208,7 +223,10 @@ final class _Header extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text('Unit library', style: Theme.of(context).textTheme.headlineMedium),
+            Text(
+              'Unit library',
+              style: Theme.of(context).textTheme.headlineMedium,
+            ),
             const SizedBox(height: AppSpacing.xxs),
             Text(
               'Search built-in units, favorites, and your own validated custom units.',
@@ -245,7 +263,10 @@ final class _PinnedPairs extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text('Pinned pairs', style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              'Pinned pairs',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: AppSpacing.xs),
             Wrap(
               spacing: AppSpacing.xs,
@@ -324,9 +345,13 @@ final class _UnitTile extends StatelessWidget {
         horizontal: AppSpacing.md,
         vertical: AppSpacing.xs,
       ),
-      leading: CircleAvatar(child: Text(unit.symbol, textAlign: TextAlign.center)),
+      leading: CircleAvatar(
+        child: Text(unit.symbol, textAlign: TextAlign.center),
+      ),
       title: Text(unit.name),
-      subtitle: Text('${unit.category.label} • ${unit.id}${unit.isBuiltIn ? '' : ' • Custom'}'),
+      subtitle: Text(
+        '${unit.category.label} • ${unit.id}${unit.isBuiltIn ? '' : ' • Custom'}',
+      ),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
@@ -363,7 +388,10 @@ final class _EmptyLibrary extends StatelessWidget {
             color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
           const SizedBox(height: AppSpacing.md),
-          Text('No units match this search.', style: Theme.of(context).textTheme.titleMedium),
+          Text(
+            'No units match this search.',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
         ],
       ),
     ),
