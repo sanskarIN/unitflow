@@ -49,6 +49,7 @@ No additional changes are queued beyond the `2.0.12` development snapshot docume
 - Production and in-memory state repositories now share the same bounded JSON decoder so tests cannot rely on weaker backup-import validation.
 - Recent-history persistence now validates nonblank/bounded input plus existing same-category unit references while preserving locale-formatted original input text.
 - Native bridge request/response DTO validation now enforces canonical decimal strings, stable unit-ID syntax, and supported precision before data crosses the future generated binding boundary.
+- Plain decimal display grouping now follows locale decimal-pattern primary/secondary grouping sizes while preserving exact decimal strings.
 - Normal Bash/PowerShell verification, CI, and release packaging now execute repository-integrity validators before language/toolchain checks.
 - Flutter CI/release verification runs localization generation explicitly.
 - Dart formatting uses an explicit repository-wide 120-column page width while retaining strict analyzer/lint rules.
@@ -66,9 +67,11 @@ No additional changes are queued beyond the `2.0.12` development snapshot docume
 - Ensured JSON batch export is represented correctly in copy feedback.
 - Fixed a persistence race where a queued pre-reset save could repopulate local data after reset; reset now serializes behind pending writes, clears storage, and persists a clean baseline.
 - Fixed local reset persistence failures being logged without a safe user-visible warning state.
+- Fixed Settings showing a successful reset message after a failed storage clear.
 - Fixed `recordRecent` accepting unknown or cross-category units and oversized/blank input.
 - Fixed imported conversion history accepting whitespace-only input.
 - Fixed in-memory backup imports bypassing the production 1,000,000-character payload and JSON-object/string-key boundary.
+- Fixed locale display grouping being hard-coded to groups of three, which produced incorrect grouping for locales with a different secondary group size.
 - Fixed the generated platform-smoke workflow/documentation mismatch by implementing the previously documented Linux, Windows, macOS, and iOS jobs in addition to Web and Android.
 
 ### Security
