@@ -177,6 +177,25 @@ void main() {
       throwsFormatException,
     );
   });
+
+  test('backup rejects recent conversions with oversized unit identifiers', () {
+    final repository = MemoryUserStateRepository();
+    final longId = List<String>.filled(65, 'x').join();
+    final backup = _emptyBackup()
+      ..['recents'] = <Object?>[
+        <String, Object?>{
+          'input': '1',
+          'fromUnitId': longId,
+          'toUnitId': 'meter',
+          'createdAt': DateTime.utc(2026, 8, 19).toIso8601String(),
+        },
+      ];
+
+    expect(
+      () => repository.importJson(jsonEncode(backup)),
+      throwsFormatException,
+    );
+  });
 }
 
 Map<String, Object?> _emptyBackup() => <String, Object?>{
