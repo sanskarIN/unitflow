@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 APP="$ROOT/apps/unitflow_app"
 BRIDGE="$ROOT/crates/unitflow_bridge"
+PLATFORMS="${1:-android,ios,linux,macos,windows}"
 
 if ! command -v flutter_rust_bridge_codegen >/dev/null 2>&1; then
   echo "flutter_rust_bridge_codegen is required." >&2
@@ -19,7 +20,7 @@ flutter_rust_bridge_codegen integrate \
   --rust-crate-name unitflow_bridge \
   --rust-crate-dir ../../crates/unitflow_bridge \
   --integration-backend cargokit \
-  --platforms android,ios,linux,macos,windows \
+  --platforms "$PLATFORMS" \
   --no-write-lib \
   --no-integration-test \
   --no-dart-fix \
@@ -34,4 +35,4 @@ rm -f "$BRIDGE/Cargo.lock"
 cd "$ROOT"
 bash tool/generate_bridge.sh
 
-echo "UnitFlow native FRB/Cargokit scaffolding and generated bindings are ready."
+echo "UnitFlow native FRB/Cargokit scaffolding and generated bindings are ready for: $PLATFORMS"
