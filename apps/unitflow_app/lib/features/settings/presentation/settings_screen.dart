@@ -5,6 +5,7 @@ import '../../../app/app_controller.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../core/format/decimal_format.dart';
 import '../../../core/io/backup_file_service.dart';
+import '../../../core/math/exact_decimal.dart';
 import '../../../core/persistence/user_state.dart';
 import '../../../l10n/app_localizations.dart';
 
@@ -90,6 +91,27 @@ final class SettingsScreen extends StatelessWidget {
                         onChanged: (value) {
                           if (value != null) {
                             appController.setDecimalPlaces(value);
+                          }
+                        },
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      _DropdownSetting<DecimalRoundingMode>(
+                        label: strings.roundingMode,
+                        helperText: strings.roundingModeSubtitle,
+                        value: appController.state.roundingMode,
+                        values: DecimalRoundingMode.values,
+                        labelFor: (value) => switch (value) {
+                          DecimalRoundingMode.nearestEven => strings.nearestEven,
+                          DecimalRoundingMode.halfAwayFromZero =>
+                            strings.halfAwayFromZero,
+                          DecimalRoundingMode.towardZero => strings.towardZero,
+                          DecimalRoundingMode.awayFromZero => strings.awayFromZero,
+                          DecimalRoundingMode.floor => strings.floor,
+                          DecimalRoundingMode.ceiling => strings.ceiling,
+                        },
+                        onChanged: (value) {
+                          if (value != null) {
+                            appController.setRoundingMode(value);
                           }
                         },
                       ),
@@ -337,9 +359,11 @@ final class _DropdownSetting<T> extends StatelessWidget {
     required this.values,
     required this.labelFor,
     required this.onChanged,
+    this.helperText,
   });
 
   final String label;
+  final String? helperText;
   final T value;
   final List<T> values;
   final String Function(T value) labelFor;
@@ -347,7 +371,7 @@ final class _DropdownSetting<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => InputDecorator(
-    decoration: InputDecoration(labelText: label),
+    decoration: InputDecoration(labelText: label, helperText: helperText),
     child: DropdownButtonHideUnderline(
       child: DropdownButton<T>(
         value: value,
