@@ -1,194 +1,255 @@
 # UnitFlow — Development Handoff
 
-This file is the primary continuation checkpoint for future UnitFlow development sessions. It intentionally contains the detailed engineering handoff so chat responses can remain short.
+This file is the primary continuation checkpoint for future UnitFlow development sessions. Detailed engineering notes live here so chat responses can remain short.
 
 Last updated: **2026-08-19**
 
 Repository: `https://github.com/sanskarIN/unitflow`
 
-Target prerelease: **`0.1.0-alpha.1`**
+Current source version: **`2.0.12`**
 
-## Current milestone
+Flutter build number: **`12`**
 
-UnitFlow is no longer in repository bootstrap. The repository now has a substantial Rust conversion core, Flutter product source, local-first persistence, deterministic Dart compatibility engine, tests, localization, repository governance, CI/security/release automation, generated six-platform compatibility smoke builds, and deep engineering documentation.
+Current branch: **`main`**
 
-The current stage is **alpha release hardening / native integration readiness**.
+## Current release state
 
-Do **not** describe the project as release-complete yet. The major remaining blockers are reviewed native Flutter platform projects, the production Rust↔Flutter bridge and generated bindings/native packaging, full clean CI/native execution evidence, integration/E2E coverage, accessibility/performance manual evidence, and release-candidate verification.
+UnitFlow source is now aligned to version `2.0.12` across the Rust workspace, Flutter package metadata, About screen, changelog, release documentation, testing documentation, roadmap, and public README.
 
-## Product implementation completed
+This is **not yet a verified native release**. Do not create or describe a `v2.0.12` release as completed until the remaining evidence-based blockers in this file and `ROADMAP.md` have been satisfied.
 
-### Rust domain core
+No release tag was created in this continuation.
 
-The `unitflow_core` Rust crate includes:
+## Major implementation already present
 
-- validated unit/category models and stable identifiers;
-- exact base-10 decimal conversion with `rust_decimal`;
-- multiplicative and affine conversions;
-- explicit rounding policies;
-- single and batch conversion services;
-- searchable catalog with names/symbols/aliases;
-- validated custom affine units;
-- plain/scientific/engineering notation support;
-- offline educational category metadata;
+### Rust core
+
+`crates/unitflow_core` provides:
+
+- validated categories and unit definitions;
+- stable unit IDs;
+- exact base-10 arithmetic through `rust_decimal`;
+- multiplicative and affine conversion;
+- explicit rounding modes;
+- single and batch conversion;
+- searchable built-in catalog;
+- custom affine units;
+- notation formatting;
+- offline educational metadata;
 - typed public errors;
-- catalog/conversion/custom-unit/education/notation/bridge parity tests;
-- catalog-wide invariant coverage;
-- dependency-free conversion benchmark example.
-
-Rust remains the intended authoritative native domain core. Native Flutter clients must not claim that authority is active until the production bridge is integrated and packaged.
+- catalog, conversion, custom-unit, education, notation, invariant, and bridge-parity tests;
+- dependency-free benchmark example.
 
 ### Flutter/Dart application
 
-The Flutter application source includes:
+`apps/unitflow_app` provides:
 
-- adaptive mobile/desktop application shell;
-- Convert, Batch, Library, History, and Settings destinations;
-- exact deterministic Dart decimal implementation during bridge transition;
-- locale-aware decimal parsing/display architecture;
-- source/target selection and swap;
-- result formatting with persisted notation, precision, grouping, and rounding settings;
-- searchable unit library;
-- favorites and pinned conversion pairs;
-- local recent-conversion history with restore/clear behavior;
-- validated custom-unit editor;
-- batch conversion table;
-- CSV, TSV, and JSON batch export/copy behavior;
-- onboarding;
-- theme settings;
-- local state backup/import/reset workflows;
+- adaptive application shell;
+- Convert, Batch, Library, History, and Settings workspaces;
+- deterministic exact-decimal Dart compatibility engine;
+- locale-aware decimal input/display handling;
+- favorites, pinned pairs, recents, custom units, settings, onboarding, and local backup/import/reset;
+- CSV/TSV/JSON batch export;
+- generated Flutter localization architecture with English source ARB;
+- keyboard shortcuts and adaptive navigation;
+- safe diagnostic logging;
 - About/project/support surfaces;
-- generated Flutter localization resources with English source ARB;
-- keyboard/adaptive navigation basics;
-- structured diagnostic logging with sensitive-key redaction.
+- versioned local persistence with migration from schema 1 to schema 2.
 
-### Local persistence and backup hardening
+### Repository engineering
 
-The versioned state layer is currently schema version `2`, with explicit migration support from schema version `1`.
+The repository includes:
 
-Important current guarantees:
+- CI for repository integrity, Rust, and Flutter;
+- CodeQL;
+- dependency review;
+- Dependabot for Cargo, pub, and GitHub Actions;
+- generated platform smoke builds for Android, Web, Linux, Windows, macOS, and iOS;
+- evidence-based source release workflow;
+- exact release-tag/version guard;
+- exhaustive tracked-file inventory validation;
+- Markdown link validation;
+- release/schema/protocol/toolchain consistency validation;
+- repository hygiene validation;
+- Bash and PowerShell one-command verification;
+- extensive maintainer/product/security/release documentation.
 
-- imports are rejected if empty or larger than 1,000,000 characters before JSON decoding;
-- both production Shared Preferences and in-memory test repositories use the same shared import decoder;
-- top-level JSON must be an object with string keys;
-- favorite/pin/recent/custom-unit collection counts are bounded;
-- persisted identifiers and user-controlled fields have explicit bounds;
-- custom units are fully validated before activation;
-- imported favorites, pins, and recents must reference valid units/categories before active state replacement;
-- rejected imports do not partially replace active state;
-- recent-history input must contain non-whitespace content and be at most 1,024 characters;
-- valid locale-formatted original history text such as `1,5` is preserved rather than incorrectly forcing dot-decimal parsing at persistence time;
-- custom-unit removal also removes dangling favorites, pins, and recents;
-- asynchronous state saves are serialized;
-- local reset is serialized behind pending writes, then clears storage and persists a clean baseline, preventing an earlier queued save from repopulating reset data.
+## Version 2.0.12 alignment completed
 
-## Concrete bugs fixed in the final hardening continuation
+The requested `2.0.12` source version is now present in:
 
-### Reset ordering race
+- root `Cargo.toml` workspace package version;
+- Flutter `pubspec.yaml` as `2.0.12+12`;
+- About screen `appVersion`;
+- `CHANGELOG.md`;
+- `ROADMAP.md` release target;
+- `docs/release.md` tag examples/procedure;
+- `docs/testing.md` release-tag example;
+- `README.md` public status;
+- this handoff.
 
-An existing regression test expected a pending save to complete before reset, followed by repository clear and a persisted clean baseline. `AppController.resetLocalData()` previously cleared storage outside `_writeChain`, so an older queued save could write stale state after reset.
+`scripts/check_release_consistency.py` dynamically verifies Cargo, Flutter, About, changelog, schema, bridge protocol, and documented Rust-minimum declarations so future drift is caught automatically.
 
-The reset path now:
+## Important defects fixed during the final 2.0.12 audit
 
-1. switches visible in-memory state immediately to a clean baseline;
-2. enqueues behind prior writes;
-3. clears repository storage;
-4. saves the clean baseline;
-5. preserves write-chain continuity if persistence reports an error.
+### Rust bridge parity compile failure
 
-### Recent-history reference validation
+`crates/unitflow_core/tests/bridge_parity.rs` referenced `result.value`, but `ConversionResult` exposes the converted value as `result.output`.
 
-`recordRecent()` previously allowed values that its tests and persisted-state validation considered invalid. It now rejects:
+The test now uses `result.output`.
 
-- unknown source unit IDs;
-- unknown target unit IDs;
-- cross-category pairs;
+### Shared parity fixture was not actually shared by Rust
+
+Dart consumed `fixtures/bridge_parity_v1.json`, but Rust duplicated those vectors manually. That allowed the two suites to drift.
+
+Rust now directly deserializes the same fixture used by Dart.
+
+The shared fixture was expanded to cover:
+
+- representative length conversions;
+- affine temperature conversion;
+- time conversion;
+- binary data-size conversion;
+- nearest-even rounding;
+- half-away-from-zero rounding;
+- toward-zero rounding;
+- away-from-zero rounding;
+- floor rounding;
+- ceiling rounding;
+- positive and negative cases.
+
+### Rust bridge rounding identifiers disagreed with protocol
+
+Rust `RoundMode` previously used snake_case Serde names while the documented bridge contract and Dart request DTO use camelCase identifiers.
+
+Rust now serializes/deserializes the documented identifiers:
+
+- `nearestEven`;
+- `halfAwayFromZero`;
+- `towardZero`;
+- `awayFromZero`;
+- `floor`;
+- `ceiling`.
+
+A regression test locks this behavior.
+
+### Rust minimum version declaration was too low
+
+The core uses `Option::is_none_or`, while the workspace previously declared Rust `1.80`.
+
+The workspace minimum is now `1.82`, setup documentation is aligned, README reports `Rust 1.82+`, and release-consistency validation checks that the Cargo minimum and setup documentation stay synchronized.
+
+### Rust formatting/release-quality issues
+
+- notation tests were normalized for `rustfmt`;
+- custom-unit tests were normalized for `rustfmt`;
+- the intentionally dense built-in unit data table is protected with `#[rustfmt::skip]` so constants remain compact/auditable without excluding executable module logic from formatting checks;
+- release packaging no longer uses `cargo package --allow-dirty`; a clean package tree is required.
+
+### Rust custom-unit alias ceiling
+
+Dart already bounded custom-unit aliases at 32 entries; Rust did not.
+
+Rust now rejects more than 32 aliases with a typed `TooManyAliases` error, and regression coverage verifies the bound.
+
+### Native bridge DTO validation
+
+The Flutter-side native bridge boundary previously checked response types/lengths but did not enforce the documented canonical decimal contract.
+
+The bridge now validates before accepting/emitting payloads:
+
+- canonical exact decimal strings;
+- stable unit IDs matching lowercase ASCII/digit/underscore/hyphen syntax;
+- 1–64-character unit IDs;
+- decimal precision in the supported 0–28 range;
+- bounded decimal text.
+
+Tests cover malformed requests, malformed responses, noncanonical decimal text, invalid IDs, unsupported precision, and safe bridge-failure stringification.
+
+### Backup import behavior differed between production and tests
+
+`MemoryUserStateRepository` previously bypassed the production repository's 1,000,000-character import ceiling and top-level JSON/string-key validation.
+
+Both repositories now use the same `_decodeUserState` path.
+
+Regression coverage verifies the memory repository rejects oversized backup content too.
+
+### Reset write-order race
+
+Reset is serialized behind pending state saves so an older queued save cannot repopulate state after reset.
+
+The reset operation clears storage and persists a clean baseline after pending writes complete.
+
+### Reset failure UX
+
+A storage reset failure previously only reached logging and could also allow an uncaught Future path from Settings.
+
+The controller now exposes a safe warning message through the existing warning banner, and Settings does not show the success Snackbar when reset fails.
+
+A regression test covers the safe warning path.
+
+### Recent-history validation
+
+Recent conversion persistence now rejects:
+
+- unknown unit IDs;
+- cross-category source/target pairs;
 - blank input;
-- input longer than 1,024 characters.
+- oversized input.
 
-The fix deliberately preserves locale-formatted original text instead of re-parsing with the non-locale exact-decimal parser.
+Imported recent history also rejects whitespace-only input.
 
-### Backup repository inconsistency
+Valid locale-formatted original input text is retained instead of being forced through a non-locale parser at persistence time.
 
-The in-memory repository used by tests previously bypassed production import-size and top-level JSON validation. Both repository implementations now use `_decodeUserState`, ensuring test success cannot rely on a weaker import path.
+### Locale grouping was not genuinely locale-aware
 
-### Imported blank history
+Displayed plain-decimal grouping previously always split the integer part into groups of three.
 
-Imported recent conversions previously accepted whitespace-only `input`. The persisted model now rejects blank history text and a regression test covers it.
+The formatter now derives primary/secondary grouping sizes from the locale decimal pattern while keeping the value as an exact decimal string.
 
-### Generated platform smoke documentation mismatch
+Regression coverage includes:
 
-The documentation described six generated platform smoke jobs while the workflow actually had only Web and Android. The workflow now implements all documented generated-scaffold jobs:
+- `en_US` Western grouping;
+- `en_IN` Indian grouping;
+- `de_DE` localized grouping/decimal parsing.
 
-- Web release build on Ubuntu;
-- Android debug APK on Ubuntu with Java 17;
-- Linux debug desktop build on Ubuntu with required GTK/CMake/Ninja dependencies;
-- Windows debug desktop build on `windows-latest`;
-- macOS debug desktop build on `macos-latest`;
-- iOS debug simulator build on `macos-latest`.
+No binary floating-point conversion was introduced to implement grouping.
 
-These jobs generate temporary platform scaffolds in CI. They are compatibility probes, **not** reviewed native release projects.
-
-## Repository quality/security automation completed
+## Repository integrity and release hardening completed
 
 ### Dependabot
 
-`.github/dependabot.yml` now schedules weekly update discovery for:
+`.github/dependabot.yml` schedules weekly dependency update discovery for:
 
-- Cargo workspace dependencies;
-- Flutter/Dart dependencies in `apps/unitflow_app`;
+- Cargo;
+- Flutter/Dart pub packages;
 - GitHub Actions.
-
-Dependency PRs are explicitly treated as review proposals, not automatic approvals.
 
 ### Repository validators
 
-The repository now contains dependency-free Python validators for:
+The dependency-free Python validator suite covers:
 
+- exhaustive `git ls-files` versus `docs/repository-inventory.md` parity;
 - repository-local Markdown targets;
-- package/version/changelog/schema/bridge-protocol consistency;
-- exact release tag versus Cargo workspace version;
-- critical repository/documentation file presence and tracked-file hygiene;
-- exhaustive tracked-file versus documentation-inventory parity.
+- Cargo/Flutter/About version parity;
+- changelog coverage for the current version;
+- Cargo minimum-Rust-version versus setup-documentation parity;
+- local state schema versus data-format documentation;
+- bridge fixture protocol versus bridge-protocol documentation;
+- critical repository file presence;
+- tracked secret/signing/build/generated-file hygiene;
+- exact `v<workspace-version>` release tag validation.
 
-Standard-library `unittest` regression coverage validates important helper/parser/tag/inventory behavior.
-
-### Exhaustive repository inventory
-
-`docs/repository-inventory.md` documents **every tracked first-party file** and its role.
-
-`scripts/check_repository_inventory.py` compares those machine-readable inventory entries to `git ls-files` and fails on:
-
-- a tracked file missing from the inventory;
-- a stale inventory entry for a non-tracked file;
-- duplicate inventory entries.
-
-This gate is now part of local Bash/PowerShell verification, main CI, and release verification. Any future tracked-file addition/removal must update the inventory in the same change.
-
-### Repository hygiene
-
-`scripts/check_repository_hygiene.py` now requires the complete critical project/governance/documentation/validator set and rejects commonly accidental tracked artifacts, including:
-
-- `.env` files and unexpected `.env.*` variants except `.env.example`;
-- common signing/provisioning file suffixes;
-- target/build directories;
-- `.dart_tool` output;
-- generated localization output.
-
-### Release tag guard
-
-`scripts/check_release_tag.py` reads the root Cargo workspace version and requires the release tag to equal exactly `v<version>`.
-
-The release workflow executes this guard before packaging on tag-triggered runs. A tag such as `v9.9.9` cannot package the current `0.1.0-alpha.1` source as if it were that version.
+Validator helper/tag behavior has standard-library `unittest` regression coverage.
 
 ### Verification scripts
 
-`scripts/verify.sh` and `scripts/verify.ps1` now run, in order:
+`scripts/verify.sh` and `scripts/verify.ps1` run:
 
-1. repository-validator regression tests;
+1. Python validator regression tests;
 2. exhaustive repository inventory validation;
-3. Markdown-link validation;
-4. release/schema/protocol consistency validation;
+3. Markdown link validation;
+4. release/toolchain/schema/protocol consistency validation;
 5. repository hygiene validation;
 6. Rust formatting;
 7. Rust Clippy with warnings denied;
@@ -199,196 +260,193 @@ The release workflow executes this guard before packaging on tag-triggered runs.
 12. Flutter analysis with fatal infos/warnings;
 13. Flutter tests.
 
-The PowerShell script supports `python3`, `python`, or the Windows `py -3` launcher.
+### Dart formatting policy
+
+The repository keeps strict analyzer/lint rules and now declares an explicit 120-column formatter page width in `analysis_options.yaml` to make formatting behavior project-wide and deterministic.
 
 ### CI
 
-`.github/workflows/ci.yml` now has a dedicated `Repository integrity` job in addition to Rust and Flutter quality jobs. It runs validator tests plus inventory, Markdown, release-consistency, and hygiene checks.
+Main CI contains a dedicated repository-integrity job plus Rust and Flutter source-quality jobs.
 
 ### Release workflow
 
-The release workflow now:
+The release workflow:
 
-- tests the repository validators;
-- verifies inventory/Markdown/release consistency/hygiene;
+- runs validator tests;
+- runs inventory/link/release/hygiene checks;
 - rejects a mismatched tag;
 - reruns Rust formatting/Clippy/tests;
-- resolves/generates/analyzes/tests Flutter source;
-- packages the Rust source crate;
-- creates a deterministic Flutter source archive;
-- emits SHA-256 checksums;
+- reruns Flutter dependency/localization/format/analysis/tests;
+- requires a clean Rust package tree;
+- packages Rust source crate and Flutter source archive;
+- creates SHA-256 checksums;
 - uploads verification artifacts;
-- creates a GitHub release only from an actual tag ref.
+- creates a GitHub release only from a real tag ref.
 
-Source artifacts do not substitute for native installers/bundles.
+Source packaging is not native binary verification.
 
-## Documentation completed/refreshed
+## Generated platform smoke matrix
 
-The repository documentation now covers and cross-links:
+The generated-scaffold compatibility workflow currently defines jobs for:
 
-- architecture;
+- Web release build on Ubuntu;
+- Android debug APK on Ubuntu;
+- Linux debug desktop build on Ubuntu;
+- Windows debug desktop build on Windows;
+- macOS debug desktop build on macOS;
+- iOS simulator debug build on macOS.
+
+Each job generates temporary Flutter platform scaffolding in the runner.
+
+These checks are preliminary source/toolchain compatibility evidence only. They do not replace reviewed/committed native platform projects or release-candidate testing.
+
+## Documentation state
+
+Documentation currently covers:
+
+- public project status/features/platform targets;
+- architecture and ADRs;
 - unit model;
-- Rust↔Flutter bridge direction;
-- bridge protocol/parity fixture;
-- local persisted data format/migrations/import limits/reset ordering;
-- setup for Git/Python/Rust/Flutter/native toolchains;
-- development conventions;
-- testing and regression strategy;
-- performance measurement policy;
+- bridge direction/protocol/parity;
+- local state data format/migration/import/reset behavior;
+- setup prerequisites including Python and Rust 1.82 minimum;
+- development workflow;
+- testing/regression strategy;
+- performance policy;
 - accessibility requirements;
-- localization workflow;
+- localization;
 - keyboard shortcuts;
-- diagnostics/logging;
-- dependency/Dependabot maintenance;
-- platform target/support terminology;
-- reviewed native platform completion requirements;
-- generated platform smoke-build evidence boundaries;
-- threat model;
-- security policy;
-- release procedure;
-- release checklist;
-- GitHub repository maintenance/settings;
+- diagnostics;
+- dependencies/Dependabot;
+- platform support terminology;
+- native platform completion requirements;
+- generated platform-smoke evidence boundary;
+- security policy and threat model;
+- release procedure/checklist;
+- GitHub repository maintenance;
 - troubleshooting;
-- four architecture decision records;
-- exhaustive tracked-file repository inventory.
-
-`README.md`, `CHANGELOG.md`, `ROADMAP.md`, `SECURITY.md`, and this handoff have been updated to match the implemented alpha-hardening state and avoid claiming unverified native release status.
+- exhaustive repository inventory;
+- changelog and roadmap;
+- this continuation handoff.
 
 ## Verification status — do not overclaim
 
-### What was verified by repository inspection
+### Repository inspection
 
-During this continuation, the connected GitHub repository was repeatedly inspected before edits. The latest source structure, workflows, tests, persistence code, roadmap, changelog, and documentation were read directly from the repository before the corresponding fixes were made.
+The live `main` branch was repeatedly read through the authenticated GitHub integration during the final audit before source/documentation changes were written.
 
-### Toolchain limitation in this execution environment
+### Local execution limitation
 
-The execution environment used for this continuation does **not** provide the project Rust/Flutter/Dart/native toolchains needed to run the full repository verification locally. Therefore this handoff does **not** claim that:
+The available execution environment has Git and Python, but does not provide the Rust/Cargo, Flutter, Dart, or native-platform toolchains required for the complete project verification.
 
-- `cargo fmt` passed;
-- `cargo clippy` passed;
-- Rust tests passed;
-- Flutter localization generation passed;
-- Dart formatting passed;
-- Flutter analysis passed;
-- Flutter tests passed;
-- any native target build passed.
+Direct cloning from the execution container was also unavailable because external DNS/network access from that container was not available.
 
-Do not change those statements to “passed” until actual output exists from a suitable environment or GitHub Actions.
+Therefore this continuation does **not** claim successful local output for:
 
-### GitHub Actions status seen in this continuation
+- `cargo fmt`;
+- `cargo clippy`;
+- Rust tests;
+- Flutter localization generation;
+- Dart formatting;
+- Flutter analysis;
+- Flutter tests;
+- Android/Web/Linux/Windows/macOS/iOS builds.
 
-A workflow-run lookup for the then-latest inspected commit returned no runs yet. Therefore remote green status was **not** established from this session. The workflow definitions were strengthened, but definitions are not the same as successful execution evidence.
+### GitHub Actions evidence
 
-The next continuation should inspect the latest commit's workflow runs and fix every real failure rather than marking the roadmap complete from source inspection alone.
+The GitHub combined-status lookup for the latest inspected pre-handoff commit returned no status contexts. A green final CI matrix has therefore not been established from this continuation.
 
-## Current release blockers
+Do not convert roadmap/checklist items to passed merely because the workflow definitions exist.
 
-The remaining blockers are intentional and real:
+## Current blockers before a real 2.0.12 native release
 
-1. **Production Rust↔Flutter bridge** — implement/generate/review native bindings and make native Flutter builds load the Rust domain core where Rust authority is claimed.
-2. **Reviewed native platform projects** — generate/update, review, and commit Android, Windows, Linux, macOS, Web, and iOS projects as appropriate; generated CI scaffolds are not enough.
-3. **Actual full CI evidence** — run/review repository integrity, Rust, Flutter, security/dependency, and generated platform workflows on the final candidate commit and fix every discovered issue.
-4. **Native integration/E2E** — exercise persisted primary journeys on committed platform projects.
-5. **Accessibility manual review** — screen readers, large text, reduced motion, contrast, focus/keyboard, touch targets.
-6. **Performance evidence** — record catalog-search/batch/native profiling baselines on documented hardware where release decisions require them.
-7. **Release assets/media** — real screenshots/demo media, icon/splash/native assets from verified builds.
-8. **Native packaging/signing/store evidence** — validate platform-specific bundle/install/sign/notarize/store requirements without committing credentials.
-9. **Release-candidate checks** — clean-clone verification, downloaded-artifact smoke testing, final release checklist, and tag only after blockers are satisfied.
+1. **Run/review final CI** — repository integrity, Rust, Flutter, security/dependency, and generated-platform workflows must execute successfully on the final candidate commit, with every real failure fixed.
+2. **Production Rust↔Flutter bridge** — implement generated native bindings and package/load the Rust core on native targets where Rust authority is claimed.
+3. **Reviewed native platform projects** — generate, review, commit, and maintain Android/Windows/Linux/macOS/Web/iOS projects deliberately rather than relying on temporary CI scaffolds.
+4. **Native integration/E2E** — execute primary offline conversion, persistence, backup/import, restart, custom-unit, history, and clipboard journeys against committed native projects.
+5. **Accessibility manual review** — screen reader, keyboard/focus, large text, contrast, reduced-motion, and touch-target checks.
+6. **Performance evidence** — record search/batch/native profiling baselines on documented hardware where release decisions require them.
+7. **Real release media/assets** — icon/splash/platform assets and screenshots/demo media from verified builds.
+8. **Native packaging/signing/store verification** — installers/bundles/signing/notarization/store requirements without committing credentials.
+9. **Clean-clone/release-candidate verification** — run the full release checklist and smoke-test downloaded artifacts.
+10. **Tag only after evidence exists** — validate `v2.0.12` with `scripts/check_release_tag.py` and create the tag only for the exact audited release commit.
 
-## Exact next development priority
+## Exact next priority if another continuation is needed
 
-If development continues toward `0.1.0-alpha.1`, use this order:
+Use this order:
 
-1. Inspect the latest GitHub Actions runs and address all repository-integrity/Rust/Flutter/platform-smoke failures.
-2. Run the complete `scripts/verify.sh` or `scripts/verify.ps1` from a machine with Git, Python 3, Rust, Flutter, and Dart.
-3. Implement the production Rust↔Flutter generated bridge/binding workflow using the documented decimal-string protocol and parity fixture.
-4. Generate/review/commit native platform projects deliberately, updating `docs/repository-inventory.md` in the same commits.
-5. Change platform CI from temporary generated scaffolds to building committed native projects target-by-target as each reviewed project lands.
-6. Add native integration/E2E coverage for the primary offline conversion/persistence/backup journeys.
-7. Perform accessibility/performance/platform-manual audits and record evidence.
-8. Add real app artwork/screenshots only from verified builds.
-9. Run the final release checklist.
-10. Validate the intended tag with `python3 scripts/check_release_tag.py v0.1.0-alpha.1` and tag only the exact audited candidate commit.
+1. Inspect GitHub Actions for the newest commit and fix all actual failures.
+2. Run `scripts/verify.sh` or `scripts/verify.ps1` on a machine with the complete Rust/Flutter/Dart toolchain.
+3. Address any formatter/Clippy/analyzer/test failures found by real execution.
+4. Implement the production Rust↔Flutter generated binding layer against `docs/bridge-protocol.md`.
+5. Generate/review/commit native projects one target at a time and update `docs/repository-inventory.md` in the same changes.
+6. Switch target CI jobs from temporary generated scaffolds to committed project builds as each platform project becomes authoritative.
+7. Add native integration/E2E tests.
+8. Perform accessibility/performance/manual platform verification.
+9. Produce real artwork/screenshots and native packages from verified builds.
+10. Complete `docs/release-checklist.md` and only then tag `v2.0.12`.
 
 ## Commit identity note
 
 Requested local Git commit email: `sanskarin@outlook.in`.
 
-The connected GitHub contents/write API used here does not expose a per-write `author.email` or `committer.email` parameter. Connector-created commit identity is controlled by the authenticated GitHub integration. Contributor/setup documentation therefore includes the requested local configuration:
+The connected GitHub contents/write API used in these sessions does not expose a per-write `author.email`/`committer.email` field. Connector-created commit identity is controlled by the authenticated GitHub integration.
+
+Contributor/setup guidance keeps the requested local identity:
 
 ```bash
 git config user.name "Sanskar"
 git config user.email "sanskarin@outlook.in"
 ```
 
-Do not falsely claim connector-created commits used a configurable email when the connector did not provide that field.
+Do not claim connector-created commits used a configurable email when the connector did not expose that option.
 
-## Meaningful commits from this final hardening continuation
+## Recent meaningful 2.0.12 commits
 
-The continuation intentionally used many small meaningful commits. Important commits include:
+The final audit intentionally used many small, focused commits. Recent examples include:
 
-- `c9fdd487` — `ci: enable automated dependency updates`
-- `779a5068` — `security: extend repository hygiene coverage`
-- `21850a5d` — `build: include repository integrity in bash verification`
-- `703bc936` — `build: include repository integrity in PowerShell verification`
-- `3341ba99` — `ci: enforce repository integrity checks`
-- `bfd65d38` — `build: validate release tags against package version`
-- `30b82d62` — `security: require release tag validator`
-- `a3c3724b` — `ci: harden release validation before packaging`
-- `30d7ad06` — `security: detect nested environment and signing files`
-- `85c5a9e2` — `test: cover repository validation helpers`
-- `884e8bf4` — `test: keep validator tests version agnostic`
-- `80b147e0` — `test: run repository validator tests in CI`
-- `1959c516` — `test: include validator tests in bash verification`
-- `bffb6090` — `test: include validator tests in PowerShell verification`
-- `13dbed23` — `test: run validator tests before release packaging`
-- `5638e9d1` — `fix: keep backup import validation consistent`
-- `c8b680bd` — `test: cover memory backup size limit`
-- `6f483792` — `security: require repository validator regression tests`
-- `968dcf1e` — `docs: complete documentation navigation for final validators`
-- `c7558d4e` — `docs: document Python and complete verification prerequisites`
-- `2c322236` — `docs: expand testing strategy with repository integrity gates`
-- `da144583` — `docs: harden evidence based release procedure`
-- `e109e5ce` — `docs: make release checklist match final quality gates`
-- `a87cdb6b` — `docs: document active Dependabot maintenance policy`
-- `2287aa7d` — `build: make PowerShell validator invocation explicit`
-- `3156f3f6` — `fix: serialize local reset with pending persistence`
-- `a6083bc2` — `fix: validate recent conversions before persistence`
-- `99c9e577` — `fix: preserve locale formatted recent inputs`
-- `741b042b` — `test: preserve localized recent conversion text`
-- `b8e23c05` — `ci: complete generated platform smoke matrix`
-- `5df5846e` — `docs: align README with final automation and quality gates`
-- `1d7f4f8f` — `docs: update GitHub maintenance for final CI gates`
-- `b32f7302` — `docs: align development workflow with hardened repository`
-- `268a6e23` — `fix: reject empty recent history inputs`
-- `d141c789` — `test: reject blank imported recent history`
-- `4d172ea2` — `docs: document hardened backup and history validation`
-- `582c6a9f` — `docs: refresh roadmap after final hardening audit`
-- `cb8c43af` — `docs: record final hardening changes in changelog`
-- `dbb3226a` — `docs: add exhaustive tracked file inventory`
-- `affbfc45` — `docs: enforce exhaustive repository inventory`
-- `4afbbf99` — `test: cover repository inventory validator`
-- `b5aeba21` — `security: require complete project documentation set`
-- `da9245b8` — `build: verify exhaustive repository inventory`
-- `181e7f7b` — `build: verify inventory in PowerShell quality gate`
-- `52df1139` — `ci: enforce complete repository documentation inventory`
-- `24f448b4` — `ci: verify repository inventory before release`
-- `af894f9b` — `docs: index every engineering documentation guide`
-- `cafb87eb` — `docs: align security policy with hardened import and release model`
-- `eb0aea41` — `docs: update threat model for persistence and release hardening`
-- `a72acf35` — `docs: include inventory parity in testing strategy`
-- `da33d80c` — `docs: require inventory and persistence regressions before release`
-- `731fc23e` — `docs: add inventory validation to setup workflow`
-- `fca2fc21` — `docs: record exhaustive documentation inventory gate`
+- `d6aa4097` — `release: bump Rust workspace to 2.0.12`
+- `59cc3696` — `release: bump Flutter app to 2.0.12`
+- `c0997473` — `release: show version 2.0.12 in About`
+- `941b1a9e` — `docs: publish 2.0.12 changelog snapshot`
+- `466153da` — `docs: retarget roadmap release milestone to 2.0.12`
+- `2fb8dca8` — `docs: align release guide with version 2.0.12`
+- `26bf25cb` — `fix: use conversion output in Rust parity test`
+- `b39a440e` — `style: normalize Rust notation tests for rustfmt`
+- `f05a65e3` — `style: preserve auditable Rust catalog table`
+- `c37c5314` — `fix: align Rust rounding identifiers with bridge protocol`
+- `a8aa11d9` — `test: lock Rust bridge rounding identifiers`
+- `156005aa` — `build: align Rust MSRV with used standard library APIs`
+- `5e6d00ed` — `fix: enforce canonical native bridge payloads`
+- `430d7e2f` — `test: cover native bridge payload validation`
+- `7e0b7443` — `feat: add explicit Rust custom alias count error`
+- `b486996e` — `fix: bound Rust custom aliases and normalize formatting`
+- `74fa7863` — `test: cover Rust custom alias count limit`
+- `382e9058` — `style: normalize Rust custom unit regression test`
+- `3499ee9d` — `test: consume shared bridge fixture from Rust`
+- `7df22406` — `test: expand shared bridge rounding parity vectors`
+- `685648a7` — `ci: require clean Rust packaging for releases`
+- `564492a0` — `docs: document Rust 1.82 minimum for 2.0.12`
+- `f16978ac` — `style: define repository wide Dart formatter width`
+- `4e4089c2` — `fix: surface local reset persistence failures safely`
+- `25cf000a` — `test: cover safe local reset failure warning`
+- `b2acef9d` — `docs: record final 2.0.12 hardening fixes`
+- `e1b57359` — `build: validate documented Rust minimum version`
+- `8436d086` — `fix: avoid false success after local reset failure`
+- `8e6dd01a` — `docs: publish UnitFlow 2.0.12 source status`
+- `72b3bdae` — `docs: update 2.0.12 verification and parity strategy`
+- `6100b37e` — `fix: honor locale specific decimal grouping patterns`
+- `c45efd64` — `test: cover locale specific exact decimal grouping`
+- `54ab7d0e` — `fix: keep locale grouping indices strongly typed`
 
-## Release notes draft
-
-### `0.1.0-alpha.1` — planned, not tagged yet
-
-UnitFlow's first development preview is intended to include the exact-decimal Rust conversion core, adaptive Flutter interface, deterministic Dart compatibility engine, broad offline unit catalog, favorites/pins/history/custom units, batch export, versioned local backup/import, localization-ready UI, repository security/quality automation, and source release tooling.
-
-Do not publish this prerelease until the current release blockers above are cleared or the release notes explicitly narrow platform/support claims to match verified evidence.
+Earlier final-hardening commits also added Dependabot, repository validators/tests, exhaustive inventory enforcement, backup-import consistency, reset ordering, recent-history validation, security/release hardening, and the six-platform generated smoke matrix.
 
 ## Handoff rule
 
-Future work should keep this file current after meaningful milestones. When a tracked file is added/removed, update `docs/repository-inventory.md` in the same change. When a confirmed defect is fixed, add regression coverage where practical. Never mark a roadmap/release check complete without execution evidence that actually satisfies it.
+Before changing this file in another continuation:
+
+1. inspect the latest repository state rather than trusting this handoff blindly;
+2. prefer actual compiler/test/workflow evidence over assumptions;
+3. keep `2.0.12` version declarations synchronized unless the user explicitly requests another version;
+4. update this file after meaningful new work;
+5. keep commits focused and descriptive.
