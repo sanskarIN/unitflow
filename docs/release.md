@@ -4,9 +4,9 @@ UnitFlow releases are evidence-based. A source-level test suite, generated platf
 
 ## Versioning
 
-UnitFlow uses SemVer-style versions. During `0.x`, breaking changes may occur but must be documented. Stable releases should preserve stored-data and bridge compatibility or include explicit migration notes.
+UnitFlow uses Semantic Versioning-style release numbers. Version `2.0.12` is the current development/release target. Stable releases should preserve stored-data and bridge compatibility or include explicit migration notes whenever compatibility changes.
 
-The release tag must equal `v` plus the Cargo workspace version exactly. For example, workspace version `0.1.0-alpha.1` requires tag `v0.1.0-alpha.1`.
+The release tag must equal `v` plus the Cargo workspace version exactly. For example, workspace version `2.0.12` requires tag `v2.0.12`.
 
 ## Release checklist
 
@@ -38,7 +38,7 @@ PowerShell:
 ./scripts/verify.ps1
 ```
 
-The scripts run Python repository-validator tests, Markdown/release/hygiene validation, Rust formatting/Clippy/tests, Flutter dependency resolution/localization, Dart formatting, Flutter analysis, and Flutter tests.
+The scripts run Python repository-validator tests, Markdown/release/hygiene/inventory validation, Rust formatting/Clippy/tests, Flutter dependency resolution/localization, Dart formatting, Flutter analysis, and Flutter tests.
 
 For targeted troubleshooting, see [`testing.md`](testing.md).
 
@@ -47,10 +47,10 @@ For targeted troubleshooting, see [`testing.md`](testing.md).
 Before creating a release tag, validate the exact intended tag:
 
 ```bash
-python3 scripts/check_release_tag.py v0.1.0-alpha.1
+python3 scripts/check_release_tag.py v2.0.12
 ```
 
-Substitute the intended version. The release GitHub Actions workflow runs this check automatically for tag-triggered executions and refuses to package a mismatched `v*` tag.
+Substitute the intended version for future releases. The release GitHub Actions workflow runs this check automatically for tag-triggered executions and refuses to package a mismatched `v*` tag.
 
 ## Native and generated platform builds
 
@@ -84,8 +84,8 @@ Windows, Linux, macOS, and iOS builds require their compatible host/toolchains. 
 Example only after the audited release commit passes the applicable checklist:
 
 ```bash
-git tag -a v0.1.0-alpha.1 -m "UnitFlow 0.1.0-alpha.1"
-git push origin v0.1.0-alpha.1
+git tag -a v2.0.12 -m "UnitFlow 2.0.12"
+git push origin v2.0.12
 ```
 
 Never create a tag merely to see whether CI passes. Run source checks before tagging, then require the tag-triggered release workflow to independently rerun its gates.
