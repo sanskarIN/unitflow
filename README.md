@@ -84,9 +84,17 @@ See [`docs/setup.md`](docs/setup.md) for platform prerequisites and [`docs/troub
 
 ## Development Quality Gates
 
-Core checks:
+Recommended one-command audit:
 
 ```bash
+bash tool/check.sh
+```
+
+Equivalent core checks include:
+
+```bash
+python3 -m py_compile tool/*.py
+(cd tool && python3 -m unittest discover -p 'test_*.py')
 python3 tool/check_secrets.py
 python3 tool/check_data_files.py
 python3 tool/check_docs_links.py
@@ -112,7 +120,7 @@ See [`docs/testing.md`](docs/testing.md), [`docs/performance.md`](docs/performan
 
 ## Local Data and Portability
 
-UnitFlow keeps preferences, favorites, bounded recent history, pinned pairs, accessibility choices, and custom units locally by default. The portable backup format is versioned and validated before replacement of current state. Version 1 backups migrate deterministically to schema version 2, including the historical nearest-even rounding default.
+UnitFlow keeps preferences, favorites, bounded recent history, pinned pairs, accessibility choices, and custom units locally by default. The portable backup format is versioned and validated before replacement of current state. Version 1 backups migrate deterministically to schema version 2, including the historical nearest-even rounding default. Imports reject unsupported object fields and collection counts outside the documented schema bounds rather than silently discarding them.
 
 See [`docs/data-format.md`](docs/data-format.md) and [`schemas/unitflow-backup-v2.schema.json`](schemas/unitflow-backup-v2.schema.json).
 
@@ -124,7 +132,7 @@ See [`docs/accessibility.md`](docs/accessibility.md).
 
 ## Security and Privacy
 
-Static conversions work offline and require no account. Repository CI includes common credential-pattern scanning, structured-data validation, dependency review, CodeQL, Rust/Flutter quality gates, and documentation link validation. Suspected vulnerabilities should be reported privately according to [`SECURITY.md`](SECURITY.md).
+Static conversions work offline and require no account. Repository CI includes common credential-pattern scanning, structured-data validation including duplicate JSON/ARB key rejection, dependency review, CodeQL, Rust/Flutter quality gates, repository-utility regression tests, and documentation link validation. Suspected vulnerabilities should be reported privately according to [`SECURITY.md`](SECURITY.md).
 
 See [`PRIVACY.md`](PRIVACY.md) and [`SECURITY.md`](SECURITY.md).
 
