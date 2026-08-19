@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../../../app/app_controller.dart';
 import '../../../app/theme/app_theme.dart';
+import '../../../core/persistence/user_state.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../converter/domain/unit_models.dart';
 
@@ -35,14 +36,32 @@ final class HistoryScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
                   const SizedBox(height: AppSpacing.md),
-                  Text(
-                    strings.recentConversions,
-                    style: Theme.of(context).textTheme.headlineMedium,
-                  ),
-                  const SizedBox(height: AppSpacing.xxs),
-                  Text(
-                    strings.recentConversionsSubtitle,
-                    style: Theme.of(context).textTheme.bodyMedium,
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: <Widget>[
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Text(
+                              strings.recentConversions,
+                              style: Theme.of(context).textTheme.headlineMedium,
+                            ),
+                            const SizedBox(height: AppSpacing.xxs),
+                            Text(
+                              strings.recentConversionsSubtitle,
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.md),
+                      TextButton.icon(
+                        onPressed: () => _clearHistory(context, recents),
+                        icon: const Icon(Icons.delete_sweep_outlined),
+                        label: Text(strings.clearHistory),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   ...recents.map((recent) {
@@ -91,6 +110,28 @@ final class HistoryScreen extends StatelessWidget {
       );
     },
   );
+
+  Future<void> _clearHistory(
+    BuildContext context,
+    List<RecentConversion> snapshot,
+  ) async {
+    final strings = AppLocalizations.of(context);
+    final preserved = List<RecentConversion>.of(snapshot);
+    await appController.clearHistory();
+    if (!context.mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(strings.historyCleared),
+        action: SnackBarAction(
+          label: strings.undo,
+          onPressed: () => appController.restoreHistory(preserved),
+        ),
+      ),
+    );
+  }
 }
 
 final class _EmptyHistory extends StatelessWidget {
