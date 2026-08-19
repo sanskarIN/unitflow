@@ -15,6 +15,8 @@ final class ConverterController extends ChangeNotifier {
     recompute();
   }
 
+  static const _maxPersistedRecentInputLength = 1024;
+
   final AppController _appController;
   final DecimalInputParser _parser = const DecimalInputParser();
   final DecimalDisplayFormatter _formatter = const DecimalDisplayFormatter();
@@ -174,8 +176,12 @@ final class ConverterController extends ChangeNotifier {
     if (currentResult == null) {
       return Future<void>.value();
     }
+    final canonicalInput = currentResult.input.toCanonicalString();
+    if (canonicalInput.length > _maxPersistedRecentInputLength) {
+      return Future<void>.value();
+    }
     return _appController.recordRecent(
-      input: currentResult.input.toCanonicalString(),
+      input: canonicalInput,
       fromUnitId: _fromUnitId,
       toUnitId: _toUnitId,
     );
