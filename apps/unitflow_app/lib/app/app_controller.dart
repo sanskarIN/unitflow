@@ -124,12 +124,7 @@ final class AppController extends ChangeNotifier {
     required String fromUnitId,
     required String toUnitId,
   }) {
-    if (input.isEmpty || input.length > 1024) {
-      throw ArgumentError.value(input, 'input', 'conversion input is invalid');
-    }
-    try {
-      ExactDecimal.parse(input);
-    } on FormatException {
+    if (input.trim().isEmpty || input.length > 1024) {
       throw ArgumentError.value(input, 'input', 'conversion input is invalid');
     }
 
