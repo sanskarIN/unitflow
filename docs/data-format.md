@@ -8,6 +8,7 @@ The current local state contains:
 
 - theme preference;
 - notation preference;
+- explicit decimal rounding mode;
 - decimal-place preference;
 - grouping preference;
 - onboarding completion state;
@@ -16,7 +17,7 @@ The current local state contains:
 - bounded recent-conversion history;
 - validated custom affine units.
 
-The current schema version is **1**. Its machine-readable contract is published at `schemas/unitflow-backup-v1.schema.json`.
+The current schema version is **2**. Its machine-readable contract is published at `schemas/unitflow-backup-v2.schema.json`. The version 1 schema remains checked in at `schemas/unitflow-backup-v1.schema.json` for compatibility documentation and migration tests.
 
 ## Backup envelope
 
@@ -30,6 +31,19 @@ Current safety bounds include:
 - custom aliases: at most 32 per unit;
 - decimal precision preference: 0–28 places;
 - stable identifiers: lowercase ASCII letters, digits, `_`, and `-` only.
+
+## Rounding modes
+
+Schema version 2 stores a `roundingMode` field. Accepted values are:
+
+- `nearestEven`;
+- `halfAwayFromZero`;
+- `towardZero`;
+- `awayFromZero`;
+- `floor`;
+- `ceiling`.
+
+The selected mode is applied by the conversion engine whenever a result must be rounded to the configured decimal-place precision.
 
 ## Custom-unit formula
 
@@ -53,7 +67,7 @@ An import is rejected when, among other validation failures:
 - duplicate identifiers would collide with built-in or imported custom units;
 - the import exceeds configured size/count limits.
 
-The application should preserve the existing state when validation fails.
+The application preserves the existing state when validation fails.
 
 ## Export behavior
 
@@ -61,14 +75,18 @@ UnitFlow supports explicit JSON backup export. File export uses a user-selected 
 
 ## Migration policy
 
-When schema version 2 or later is introduced:
+### Version 1 → version 2
 
-1. keep version 1 parsing deterministic;
+Version 1 did not contain a rounding preference. When a valid version 1 backup is imported, UnitFlow deterministically migrates it to `nearestEven`, which was the conversion engine's historical default. A subsequent export emits schema version 2.
+
+For future schema versions:
+
+1. keep older supported parsing deterministic;
 2. add explicit migrations rather than silently reinterpreting old fields;
 3. add migration and corruption-regression tests;
 4. update the JSON Schema and this document;
 5. update `CHANGELOG.md` with user-visible compatibility notes;
-6. preserve unknown future schemas by rejecting them rather than destructively rewriting them.
+6. reject unknown future schemas rather than destructively rewriting them.
 
 ## Privacy
 
