@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../core/persistence/user_state.dart';
 import '../features/converter/domain/unit_models.dart';
 import '../features/converter/presentation/converter_controller.dart';
 import '../features/converter/presentation/converter_screen.dart';
@@ -181,7 +182,7 @@ final class _AppShellState extends State<AppShell> {
       ),
       HistoryScreen(
         appController: widget.appController,
-        onOpenPair: _openPair,
+        onOpenRecent: _openRecent,
       ),
       SettingsScreen(
         appController: widget.appController,
@@ -199,6 +200,11 @@ final class _AppShellState extends State<AppShell> {
 
   void _openPair(PinnedPair pair) {
     _converterController.applyPinnedPair(pair);
+    setState(() => _selectedIndex = 0);
+  }
+
+  void _openRecent(RecentConversion recent) {
+    _converterController.applyRecentConversion(recent);
     setState(() => _selectedIndex = 0);
   }
 
