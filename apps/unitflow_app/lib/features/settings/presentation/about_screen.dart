@@ -7,7 +7,7 @@ import '../../../l10n/generated/app_localizations.dart';
 final class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
 
-  static const appVersion = '0.1.0-alpha.1';
+  static const appVersion = '2.0.12';
 
   @override
   Widget build(BuildContext context) {
