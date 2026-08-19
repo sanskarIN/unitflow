@@ -35,6 +35,16 @@ void main() {
     expect(recent.toUnitId, 'kilometer');
   });
 
+  test('oversized canonical exact input is not persisted to history', () async {
+    final hugeInput = '${''.padRight(1018, '9')}e1000';
+    converter.setInput(hugeInput);
+    expect(converter.result, isNotNull);
+
+    await converter.recordCurrentConversion();
+
+    expect((await repository.load()).recents, isEmpty);
+  });
+
   test('applying a recent conversion restores pair input and result', () {
     final recent = RecentConversion(
       input: '2500',
