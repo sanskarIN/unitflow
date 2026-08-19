@@ -43,8 +43,8 @@ flutter test
 flutter build web --release
 
 cd "$ROOT"
-if ! git diff --quiet --exit-code; then
-  echo "Release verification changed tracked files." >&2
+if [[ -n "$(git status --porcelain --untracked-files=all)" ]]; then
+  echo "Release verification changed or created repository files." >&2
   echo "Regenerate/format sources and commit the result before releasing." >&2
   git status --short >&2
   exit 1
