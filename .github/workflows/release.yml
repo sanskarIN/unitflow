@@ -39,6 +39,7 @@ jobs:
         working-directory: apps/unitflow_app
         run: |
           flutter pub get
+          flutter gen-l10n
           dart format --output=none --set-exit-if-changed lib test
           flutter analyze --fatal-infos --fatal-warnings
           flutter test
@@ -59,7 +60,8 @@ jobs:
             apps/unitflow_app/lib \
             apps/unitflow_app/test \
             apps/unitflow_app/pubspec.yaml \
-            apps/unitflow_app/analysis_options.yaml
+            apps/unitflow_app/analysis_options.yaml \
+            apps/unitflow_app/l10n.yaml
           cp target/package/unitflow_core-*.crate dist/
           (cd dist && sha256sum * > SHA256SUMS)
 
