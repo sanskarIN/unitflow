@@ -156,7 +156,8 @@ final class DecimalDisplayFormatter {
     var end = whole.length;
     var size = primarySize;
     while (end > 0) {
-      final start = (end - size).clamp(0, end);
+      final candidate = end - size;
+      final start = candidate < 0 ? 0 : candidate;
       chunks.add(whole.substring(start, end));
       end = start;
       size = secondarySize;
