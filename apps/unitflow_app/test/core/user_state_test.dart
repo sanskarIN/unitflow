@@ -154,6 +154,29 @@ void main() {
       throwsFormatException,
     );
   });
+
+  test('backup rejects more custom units than the import limit', () {
+    final repository = MemoryUserStateRepository();
+    final backup = _emptyBackup()
+      ..['customUnits'] = List<Object?>.generate(
+        UserState.maxImportedCustomUnits + 1,
+        (index) => <String, Object?>{
+          'id': 'custom_$index',
+          'category': 'length',
+          'name': 'Custom $index',
+          'symbol': 'u$index',
+          'scale': '1',
+          'offset': '0',
+          'aliases': <Object?>[],
+          'description': '',
+        },
+      );
+
+    expect(
+      () => repository.importJson(jsonEncode(backup)),
+      throwsFormatException,
+    );
+  });
 }
 
 Map<String, Object?> _emptyBackup() => <String, Object?>{
