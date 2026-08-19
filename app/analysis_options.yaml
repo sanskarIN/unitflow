@@ -7,18 +7,14 @@ analyzer:
     dead_code: error
     unused_import: error
     unused_local_variable: error
+    invalid_assignment: error
+    missing_return: error
 
 linter:
   rules:
     - always_declare_return_types
     - avoid_print
-    - avoid_redundant_argument_values
     - avoid_relative_lib_imports
     - cancel_subscriptions
     - directives_ordering
-    - prefer_const_constructors
-    - prefer_const_declarations
-    - prefer_final_fields
-    - prefer_final_locals
-    - sort_child_properties_last
     - use_build_context_synchronously
