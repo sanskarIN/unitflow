@@ -5,6 +5,7 @@ import '../../../app/theme/app_theme.dart';
 import '../../../core/logging/app_log.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../converter/domain/unit_models.dart';
+import '../../converter/presentation/category_localizations.dart';
 import 'custom_unit_dialog.dart';
 
 final class LibraryScreen extends StatefulWidget {
@@ -291,31 +292,34 @@ final class _CategoryFilter extends StatelessWidget {
   final ValueChanged<UnitCategory?> onChanged;
 
   @override
-  Widget build(BuildContext context) => SingleChildScrollView(
-    scrollDirection: Axis.horizontal,
-    child: Row(
-      children: <Widget>[
-        Padding(
-          padding: const EdgeInsets.only(right: AppSpacing.xs),
-          child: FilterChip(
-            label: Text(AppLocalizations.of(context).allFilter),
-            selected: value == null,
-            onSelected: (_) => onChanged(null),
-          ),
-        ),
-        ...UnitCategory.values.map(
-          (category) => Padding(
+  Widget build(BuildContext context) {
+    final strings = AppLocalizations.of(context);
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: <Widget>[
+          Padding(
             padding: const EdgeInsets.only(right: AppSpacing.xs),
             child: FilterChip(
-              label: Text(category.label),
-              selected: value == category,
-              onSelected: (_) => onChanged(category),
+              label: Text(strings.allFilter),
+              selected: value == null,
+              onSelected: (_) => onChanged(null),
             ),
           ),
-        ),
-      ],
-    ),
-  );
+          ...UnitCategory.values.map(
+            (category) => Padding(
+              padding: const EdgeInsets.only(right: AppSpacing.xs),
+              child: FilterChip(
+                label: Text(category.localizedLabel(strings)),
+                selected: value == category,
+                onSelected: (_) => onChanged(category),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 final class _UnitTile extends StatelessWidget {
@@ -343,7 +347,9 @@ final class _UnitTile extends StatelessWidget {
         ),
         leading: CircleAvatar(child: Text(unit.symbol, textAlign: TextAlign.center)),
         title: Text(unit.name),
-        subtitle: Text('${unit.category.label} • ${unit.id}$customSuffix'),
+        subtitle: Text(
+          '${unit.category.localizedLabel(strings)} • ${unit.id}$customSuffix',
+        ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
