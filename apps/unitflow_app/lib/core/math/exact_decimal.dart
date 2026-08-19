@@ -59,9 +59,9 @@ final class ExactDecimal implements Comparable<ExactDecimal> {
     return _normalized(coefficient, scale);
   }
 
-  const ExactDecimal._(this.coefficient, this.scale);
+  ExactDecimal._(this.coefficient, this.scale);
 
-  static const zero = ExactDecimal._(BigInt.zero, 0);
+  static final zero = ExactDecimal._(BigInt.zero, 0);
 
   final BigInt coefficient;
   final int scale;
