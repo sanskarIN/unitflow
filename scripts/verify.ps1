@@ -43,6 +43,9 @@ try {
     Write-Host '==> Repository validator tests'
     Invoke-PythonCheck -Arguments @('-m', 'unittest', 'discover', '-s', 'scripts/tests', '-p', 'test_*.py') -FailureMessage 'Repository validator tests failed'
 
+    Write-Host '==> Repository inventory'
+    Invoke-PythonCheck -Arguments @('scripts/check_repository_inventory.py') -FailureMessage 'Repository inventory validation failed'
+
     Write-Host '==> Markdown links'
     Invoke-PythonCheck -Arguments @('scripts/check_markdown_links.py') -FailureMessage 'Markdown link validation failed'
 
