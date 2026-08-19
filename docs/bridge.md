@@ -41,7 +41,9 @@ Decimal values cross the FFI boundary as strings. Rust parses and validates them
 
 ## Generated sources
 
-Generated bindings are treated as derived sources. The audit-branch normalization workflow installs the pinned generator, regenerates bindings, runs formatting, and commits generated changes when needed. Generated files must still pass Rust and Flutter analysis before merge.
+Generated bindings are treated as derived **but intentionally tracked** sources. The audit-branch normalization workflow installs the pinned generator, regenerates bindings, runs formatting, and commits generated changes when needed. Generated files must still pass Rust and Flutter analysis before merge.
+
+Generated FRB Dart files must not be added to `.gitignore`; otherwise a code-generation run could create required source that CI cannot review or reproduce from a clean checkout. Cleanliness checks use `git status --porcelain --untracked-files=all`, not only `git diff`, so newly generated untracked files are treated as drift.
 
 Do not hand-edit generated bridge files. Change the Rust API or generator configuration instead.
 
@@ -68,7 +70,8 @@ When bridge-visible Rust types/functions change:
 2. regenerate bindings with the pinned codegen version;
 3. run `cargo fmt`, `cargo clippy`, and workspace tests;
 4. run Flutter generation, formatting, analysis, and tests;
-5. update this document and `what_changed.md` when integration behavior changes.
+5. confirm no modified or untracked generated source remains;
+6. update this document and `what_changed.md` when integration behavior changes.
 
 ## Troubleshooting
 
