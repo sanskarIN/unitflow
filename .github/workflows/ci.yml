@@ -15,6 +15,16 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  repository-safety:
+    name: Repository safety
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Scan tracked files for credential signatures
+        run: python3 tool/check_secrets.py
+
   rust:
     name: Rust quality
     runs-on: ubuntu-latest
