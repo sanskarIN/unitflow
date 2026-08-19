@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../core/persistence/user_state.dart';
 import '../features/converter/domain/unit_models.dart';
 import '../features/converter/presentation/batch_screen.dart';
 import '../features/converter/presentation/converter_controller.dart';
 import '../features/converter/presentation/converter_screen.dart';
+import '../features/history/presentation/history_screen.dart';
 import '../features/library/presentation/library_screen.dart';
 import '../features/settings/presentation/about_screen.dart';
 import '../features/settings/presentation/settings_screen.dart';
@@ -40,11 +42,13 @@ final class _AppShellState extends State<AppShell> {
         const SingleActivator(LogicalKeyboardKey.digit1, control: true): () => _select(0),
         const SingleActivator(LogicalKeyboardKey.digit2, control: true): () => _select(1),
         const SingleActivator(LogicalKeyboardKey.digit3, control: true): () => _select(2),
-        const SingleActivator(LogicalKeyboardKey.comma, control: true): () => _select(3),
+        const SingleActivator(LogicalKeyboardKey.digit4, control: true): () => _select(3),
+        const SingleActivator(LogicalKeyboardKey.comma, control: true): () => _select(4),
         const SingleActivator(LogicalKeyboardKey.digit1, meta: true): () => _select(0),
         const SingleActivator(LogicalKeyboardKey.digit2, meta: true): () => _select(1),
         const SingleActivator(LogicalKeyboardKey.digit3, meta: true): () => _select(2),
-        const SingleActivator(LogicalKeyboardKey.comma, meta: true): () => _select(3),
+        const SingleActivator(LogicalKeyboardKey.digit4, meta: true): () => _select(3),
+        const SingleActivator(LogicalKeyboardKey.comma, meta: true): () => _select(4),
       },
       child: Focus(
         autofocus: true,
@@ -109,6 +113,11 @@ final class _AppShellState extends State<AppShell> {
                                     label: Text('Library'),
                                   ),
                                   NavigationRailDestination(
+                                    icon: Icon(Icons.history_outlined),
+                                    selectedIcon: Icon(Icons.history),
+                                    label: Text('History'),
+                                  ),
+                                  NavigationRailDestination(
                                     icon: Icon(Icons.settings_outlined),
                                     selectedIcon: Icon(Icons.settings),
                                     label: Text('Settings'),
@@ -145,6 +154,11 @@ final class _AppShellState extends State<AppShell> {
                           label: 'Library',
                         ),
                         NavigationDestination(
+                          icon: Icon(Icons.history_outlined),
+                          selectedIcon: Icon(Icons.history),
+                          label: 'History',
+                        ),
+                        NavigationDestination(
                           icon: Icon(Icons.settings_outlined),
                           selectedIcon: Icon(Icons.settings),
                           label: 'Settings',
@@ -167,6 +181,10 @@ final class _AppShellState extends State<AppShell> {
         appController: widget.appController,
         onOpenPair: _openPair,
       ),
+      HistoryScreen(
+        appController: widget.appController,
+        onOpenRecent: _openRecent,
+      ),
       SettingsScreen(
         appController: widget.appController,
         onOpenAbout: _openAbout,
@@ -183,6 +201,11 @@ final class _AppShellState extends State<AppShell> {
 
   void _openPair(PinnedPair pair) {
     _converterController.applyPinnedPair(pair);
+    setState(() => _selectedIndex = 0);
+  }
+
+  void _openRecent(RecentConversion recent) {
+    _converterController.applyRecent(recent);
     setState(() => _selectedIndex = 0);
   }
 
