@@ -2,7 +2,8 @@ use std::str::FromStr;
 
 use rust_decimal::Decimal;
 use unitflow_core::{
-    ConversionRequest, Converter, Notation, RoundMode, UnitCatalog, UnitDefinition,
+    ConversionRequest, ConversionResult, Converter, Notation, RoundMode, UnitCatalog,
+    UnitDefinition,
 };
 
 #[derive(Debug, Clone)]
@@ -90,7 +91,11 @@ pub fn search_units(
         None => None,
     };
     Ok(catalog
-        .search(&query, category, usize::try_from(limit).unwrap_or(usize::MAX))
+        .search(
+            &query,
+            category,
+            usize::try_from(limit).unwrap_or(usize::MAX),
+        )
         .into_iter()
         .map(BridgeUnit::from)
         .collect())
@@ -104,7 +109,7 @@ pub fn convert_value(
     decimal_places: Option<u32>,
     round_mode: BridgeRoundMode,
 ) -> Result<BridgeConversionResult, String> {
-    let value = Decimal::from_str(input.trim()).map_err(|_| "invalid decimal input".to_owned())?;
+    let value = parse_decimal_input(&input)?;
     let converter = Converter::with_built_in_catalog().map_err(|error| error.to_string())?;
     let result = converter
         .convert(&ConversionRequest {
@@ -116,13 +121,29 @@ pub fn convert_value(
         })
         .map_err(|error| error.to_string())?;
 
-    Ok(BridgeConversionResult {
-        input: result.input.normalize().to_string(),
-        output: result.output.normalize().to_string(),
-        from_unit_id: result.from_unit_id,
-        to_unit_id: result.to_unit_id,
-        category: result.category.to_string(),
-    })
+    Ok(result.into())
+}
+
+#[flutter_rust_bridge::frb(sync)]
+pub fn batch_convert_value(
+    input: String,
+    from_unit_id: String,
+    to_unit_ids: Vec<String>,
+    decimal_places: Option<u32>,
+    round_mode: BridgeRoundMode,
+) -> Result<Vec<BridgeConversionResult>, String> {
+    let value = parse_decimal_input(&input)?;
+    let converter = Converter::with_built_in_catalog().map_err(|error| error.to_string())?;
+    converter
+        .batch_convert(
+            value,
+            &from_unit_id,
+            &to_unit_ids,
+            decimal_places,
+            round_mode.into(),
+        )
+        .map(|results| results.into_iter().map(BridgeConversionResult::from).collect())
+        .map_err(|error| error.to_string())
 }
 
 #[flutter_rust_bridge::frb(sync)]
@@ -132,13 +153,22 @@ pub fn format_value(
     decimal_places: Option<u32>,
     round_mode: BridgeRoundMode,
 ) -> Result<String, String> {
-    let value = Decimal::from_str(input.trim()).map_err(|_| "invalid decimal input".to_owned())?;
+    let value = parse_decimal_input(&input)?;
     unitflow_core::format_decimal(value, notation.into(), decimal_places, round_mode.into())
         .map_err(|error| error.to_string())
 }
 
+fn parse_decimal_input(input: &str) -> Result<Decimal, String> {
+    Decimal::from_str(input.trim()).map_err(|_| "invalid decimal input".to_owned())
+}
+
 fn parse_category(value: &str) -> Result<unitflow_core::Category, String> {
-    match value.trim().to_ascii_lowercase().replace([' ', '-'], "_").as_str() {
+    match value
+        .trim()
+        .to_ascii_lowercase()
+        .replace([' ', '-'], "_")
+        .as_str()
+    {
         "length" => Ok(unitflow_core::Category::Length),
         "area" => Ok(unitflow_core::Category::Area),
         "volume" => Ok(unitflow_core::Category::Volume),
@@ -168,6 +198,18 @@ impl From<&UnitDefinition> for BridgeUnit {
             scale: unit.scale.normalize().to_string(),
             offset: unit.offset.normalize().to_string(),
             is_builtin: unit.is_builtin,
+        }
+    }
+}
+
+impl From<ConversionResult> for BridgeConversionResult {
+    fn from(result: ConversionResult) -> Self {
+        Self {
+            input: result.input.normalize().to_string(),
+            output: result.output.normalize().to_string(),
+            from_unit_id: result.from_unit_id,
+            to_unit_id: result.to_unit_id,
+            category: result.category.to_string(),
         }
     }
 }
