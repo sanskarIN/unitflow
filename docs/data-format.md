@@ -24,12 +24,16 @@ The current schema version is **2**. Its machine-readable contract is published 
 
 A backup is a UTF-8 JSON object. The root `schemaVersion` field is mandatory. UnitFlow validates the complete object before replacing the in-memory state; malformed or unsupported imports must not partially overwrite an existing profile.
 
-The decoder intentionally rejects unknown object properties instead of silently discarding them. This keeps runtime behavior aligned with the checked-in JSON Schemas, which use `additionalProperties: false`, and prevents misspelled or future fields from appearing to import successfully when their meaning was actually ignored.
+The runtime decoder performs a bounded structural pass before normal JSON decoding. It rejects duplicate object keys, including keys that become equal after JSON escape decoding, and rejects nesting deeper than 64 containers. This prevents ambiguous last-value-wins parsing and unbounded recursive input structures from entering state validation.
+
+The decoder also rejects unknown object properties instead of silently discarding them. This keeps runtime behavior aligned with the checked-in JSON Schemas, which use `additionalProperties: false`, and prevents misspelled or future fields from appearing to import successfully when their meaning was actually ignored.
 
 Current safety bounds include:
 
-- file/import text size: at most 1,000,000 characters;
+- file/import text size: at most 1,000,000 characters through the state decoder and at most 1,000,000 bytes through file import/export;
+- JSON nesting: at most 64 containers;
 - recent conversions: at most 100 accepted from an imported document, with the app normally retaining at most 50 active recents;
+- recent input text: at most 1024 characters;
 - pinned pairs: at most 20 active pairs;
 - custom units: at most 200 accepted from an imported document and at most 200 created locally;
 - custom aliases: at most 32 per unit;
@@ -39,14 +43,25 @@ Current safety bounds include:
 
 Collection bounds are validated before iterating imported entries. Oversized arrays are rejected; their tail is never silently discarded during parsing.
 
+## Decimal portability domain
+
+The native Rust core uses `rust_decimal::Decimal`. To keep the deterministic Dart fallback from accepting values that the authoritative native core cannot represent, fallback conversion input and custom-unit scale/offset values are restricted to the same normalized value domain:
+
+- scale from 0 through 28 decimal places;
+- absolute 96-bit coefficient no greater than `79228162514264337593543950335`.
+
+The Dart `ExactDecimal` type remains arbitrary precision internally because it is useful for deterministic intermediate formatting and tests, but product conversion entry points enforce the Rust-compatible boundary. This avoids a web/test-only acceptance path for values that would be rejected by the native bridge.
+
 ## Canonicalization
 
 Custom-unit text is normalized at the trust boundary before it becomes durable state:
 
 - names, symbols, descriptions, and aliases are trimmed;
 - aliases are deduplicated case-insensitively while preserving first-occurrence order;
-- scale and offset are parsed through UnitFlow's exact decimal implementation and persisted in canonical decimal form;
+- scale and offset are parsed through UnitFlow's exact decimal implementation, checked against the Rust-compatible decimal domain, and persisted in canonical decimal form;
 - stable identifiers are validated rather than rewritten.
+
+Recent conversions created by the current application store the input value in locale-independent canonical decimal form. When a recent conversion is reopened, the canonical value is parsed first and then formatted for the current input locale before converter parsing. Older history rows that contain non-canonical localized input are not reinterpreted as canonical numeric data; their unit pair can still be restored without silently changing the numeric meaning.
 
 Canonicalization ensures a unit created interactively and the same unit restored from backup have equivalent durable representation.
 
@@ -75,7 +90,7 @@ Custom units use an affine relationship instead of evaluating arbitrary executab
 base_value = input_value * scale + offset
 ```
 
-The scale must be strictly positive. This design covers ordinary multiplicative units and temperature-like offsets without introducing an expression interpreter into imported user data.
+The scale must be strictly positive, and both scale and offset must fit the shared Rust-compatible decimal domain. This design covers ordinary multiplicative units and temperature-like offsets without introducing an expression interpreter into imported user data.
 
 ## Referential normalization
 
@@ -98,13 +113,15 @@ Normalization diagnostics record only removed item counts, not unit names, value
 An import is rejected when, among other validation failures:
 
 - JSON is malformed;
+- duplicate JSON object keys are present;
+- JSON nesting exceeds the configured depth bound;
 - the root is not an object;
 - the schema version is unsupported;
 - an object contains unsupported properties;
 - required settings have invalid types or ranges;
 - favorite or pinned identifiers do not match the stable-ID grammar;
 - duplicate favorite, pinned-pair, or custom-unit identifiers are present where uniqueness is required;
-- a custom-unit identifier or formula is invalid;
+- a custom-unit identifier or formula is invalid or outside the portable decimal domain;
 - duplicate identifiers would collide with built-in or imported custom units;
 - the import exceeds configured size/count limits.
 
@@ -138,6 +155,8 @@ For future schema versions:
 ## Repository data validation
 
 `tool/check_data_files.py` parses every tracked JSON and ARB file as UTF-8 JSON and rejects duplicate object keys. Duplicate keys are forbidden because ordinary JSON parsers may silently keep one value and discard another, creating ambiguous configuration or schema evidence.
+
+Runtime backup parsing has its own duplicate-key/depth enforcement in `apps/unitflow_app/lib/core/persistence/strict_json.dart`; repository validation is not relied on for untrusted user imports.
 
 ## Privacy
 
