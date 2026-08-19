@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">UnitFlow app icon</title>
+  <desc id="desc">Two white conversion arrows flowing in opposite directions on a rounded indigo-to-cyan background.</desc>
+  <defs>
+    <linearGradient id="bg" x1="120" y1="100" x2="900" y2="920" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#4F46E5"/>
+      <stop offset="1" stop-color="#0891B2"/>
+    </linearGradient>
+  </defs>
+  <rect x="64" y="64" width="896" height="896" rx="232" fill="url(#bg)"/>
+  <path d="M214 370h430L548 274l62-62 204 204-204 204-62-62 96-96H214z" fill="#fff"/>
+  <path d="M810 654H380l96 96-62 62-204-204 204-204 62 62-96 96h430z" fill="#fff" opacity=".92"/>
+</svg>
