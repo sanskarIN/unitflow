@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../app/app_controller.dart';
 import '../../../app/theme/app_theme.dart';
+import '../../../l10n/app_localizations.dart';
 
 final class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({required this.appController, super.key});
@@ -16,24 +17,6 @@ final class _OnboardingScreenState extends State<OnboardingScreen> {
   final _pageController = PageController();
   int _page = 0;
 
-  static const _pages = <({IconData icon, String title, String body})>[
-    (
-      icon: Icons.swap_calls,
-      title: 'Convert with confidence',
-      body: 'Explore a broad catalog across length, area, volume, mass, speed, pressure, energy, power, angle, data, frequency, time, temperature, and more.',
-    ),
-    (
-      icon: Icons.calculate_outlined,
-      title: 'Precision by design',
-      body: 'UnitFlow keeps decimal calculations deterministic, supports scientific and engineering notation, and makes rounding an explicit setting.',
-    ),
-    (
-      icon: Icons.lock_outline,
-      title: 'Offline-first and yours',
-      body: 'Static conversions need no account. Favorites, history, pinned pairs, settings, and custom units are designed to stay on your device unless you export them.',
-    ),
-  ];
-
   @override
   void dispose() {
     _pageController.dispose();
@@ -43,6 +26,24 @@ final class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final strings = AppLocalizations.of(context);
+    final pages = <({IconData icon, String title, String body})>[
+      (
+        icon: Icons.swap_calls,
+        title: strings.onboardingConvertTitle,
+        body: strings.onboardingConvertBody,
+      ),
+      (
+        icon: Icons.calculate_outlined,
+        title: strings.onboardingPrecisionTitle,
+        body: strings.onboardingPrecisionBody,
+      ),
+      (
+        icon: Icons.lock_outline,
+        title: strings.onboardingPrivacyTitle,
+        body: strings.onboardingPrivacyBody,
+      ),
+    ];
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -53,20 +54,22 @@ final class _OnboardingScreenState extends State<OnboardingScreen> {
                 padding: const EdgeInsets.all(AppSpacing.md),
                 child: TextButton(
                   onPressed: widget.appController.completeOnboarding,
-                  child: const Text('Skip'),
+                  child: Text(strings.skip),
                 ),
               ),
             ),
             Expanded(
               child: PageView.builder(
                 controller: _pageController,
-                itemCount: _pages.length,
+                itemCount: pages.length,
                 onPageChanged: (value) => setState(() => _page = value),
                 itemBuilder: (context, index) {
-                  final item = _pages[index];
+                  final item = pages[index];
                   return Center(
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.xl,
+                      ),
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 620),
                         child: Column(
@@ -77,7 +80,9 @@ final class _OnboardingScreenState extends State<OnboardingScreen> {
                               height: 120,
                               decoration: BoxDecoration(
                                 color: theme.colorScheme.primaryContainer,
-                                borderRadius: BorderRadius.circular(AppRadii.large),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadii.large,
+                                ),
                               ),
                               child: Icon(
                                 item.icon,
@@ -120,10 +125,12 @@ final class _OnboardingScreenState extends State<OnboardingScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: List<Widget>.generate(
-                          _pages.length,
+                          pages.length,
                           (index) => AnimatedContainer(
                             duration: const Duration(milliseconds: 180),
-                            margin: const EdgeInsets.symmetric(horizontal: AppSpacing.xxs),
+                            margin: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.xxs,
+                            ),
                             width: index == _page ? 28 : 8,
                             height: 8,
                             decoration: BoxDecoration(
@@ -140,14 +147,15 @@ final class _OnboardingScreenState extends State<OnboardingScreen> {
                         width: double.infinity,
                         child: FilledButton(
                           onPressed: _next,
-                          child: Text(_page == _pages.length - 1 ? 'Start converting' : 'Next'),
+                          child: Text(
+                            _page == pages.length - 1
+                                ? strings.startConverting
+                                : strings.next,
+                          ),
                         ),
                       ),
                       const SizedBox(height: AppSpacing.sm),
-                      const Text(
-                        'Made by the Sanskar',
-                        textAlign: TextAlign.center,
-                      ),
+                      Text(strings.madeBySanskar, textAlign: TextAlign.center),
                     ],
                   ),
                 ),
@@ -160,7 +168,7 @@ final class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Future<void> _next() async {
-    if (_page == _pages.length - 1) {
+    if (_page == 2) {
       await widget.appController.completeOnboarding();
       return;
     }
