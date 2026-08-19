@@ -1,0 +1,49 @@
+name: Format Fix
+
+on:
+  push:
+    branches:
+      - chatgpt/unitflow-dart-fixes-20260819
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: chatgpt/unitflow-dart-fixes-20260819
+          fetch-depth: 0
+
+      - name: Install Rust formatter
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Format Rust
+        run: cargo fmt --all
+
+      - name: Format Flutter sources and tests
+        run: dart format apps/unitflow_app/lib apps/unitflow_app/test
+
+      - name: Commit formatter output
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "No formatter changes required."
+            exit 0
+          fi
+          git config user.name "Sanskar"
+          git config user.email "sanskarin@outlook.in"
+          git add -A
+          git commit -m "style: apply automated formatters"
+          git push origin HEAD:chatgpt/unitflow-dart-fixes-20260819

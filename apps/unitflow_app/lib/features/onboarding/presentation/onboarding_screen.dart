@@ -66,7 +66,9 @@ final class _OnboardingScreenState extends State<OnboardingScreen> {
                   final item = _pages[index];
                   return Center(
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.xl,
+                      ),
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 620),
                         child: Column(
@@ -77,7 +79,9 @@ final class _OnboardingScreenState extends State<OnboardingScreen> {
                               height: 120,
                               decoration: BoxDecoration(
                                 color: theme.colorScheme.primaryContainer,
-                                borderRadius: BorderRadius.circular(AppRadii.large),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadii.large,
+                                ),
                               ),
                               child: Icon(
                                 item.icon,
@@ -123,7 +127,9 @@ final class _OnboardingScreenState extends State<OnboardingScreen> {
                           _pages.length,
                           (index) => AnimatedContainer(
                             duration: const Duration(milliseconds: 180),
-                            margin: const EdgeInsets.symmetric(horizontal: AppSpacing.xxs),
+                            margin: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.xxs,
+                            ),
                             width: index == _page ? 28 : 8,
                             height: 8,
                             decoration: BoxDecoration(
@@ -140,7 +146,11 @@ final class _OnboardingScreenState extends State<OnboardingScreen> {
                         width: double.infinity,
                         child: FilledButton(
                           onPressed: _next,
-                          child: Text(_page == _pages.length - 1 ? 'Start converting' : 'Next'),
+                          child: Text(
+                            _page == _pages.length - 1
+                                ? 'Start converting'
+                                : 'Next',
+                          ),
                         ),
                       ),
                       const SizedBox(height: AppSpacing.sm),

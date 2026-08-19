@@ -29,7 +29,10 @@ abstract final class AppTheme {
   static ThemeData dark() => _build(Brightness.dark);
 
   static ThemeData _build(Brightness brightness) {
-    final colors = ColorScheme.fromSeed(seedColor: _seed, brightness: brightness);
+    final colors = ColorScheme.fromSeed(
+      seedColor: _seed,
+      brightness: brightness,
+    );
     final base = ThemeData(
       useMaterial3: true,
       brightness: brightness,
@@ -80,7 +83,9 @@ abstract final class AppTheme {
       ),
       tooltipTheme: TooltipThemeData(
         waitDuration: const Duration(milliseconds: 450),
-        textStyle: base.textTheme.bodySmall?.copyWith(color: colors.onInverseSurface),
+        textStyle: base.textTheme.bodySmall?.copyWith(
+          color: colors.onInverseSurface,
+        ),
       ),
     );
   }

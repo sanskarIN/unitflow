@@ -112,7 +112,11 @@ fn explicit_round_modes_are_respected() {
 #[test]
 fn batch_conversion_preserves_requested_target_order() {
     let converter = Converter::with_built_in_catalog().expect("catalog");
-    let targets = vec!["centimeter".to_owned(), "kilometer".to_owned(), "inch".to_owned()];
+    let targets = vec![
+        "centimeter".to_owned(),
+        "kilometer".to_owned(),
+        "inch".to_owned(),
+    ];
 
     let results = converter
         .batch_convert(

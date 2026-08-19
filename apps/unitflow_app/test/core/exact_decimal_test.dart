@@ -21,12 +21,21 @@ void main() {
 
   group('ExactDecimal arithmetic', () {
     test('adds and subtracts different scales', () {
-      expect((ExactDecimal.parse('1.2') + ExactDecimal.parse('0.03')).toString(), '1.23');
-      expect((ExactDecimal.parse('1.2') - ExactDecimal.parse('0.03')).toString(), '1.17');
+      expect(
+        (ExactDecimal.parse('1.2') + ExactDecimal.parse('0.03')).toString(),
+        '1.23',
+      );
+      expect(
+        (ExactDecimal.parse('1.2') - ExactDecimal.parse('0.03')).toString(),
+        '1.17',
+      );
     });
 
     test('multiplies exactly', () {
-      expect((ExactDecimal.parse('0.1') * ExactDecimal.parse('0.2')).toString(), '0.02');
+      expect(
+        (ExactDecimal.parse('0.1') * ExactDecimal.parse('0.2')).toString(),
+        '0.02',
+      );
     });
 
     test('divides to requested precision', () {

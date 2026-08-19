@@ -36,12 +36,18 @@ final class _AppShellState extends State<AppShell> {
     animation: widget.appController,
     builder: (context, _) => CallbackShortcuts(
       bindings: <ShortcutActivator, VoidCallback>{
-        const SingleActivator(LogicalKeyboardKey.digit1, control: true): () => _select(0),
-        const SingleActivator(LogicalKeyboardKey.digit2, control: true): () => _select(1),
-        const SingleActivator(LogicalKeyboardKey.comma, control: true): () => _select(2),
-        const SingleActivator(LogicalKeyboardKey.digit1, meta: true): () => _select(0),
-        const SingleActivator(LogicalKeyboardKey.digit2, meta: true): () => _select(1),
-        const SingleActivator(LogicalKeyboardKey.comma, meta: true): () => _select(2),
+        const SingleActivator(LogicalKeyboardKey.digit1, control: true): () =>
+            _select(0),
+        const SingleActivator(LogicalKeyboardKey.digit2, control: true): () =>
+            _select(1),
+        const SingleActivator(LogicalKeyboardKey.comma, control: true): () =>
+            _select(2),
+        const SingleActivator(LogicalKeyboardKey.digit1, meta: true): () =>
+            _select(0),
+        const SingleActivator(LogicalKeyboardKey.digit2, meta: true): () =>
+            _select(1),
+        const SingleActivator(LogicalKeyboardKey.comma, meta: true): () =>
+            _select(2),
       },
       child: Focus(
         autofocus: true,
@@ -54,7 +60,10 @@ final class _AppShellState extends State<AppShell> {
                 title: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
-                    Icon(Icons.swap_calls, color: Theme.of(context).colorScheme.primary),
+                    Icon(
+                      Icons.swap_calls,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
                     const SizedBox(width: AppSpacing.xs),
                     const Text('UnitFlow'),
                   ],
@@ -149,10 +158,7 @@ final class _AppShellState extends State<AppShell> {
     index: _selectedIndex,
     children: <Widget>[
       ConverterScreen(controller: _converterController),
-      LibraryScreen(
-        appController: widget.appController,
-        onOpenPair: _openPair,
-      ),
+      LibraryScreen(appController: widget.appController, onOpenPair: _openPair),
       SettingsScreen(
         appController: widget.appController,
         onOpenAbout: _openAbout,
@@ -173,6 +179,8 @@ final class _AppShellState extends State<AppShell> {
   }
 
   Future<void> _openAbout() => Navigator.of(context).push<void>(
-    MaterialPageRoute<void>(builder: (_) => const Scaffold(body: SafeArea(child: AboutScreen()))),
+    MaterialPageRoute<void>(
+      builder: (_) => const Scaffold(body: SafeArea(child: AboutScreen())),
+    ),
   );
 }

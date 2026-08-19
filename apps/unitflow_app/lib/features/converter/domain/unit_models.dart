@@ -50,32 +50,22 @@ extension UnitCategoryInfo on UnitCategory {
   };
 
   String get explanation => switch (this) {
-    UnitCategory.length =>
-      'Length measures distance between points. UnitFlow uses the meter as its base.',
-    UnitCategory.area =>
-      'Area measures two-dimensional surface size. UnitFlow uses the square meter as its base.',
-    UnitCategory.volume =>
-      'Volume measures three-dimensional capacity. UnitFlow uses the liter as its base.',
-    UnitCategory.mass =>
-      'Mass measures the amount of matter. UnitFlow uses the kilogram as its base.',
-    UnitCategory.speed =>
-      'Speed measures distance traveled per unit time. UnitFlow uses meters per second as its base.',
+    UnitCategory.length => 'Length measures distance between points. UnitFlow uses the meter as its base.',
+    UnitCategory.area => 'Area measures two-dimensional surface size. UnitFlow uses the square meter as its base.',
+    UnitCategory.volume => 'Volume measures three-dimensional capacity. UnitFlow uses the liter as its base.',
+    UnitCategory.mass => 'Mass measures the amount of matter. UnitFlow uses the kilogram as its base.',
+    UnitCategory.speed => 'Speed measures distance traveled per unit time. UnitFlow uses meters per second as its base.',
     UnitCategory.pressure =>
       'Pressure measures force per area. UnitFlow uses the pascal as its base.',
-    UnitCategory.energy =>
-      'Energy measures capacity to do work. UnitFlow uses the joule as its base.',
-    UnitCategory.power =>
-      'Power measures energy transferred per unit time. UnitFlow uses the watt as its base.',
+    UnitCategory.energy => 'Energy measures capacity to do work. UnitFlow uses the joule as its base.',
+    UnitCategory.power => 'Power measures energy transferred per unit time. UnitFlow uses the watt as its base.',
     UnitCategory.angle =>
       'Plane angle describes rotation. UnitFlow uses the radian as its base.',
-    UnitCategory.dataSize =>
-      'Data size measures digital information. UnitFlow uses the byte as its base and distinguishes decimal from binary prefixes.',
-    UnitCategory.frequency =>
-      'Frequency counts repeated events per second. UnitFlow uses the hertz as its base.',
+    UnitCategory.dataSize => 'Data size measures digital information. UnitFlow uses the byte as its base and distinguishes decimal from binary prefixes.',
+    UnitCategory.frequency => 'Frequency counts repeated events per second. UnitFlow uses the hertz as its base.',
     UnitCategory.time =>
       'Time measures duration. UnitFlow uses the second as its base.',
-    UnitCategory.temperature =>
-      'Temperature conversions are affine rather than purely multiplicative. UnitFlow uses kelvin as its base.',
+    UnitCategory.temperature => 'Temperature conversions are affine rather than purely multiplicative. UnitFlow uses kelvin as its base.',
   };
 
   String get example => switch (this) {
@@ -96,17 +86,17 @@ extension UnitCategoryInfo on UnitCategory {
 }
 
 final class UnitDefinition {
-  const UnitDefinition({
+  UnitDefinition({
     required this.id,
     required this.category,
     required this.name,
     required this.symbol,
     required this.scale,
-    this.offset = ExactDecimal.zero,
+    ExactDecimal? offset,
     this.aliases = const <String>[],
     this.description = '',
     this.isBuiltIn = true,
-  });
+  }) : offset = offset ?? ExactDecimal.zero;
 
   final String id;
   final UnitCategory category;

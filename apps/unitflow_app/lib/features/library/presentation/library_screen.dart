@@ -40,8 +40,10 @@ final class _LibraryScreenState extends State<LibraryScreen> {
         limit: 200,
       );
       results.sort((left, right) {
-        final leftFavorite = widget.appController.state.favoriteUnitIds.contains(left.id);
-        final rightFavorite = widget.appController.state.favoriteUnitIds.contains(right.id);
+        final leftFavorite = widget.appController.state.favoriteUnitIds
+            .contains(left.id);
+        final rightFavorite = widget.appController.state.favoriteUnitIds
+            .contains(right.id);
         if (leftFavorite != rightFavorite) {
           return leftFavorite ? -1 : 1;
         }
@@ -121,16 +123,18 @@ final class _LibraryScreenState extends State<LibraryScreen> {
               ),
               sliver: SliverList.separated(
                 itemCount: results.length,
-                separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.xs),
+                separatorBuilder: (_, _) =>
+                    const SizedBox(height: AppSpacing.xs),
                 itemBuilder: (context, index) => Center(
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 1000),
                     child: _UnitTile(
                       unit: results[index],
-                      isFavorite: widget.appController.state.favoriteUnitIds.contains(
+                      isFavorite: widget.appController.state.favoriteUnitIds
+                          .contains(results[index].id),
+                      onFavorite: () => widget.appController.toggleFavorite(
                         results[index].id,
                       ),
-                      onFavorite: () => widget.appController.toggleFavorite(results[index].id),
                       onDeleteCustom: results[index].isBuiltIn
                           ? null
                           : () => _deleteCustomUnit(results[index]),
@@ -158,17 +162,16 @@ final class _LibraryScreenState extends State<LibraryScreen> {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not create unit: $error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Could not create unit: $error')));
       return;
     }
     if (!mounted) {
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${data.name} added.')),
-    );
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text('${data.name} added.')));
   }
 
   Future<void> _deleteCustomUnit(UnitDefinition unit) async {
@@ -208,7 +211,10 @@ final class _Header extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text('Unit library', style: Theme.of(context).textTheme.headlineMedium),
+            Text(
+              'Unit library',
+              style: Theme.of(context).textTheme.headlineMedium,
+            ),
             const SizedBox(height: AppSpacing.xxs),
             Text(
               'Search built-in units, favorites, and your own validated custom units.',
@@ -245,23 +251,30 @@ final class _PinnedPairs extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text('Pinned pairs', style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              'Pinned pairs',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: AppSpacing.xs),
             Wrap(
               spacing: AppSpacing.xs,
               runSpacing: AppSpacing.xs,
-              children: pairs.map((pair) {
-                final from = appController.engine.catalog.byId(pair.fromUnitId);
-                final to = appController.engine.catalog.byId(pair.toUnitId);
-                if (from == null || to == null) {
-                  return const SizedBox.shrink();
-                }
-                return ActionChip(
-                  avatar: const Icon(Icons.push_pin_outlined, size: 18),
-                  label: Text('${from.symbol} → ${to.symbol}'),
-                  onPressed: () => onOpenPair(pair),
-                );
-              }).toList(growable: false),
+              children: pairs
+                  .map((pair) {
+                    final from = appController.engine.catalog.byId(
+                      pair.fromUnitId,
+                    );
+                    final to = appController.engine.catalog.byId(pair.toUnitId);
+                    if (from == null || to == null) {
+                      return const SizedBox.shrink();
+                    }
+                    return ActionChip(
+                      avatar: const Icon(Icons.push_pin_outlined, size: 18),
+                      label: Text('${from.symbol} → ${to.symbol}'),
+                      onPressed: () => onOpenPair(pair),
+                    );
+                  })
+                  .toList(growable: false),
             ),
           ],
         ),
@@ -324,9 +337,13 @@ final class _UnitTile extends StatelessWidget {
         horizontal: AppSpacing.md,
         vertical: AppSpacing.xs,
       ),
-      leading: CircleAvatar(child: Text(unit.symbol, textAlign: TextAlign.center)),
+      leading: CircleAvatar(
+        child: Text(unit.symbol, textAlign: TextAlign.center),
+      ),
       title: Text(unit.name),
-      subtitle: Text('${unit.category.label} • ${unit.id}${unit.isBuiltIn ? '' : ' • Custom'}'),
+      subtitle: Text(
+        '${unit.category.label} • ${unit.id}${unit.isBuiltIn ? '' : ' • Custom'}',
+      ),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
@@ -363,7 +380,10 @@ final class _EmptyLibrary extends StatelessWidget {
             color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
           const SizedBox(height: AppSpacing.md),
-          Text('No units match this search.', style: Theme.of(context).textTheme.titleMedium),
+          Text(
+            'No units match this search.',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
         ],
       ),
     ),

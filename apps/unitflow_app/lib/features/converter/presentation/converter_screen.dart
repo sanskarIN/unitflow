@@ -22,7 +22,9 @@ final class _ConverterScreenState extends State<ConverterScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    widget.controller.setLocale(Localizations.localeOf(context).toLanguageTag());
+    widget.controller.setLocale(
+      Localizations.localeOf(context).toLanguageTag(),
+    );
   }
 
   @override
@@ -101,7 +103,10 @@ final class _ConverterScreenState extends State<ConverterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
-                Text('Batch conversion', style: Theme.of(context).textTheme.headlineSmall),
+                Text(
+                  'Batch conversion',
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
                   'From ${widget.controller.fromUnit?.name ?? 'selected unit'}',
@@ -161,7 +166,10 @@ final class _ConverterCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      Text('Convert units', style: theme.textTheme.headlineMedium),
+                      Text(
+                        'Convert units',
+                        style: theme.textTheme.headlineMedium,
+                      ),
                       const SizedBox(height: AppSpacing.xxs),
                       Text(
                         'Precise, local, and distraction-free.',
@@ -173,7 +181,9 @@ final class _ConverterCard extends StatelessWidget {
                   ),
                 ),
                 IconButton.filledTonal(
-                  tooltip: controller.isCurrentPairPinned ? 'Unpin unit pair' : 'Pin unit pair',
+                  tooltip: controller.isCurrentPairPinned
+                      ? 'Unpin unit pair'
+                      : 'Pin unit pair',
                   onPressed: () => controller.toggleCurrentPairPinned(),
                   icon: Icon(
                     controller.isCurrentPairPinned
@@ -220,7 +230,9 @@ final class _ConverterCard extends StatelessWidget {
                   value: controller.fromUnitId,
                   items: units.map((unit) => unit.id).toList(growable: false),
                   itemLabel: (id) {
-                    final unit = units.firstWhere((candidate) => candidate.id == id);
+                    final unit = units.firstWhere(
+                      (candidate) => candidate.id == id,
+                    );
                     return '${unit.name} (${unit.symbol})';
                   },
                   onChanged: (id) {
@@ -234,7 +246,9 @@ final class _ConverterCard extends StatelessWidget {
                   value: controller.toUnitId,
                   items: units.map((unit) => unit.id).toList(growable: false),
                   itemLabel: (id) {
-                    final unit = units.firstWhere((candidate) => candidate.id == id);
+                    final unit = units.firstWhere(
+                      (candidate) => candidate.id == id,
+                    );
                     return '${unit.name} (${unit.symbol})';
                   },
                   onChanged: (id) {
@@ -249,7 +263,9 @@ final class _ConverterCard extends StatelessWidget {
                     children: <Widget>[
                       source,
                       Padding(
-                        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppSpacing.xs,
+                        ),
                         child: IconButton.filledTonal(
                           tooltip: 'Swap source and target units',
                           onPressed: controller.swapUnits,
@@ -264,7 +280,9 @@ final class _ConverterCard extends StatelessWidget {
                   children: <Widget>[
                     Expanded(child: source),
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.sm,
+                      ),
                       child: IconButton.filledTonal(
                         tooltip: 'Swap source and target units',
                         onPressed: controller.swapUnits,
@@ -351,9 +369,9 @@ final class _ConverterCard extends StatelessWidget {
     if (!context.mounted) {
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Conversion result copied.')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Conversion result copied.')));
   }
 }
 
@@ -375,7 +393,10 @@ final class _ConverterSidePanel extends StatelessWidget {
               children: <Widget>[
                 Row(
                   children: <Widget>[
-                    Icon(Icons.school_outlined, color: theme.colorScheme.primary),
+                    Icon(
+                      Icons.school_outlined,
+                      color: theme.colorScheme.primary,
+                    ),
                     const SizedBox(width: AppSpacing.xs),
                     Text('Learn', style: theme.textTheme.titleLarge),
                   ],
@@ -413,7 +434,9 @@ final class _ConverterSidePanel extends StatelessWidget {
                         ? Icons.push_pin
                         : Icons.push_pin_outlined,
                   ),
-                  label: Text(controller.isCurrentPairPinned ? 'Unpin pair' : 'Pin pair'),
+                  label: Text(
+                    controller.isCurrentPairPinned ? 'Unpin pair' : 'Pin pair',
+                  ),
                 ),
               ],
             ),

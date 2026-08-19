@@ -26,7 +26,8 @@ abstract interface class ConversionEngine {
 /// Native production integration can implement [ConversionEngine] with generated Rust bindings
 /// without changing presentation code.
 final class ExactConversionEngine implements ConversionEngine {
-  ExactConversionEngine({UnitCatalog? catalog}) : catalog = catalog ?? UnitCatalog();
+  ExactConversionEngine({UnitCatalog? catalog})
+    : catalog = catalog ?? UnitCatalog();
 
   @override
   final UnitCatalog catalog;

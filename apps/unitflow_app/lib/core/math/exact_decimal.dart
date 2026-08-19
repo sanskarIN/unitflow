@@ -27,9 +27,8 @@ final class ExactDecimal implements Comparable<ExactDecimal> {
       throw const FormatException('Invalid decimal input');
     }
 
-    final match = RegExp(
-      r'^([+-]?)(\d*)(?:\.(\d*))?(?:[eE]([+-]?\d+))?$',
-    ).firstMatch(input);
+    final match = RegExp(r'^([+-]?)(\d*)(?:\.(\d*))?(?:[eE]([+-]?\d+))?$')
+        .firstMatch(input);
     if (match == null) {
       throw const FormatException('Invalid decimal input');
     }
@@ -61,7 +60,8 @@ final class ExactDecimal implements Comparable<ExactDecimal> {
 
   const ExactDecimal._(this.coefficient, this.scale);
 
-  static const zero = ExactDecimal._(BigInt.zero, 0);
+  /// Canonical zero. `BigInt.zero` is a runtime getter, so this cannot be a Dart `const`.
+  static final ExactDecimal zero = ExactDecimal._(BigInt.zero, 0);
 
   final BigInt coefficient;
   final int scale;

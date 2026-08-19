@@ -69,12 +69,16 @@ final class DecimalDisplayFormatter {
       whole = chunks.join(symbols.GROUP_SEP);
     }
 
-    final fraction = parts.length == 2 ? '${symbols.DECIMAL_SEP}${parts[1]}' : '';
+    final fraction = parts.length == 2
+        ? '${symbols.DECIMAL_SEP}${parts[1]}'
+        : '';
     return '${negative ? '-' : ''}$whole$fraction';
   }
 
   String _localizeMantissa(String formatted, String localeName) {
-    final separator = NumberFormat.decimalPattern(localeName).symbols.DECIMAL_SEP;
+    final separator = NumberFormat.decimalPattern(localeName)
+        .symbols
+        .DECIMAL_SEP;
     if (separator == '.') {
       return formatted;
     }
@@ -82,7 +86,9 @@ final class DecimalDisplayFormatter {
     if (exponentIndex < 0) {
       return formatted.replaceFirst('.', separator);
     }
-    final mantissa = formatted.substring(0, exponentIndex).replaceFirst('.', separator);
+    final mantissa = formatted
+        .substring(0, exponentIndex)
+        .replaceFirst('.', separator);
     return '$mantissa${formatted.substring(exponentIndex)}';
   }
 

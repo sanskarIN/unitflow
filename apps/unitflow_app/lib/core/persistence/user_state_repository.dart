@@ -16,7 +16,8 @@ abstract interface class UserStateRepository {
   UserState importJson(String content);
 }
 
-final class SharedPreferencesUserStateRepository implements UserStateRepository {
+final class SharedPreferencesUserStateRepository
+    implements UserStateRepository {
   SharedPreferencesUserStateRepository({SharedPreferencesAsync? preferences})
     : _preferences = preferences ?? SharedPreferencesAsync();
 
@@ -77,7 +78,8 @@ final class SharedPreferencesUserStateRepository implements UserStateRepository 
 }
 
 final class MemoryUserStateRepository implements UserStateRepository {
-  MemoryUserStateRepository([UserState? initial]) : _state = initial ?? UserState();
+  MemoryUserStateRepository([UserState? initial])
+    : _state = initial ?? UserState();
 
   UserState _state;
 
