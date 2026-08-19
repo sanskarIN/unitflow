@@ -6,59 +6,64 @@
 [![Security](https://github.com/sanskarIN/unitflow/actions/workflows/codeql.yml/badge.svg)](https://github.com/sanskarIN/unitflow/actions/workflows/codeql.yml)
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-sanskarIN-FFDD00?logo=buy-me-a-coffee&logoColor=000000)](https://buymeacoffee.com/sanskarIN)
 
-UnitFlow is an open-source converter for Android, Windows, Linux, macOS, Web, and iOS-ready workflows. The project is designed around deterministic offline conversions, high-precision decimal arithmetic, accessible responsive UI, and a maintainable separation between domain logic and presentation.
+UnitFlow is an open-source conversion project designed around deterministic offline calculations, exact base-10 decimal behavior, accessible adaptive UI, local-first data, and a clean separation between reusable domain logic and platform presentation.
 
 ## Status
 
-The repository is under active development. See [`what_changed.md`](what_changed.md) for the exact implementation checkpoint and [`ROADMAP.md`](ROADMAP.md) for planned milestones.
+**Active alpha development — not yet release-verified.**
 
-## Features
+The Rust core, Flutter feature code, persistence model, tests, localization architecture, and repository automation are implemented substantially. Native Flutter platform projects and the production Rust↔Flutter bridge still need to be generated/integrated and validated before UnitFlow claims tested Android, Windows, Linux, macOS, Web, or iOS release binaries.
 
-- Length, area, volume, mass, speed, pressure, energy, power, angle, data size, frequency, time, temperature, and extensible categories.
-- High-precision decimal conversion in the Rust core.
-- Searchable catalog with symbols, aliases, and descriptions.
-- Favorites, recents, pinned pairs, and quick swap architecture.
-- Custom affine units (`base = value × factor + offset`) with validation.
-- Batch conversion and export-ready result models.
-- Scientific and engineering notation helpers.
-- Locale-aware Flutter input/formatting architecture.
-- Offline-first static conversion data.
-- Light, dark, and system theme support.
-- Keyboard and screen-reader oriented UI foundations.
+See [`what_changed.md`](what_changed.md) for the exact continuation checkpoint and [`ROADMAP.md`](ROADMAP.md) for remaining blockers.
 
-## Screenshots
+## Current Features
 
-Real screenshots will replace these placeholders once release builds are available.
+- Length, area, volume, mass, speed, pressure, energy, power, angle, data size, frequency, time, and temperature catalogs.
+- Exact decimal conversion in Rust plus a deterministic pure-Dart compatibility engine.
+- Explicit rounding strategies: nearest-even, half-away-from-zero, toward-zero, away-from-zero, floor, and ceiling.
+- Plain, scientific, and engineering notation.
+- Searchable unit library with stable IDs, symbols, aliases, favorites, and validated custom units.
+- Favorites, pinned conversion pairs, recent local history, pair restore, and quick swap.
+- Dedicated batch conversion workspace with CSV, TSV, and JSON clipboard export.
+- Versioned local backup/import with strict schema validation and schema-v1 → schema-v2 migration.
+- Educational category explanations and examples available offline.
+- Locale-aware numeric parsing/display architecture and generated Flutter localization resources.
+- Light, dark, and system theme modes.
+- Adaptive mobile/desktop navigation and keyboard shortcuts.
+- User-initiated GitHub Releases access; no background update checking is required for core conversions.
+- Structured debug logging with sensitive-key redaction.
+- Offline-first static data: no account is required for conversion.
 
-| Phone | Desktop | Dark mode |
+## Platform Targets
+
+| Platform | Product target | Current release status |
 |---|---|---|
-| `docs/assets/screenshot-phone.png` | `docs/assets/screenshot-desktop.png` | `docs/assets/screenshot-dark.png` |
+| Android | Primary | Native project/build verification pending |
+| Windows | Primary desktop | Native project/build verification pending |
+| Linux | Primary desktop | Native project/build verification pending |
+| macOS | Supported target | Native project/build verification pending |
+| Web | Supported target | Web project/build verification pending |
+| iOS | Ready target | Xcode/native project verification pending |
 
-## Supported Platforms
-
-| Platform | Target |
-|---|---|
-| Android | Primary |
-| Windows | Primary desktop |
-| Linux | Primary desktop |
-| macOS | Supported target |
-| Web | Supported target |
-| iOS | Architecture ready |
+See [`docs/platform-support.md`](docs/platform-support.md) and [`docs/native-platforms.md`](docs/native-platforms.md).
 
 ## Tech Stack
 
-- **Rust** — authoritative conversion/domain core.
-- **rust_decimal** — deterministic decimal arithmetic.
-- **Flutter / Dart** — adaptive cross-platform UI.
-- **GitHub Actions** — quality, security, and release automation.
+- **Rust** — authoritative native conversion/domain core.
+- **rust_decimal** — deterministic decimal arithmetic in Rust.
+- **Flutter / Dart** — adaptive cross-platform UI and exact-decimal fallback.
+- **Flutter gen-l10n / ARB** — generated localization resources.
+- **Shared Preferences** — initial versioned local application-state repository.
+- **GitHub Actions** — CI, CodeQL, dependency review, and source release verification.
 
 ## Repository Layout
 
 ```text
-crates/unitflow_core/   Rust domain and conversion engine
-apps/unitflow_app/      Flutter application
-docs/                   Architecture, setup, testing, release, ADRs
-.github/                 CI, security, issue and PR automation
+crates/unitflow_core/   Rust domain, catalog, conversion engine, tests, benchmark
+apps/unitflow_app/      Flutter application, local persistence, tests, l10n resources
+docs/                   Architecture, setup, data format, testing, release, ADRs
+scripts/                Bash and PowerShell verification commands
+.github/                 CI, security, issue/PR governance, funding, ownership
 ```
 
 ## Quick Start
@@ -66,7 +71,7 @@ docs/                   Architecture, setup, testing, release, ADRs
 ### Rust core
 
 ```bash
-cargo test --workspace
+cargo test --workspace --all-features
 ```
 
 ### Flutter app
@@ -74,38 +79,84 @@ cargo test --workspace
 ```bash
 cd apps/unitflow_app
 flutter pub get
-flutter analyze
+flutter gen-l10n
+flutter analyze --fatal-infos --fatal-warnings
 flutter test
 flutter run
 ```
 
-See [`docs/setup.md`](docs/setup.md) for complete platform prerequisites.
+Native `flutter run` targets require the corresponding Flutter platform project and toolchain; those scaffolds are a documented remaining alpha task.
 
-## Development Quality Gates
+See [`docs/setup.md`](docs/setup.md) for prerequisites.
 
-Before opening a pull request:
+## One-Command Verification
+
+Unix-like shell:
 
 ```bash
-cargo fmt --all -- --check
-cargo clippy --workspace --all-targets --all-features -- -D warnings
-cargo test --workspace
-cd apps/unitflow_app
-flutter pub get
-flutter analyze
-flutter test
+bash scripts/verify.sh
 ```
+
+PowerShell:
+
+```powershell
+./scripts/verify.ps1
+```
+
+The scripts run formatting, linting/analysis, localization generation, and Rust/Flutter tests. A successful run in your environment is evidence for that checkout; this README does not assume a build passed merely because source files exist.
 
 ## Architecture
 
-The Rust crate owns unit definitions, validation, conversion rules, precision behavior, search, and reusable result models. Flutter owns presentation, accessibility, adaptive layout, local preferences, and platform integration. See [`docs/architecture.md`](docs/architecture.md) and [`docs/adr/0001-rust-core-flutter-ui.md`](docs/adr/0001-rust-core-flutter-ui.md).
+The Rust crate owns validated unit definitions, conversion rules, exact-decimal behavior, catalog search, custom-unit validation, notation, and native educational metadata. Flutter owns presentation, accessibility, adaptive navigation, local preferences/state, clipboard workflows, localization resources, and platform integration.
+
+The current Dart conversion implementation is intentionally deterministic so Flutter/Web work remains testable before the native bridge is complete. Native clients should move to the Rust bridge only after parity and packaging are proven.
+
+Read:
+
+- [`docs/architecture.md`](docs/architecture.md)
+- [`docs/bridge.md`](docs/bridge.md)
+- [`docs/unit-model.md`](docs/unit-model.md)
+- [`docs/data-format.md`](docs/data-format.md)
+- [`docs/adr/0001-rust-core-flutter-ui.md`](docs/adr/0001-rust-core-flutter-ui.md)
+- [`docs/adr/0002-exact-decimal-arithmetic.md`](docs/adr/0002-exact-decimal-arithmetic.md)
+- [`docs/adr/0003-local-first-persistence.md`](docs/adr/0003-local-first-persistence.md)
+- [`docs/adr/0004-deterministic-dart-fallback.md`](docs/adr/0004-deterministic-dart-fallback.md)
+
+## Testing and Quality
+
+The repository includes:
+
+- Rust conversion/catalog invariant and regression tests;
+- Flutter exact-decimal, persistence/migration, batch-export, safe-logging, collection-cleanup, and adaptive-navigation tests;
+- deterministic property-style decimal tests;
+- a dependency-free Rust conversion micro-benchmark;
+- CI formatting/lint/analysis/test gates;
+- CodeQL and pull-request dependency review;
+- a release workflow that re-runs source quality gates and emits SHA-256 checksums.
+
+See [`docs/testing.md`](docs/testing.md), [`docs/performance.md`](docs/performance.md), and [`docs/release-checklist.md`](docs/release-checklist.md).
+
+## Localization
+
+English is the current source locale. Primary Flutter presentation strings are maintained in `apps/unitflow_app/lib/l10n/app_en.arb` and generated with `flutter gen-l10n`. Additional locales should only be advertised after translation and UI/accessibility review.
+
+See [`docs/localization.md`](docs/localization.md).
 
 ## Security and Privacy
 
-UnitFlow does not require an account for static conversions and is designed to work offline. User preferences and custom units are intended to stay on-device unless the user explicitly exports them. See [`SECURITY.md`](SECURITY.md) and [`PRIVACY.md`](PRIVACY.md).
+UnitFlow does not require an account for static conversions and is designed to work offline. Preferences, favorites, history, pins, and custom units are stored locally by default and only leave the local state through explicit user actions such as copy/export.
+
+Read [`SECURITY.md`](SECURITY.md), [`PRIVACY.md`](PRIVACY.md), and [`docs/threat-model.md`](docs/threat-model.md).
+
+## Screenshots
+
+Real screenshots and demo media are intentionally deferred until native release builds are generated and verified. The project does not use fabricated screenshots as release evidence.
 
 ## Contributing
 
-Contributions are welcome. Read [`CONTRIBUTING.md`](CONTRIBUTING.md), follow the code of conduct, add tests for behavior changes, and keep commits atomic.
+Contributions are welcome. Read [`CONTRIBUTING.md`](CONTRIBUTING.md), follow the code of conduct, add regression tests for behavior changes, keep commits meaningful and focused, and run the quality gates before opening a pull request.
+
+Repository-maintainer guidance is in [`docs/github-maintenance.md`](docs/github-maintenance.md).
 
 ## License
 
