@@ -14,7 +14,7 @@ This is the primary continuation and audit checkpoint for UnitFlow. Keep this fi
 - Required visible product credit: **Made by the Sanskar**
 - Requested maintainer commit email: `sanskarin@outlook.in`
 
-At the time this handoff was rewritten, the branch immediately before this handoff commit was `b01bfe16be45441116580a7b9fc2675180eb0b16`. The handoff commit itself advances the branch again, so always read the live PR head before using a SHA as release evidence.
+Always read the live PR head before using a SHA as release evidence. The branch advances frequently while hardening is active.
 
 ## Source-of-truth rules
 
@@ -81,6 +81,8 @@ Implemented:
 - unit/regression/property-oriented tests;
 - fuzz-target support;
 - release-mode profiling example for lookup/search/single/batch workloads.
+
+Rust unit-definition matching now includes descriptions as well as IDs, names, symbols, and aliases. A dedicated regression test covers case-insensitive description matching.
 
 ### Rust ↔ Flutter bridge
 
@@ -183,6 +185,18 @@ Migration behavior:
 - import validation occurs before replacing the active state;
 - malformed/unsupported imports must not partially overwrite the current profile.
 
+Additional strictness added during the latest hardening pass:
+
+- unknown root and nested fields are rejected to match `additionalProperties: false`;
+- pinned unit IDs must match the stable-ID grammar and serialized pin strings are length bounded;
+- duplicate favorite IDs, pinned pairs, and custom-unit IDs are rejected;
+- oversized pin/recent/custom-unit collections are rejected instead of silently truncating input;
+- production and in-memory repositories use the same maximum-size decoder;
+- locally created custom units cannot exceed the portable 200-unit limit;
+- custom names/symbols/descriptions/aliases are normalized before persistence;
+- aliases are case-insensitively deduplicated;
+- custom scale/offset values are persisted in canonical exact-decimal form.
+
 ### Error handling and diagnostics
 
 Implemented:
@@ -200,10 +214,11 @@ Implemented:
 
 - searchable identifiers, names, symbols, aliases;
 - description-aware matching in the deterministic Dart catalog path;
+- description-aware matching at the Rust unit-definition layer;
 - broad Rust catalog descriptions and aliases;
 - category explanations and examples in the converter learning panel;
 - custom unit descriptions/aliases;
-- regression coverage for descriptive custom-unit search.
+- regression coverage for descriptive custom-unit search and Rust description matching.
 
 ### Accessibility
 
@@ -257,6 +272,7 @@ Implemented coverage includes:
 - error cases;
 - notation helpers;
 - property/regression-oriented invariants;
+- description-aware unit-definition matching;
 - bridge-input and catalog-search fuzz targets.
 
 ### Flutter
@@ -268,6 +284,11 @@ Implemented coverage includes:
 - user-state backup round trip;
 - schema-v1 → schema-v2 migration;
 - early schema-v2 compatibility;
+- strict unknown-field rejection;
+- persisted stable-ID validation;
+- collection-bound validation;
+- shared in-memory/production import-size behavior;
+- custom-unit normalization and 200-unit limit behavior;
 - custom-unit validation;
 - app-controller favorites/pins/history/custom units;
 - persisted rounding/grouping/precision settings;
@@ -284,7 +305,7 @@ Implemented coverage includes:
 CI now includes dependency-free repository checks:
 
 - `tool/check_secrets.py` — common committed private-key/token signature scan over tracked text-like files;
-- `tool/check_data_files.py` — UTF-8 JSON parsing for tracked JSON/ARB data;
+- `tool/check_data_files.py` — UTF-8 JSON parsing for tracked JSON/ARB data and duplicate-object-key rejection;
 - `tool/check_docs_links.py` — internal Markdown target validation.
 
 These supplement, not replace, CodeQL, dependency review, compiler/linter/test checks, and GitHub's own repository security features.
@@ -345,7 +366,7 @@ Configured workflows include:
 
 During active development, many workflow runs are cancelled/superseded by later commits because concurrency is configured to keep the latest branch state authoritative. A queued, pending, cancelled, skipped, or older green run is **not** a passing result for the newest head.
 
-At this handoff rewrite, the latest exact-candidate workflows had not yet all completed successfully. Therefore:
+The latest exact-candidate workflows must be re-read after this handoff commit. Therefore:
 
 - do **not** claim Rust CI green for the current final head yet;
 - do **not** claim Flutter CI green for the current final head yet;
@@ -392,8 +413,13 @@ Recent additions/hardening include:
 ```text
 apps/unitflow_app/lib/app/branding/unitflow_mark.dart
 apps/unitflow_app/lib/core/errors/user_safe_error.dart
+apps/unitflow_app/lib/core/persistence/user_state.dart
+apps/unitflow_app/lib/core/persistence/user_state_repository.dart
+apps/unitflow_app/lib/features/converter/domain/unit_models.dart
+apps/unitflow_app/test/app/custom_unit_limits_test.dart
 apps/unitflow_app/test/app/primary_journey_test.dart
 apps/unitflow_app/test/core/user_safe_error_test.dart
+apps/unitflow_app/test/core/user_state_test.dart
 apps/unitflow_app/test/features/unit_catalog_search_test.dart
 assets/branding/unitflow-mark.svg
 schemas/unitflow-backup-v2.schema.json
@@ -403,10 +429,43 @@ tool/check_docs_links.py
 tool/profile_core.sh
 tool/verify_release_candidate.sh
 crates/unitflow_core/examples/profile.rs
+crates/unitflow_core/tests/unit_definition_search.rs
 docs/bridge.md
 docs/platform-support.md
 docs/branding.md
+docs/data-format.md
 ```
+
+## Latest continuation commits
+
+The latest hardening sequence before this handoff commit is:
+
+- `7edc504d8c69531b88a544802a6110e12be66c1c` — `fix: search Rust unit descriptions`
+- `80bdef48ee3e4307a040e31475b08dc30fd82ea4` — `test: cover description-aware unit matching`
+- `4eee687a31b4d3fd79433cf92746e0dba6c64d0b` — `fix: validate persisted pinned pair identifiers`
+- `14351ac96b0cbe5a05a4a9864302c4e30a25e441` — `fix: enforce backup schema bounds and normalization`
+- `6437213e0be07d249b04da14a218cf887e16a356` — `fix: keep local state within backup limits`
+- `cbe6c96aff56758430532c9ec2208b53042fe1cf` — `test: cover strict backup validation`
+- `4a5d5d0b11d1ca289ddcb3e1c4b287564094b046` — `fix: reject duplicate JSON object keys`
+- `0c096dced145eca0c5b6ba184dac09f21232f917` — `refactor: share strict backup decoding`
+- `d4d1c0df30dbe32d166049efbda09c994202ddb7` — `docs: document strict backup contract`
+- `ce7fc23c85e41e10ff96466efbcb75bac0c08dec` — `docs: record strict backup hardening`
+- `e50194988948c308c931a6562adf1747fc7bd6b5` — `test: keep in-memory import limits production-equivalent`
+- `f3300fa5f882641032df0677446c16dda5e3c58f` — `test: enforce custom unit collection limit`
+
+These commits deliberately remain granular rather than combining unrelated fixes.
+
+## Verification performed in the current continuation
+
+Static repository inspection confirmed:
+
+- PR #2 remains open and mergeable;
+- there were no open repository issues at the time checked;
+- no `TODO`, `FIXME`, `unimplemented`, `panic!`, or production `unwrap()`/`expect()` matches were surfaced by repository search;
+- `Cargo.lock` and `apps/unitflow_app/pubspec.lock` were still absent before the newest audit-normalization run; the configured audit workflow is responsible for resolving and committing normalized lock/generated output on this branch;
+- the Flutter Rust Bridge generated Rust module is still a placeholder until the pinned generator executes, so native bridge completion must not be claimed before exact workflow evidence exists.
+
+The execution environment used for connector-driven work still does not provide the project Rust/Flutter toolchains locally. Therefore compiler/analyzer/test success is intentionally not fabricated. GitHub Actions on the newest exact head remains the authoritative automated evidence source.
 
 ## Remaining release blockers / exact next work
 
@@ -415,7 +474,7 @@ These are not hidden TODOs; they are explicit release gates.
 1. Stop source churn long enough for workflows on the newest exact PR head to execute.
 2. Inspect latest CI jobs/logs rather than relying on older runs.
 3. Fix every formatter/compiler/analyzer/test/repository-safety failure discovered by those workflows.
-4. Ensure the audit normalization workflow successfully regenerates Flutter localizations and FRB bindings using the pinned versions.
+4. Ensure the audit normalization workflow successfully produces lockfiles, regenerates Flutter localizations, and regenerates FRB bindings using pinned versions.
 5. Inspect the generated Dart/Rust bridge API and wire/validate the native runtime adapter without guessing generated API names.
 6. Prove native Rust library packaging/loading on Android/Windows/Linux/macOS/iOS-ready builds.
 7. Prove deterministic web fallback behavior against representative Rust regression vectors.
@@ -438,6 +497,6 @@ UnitFlow source is substantially implemented, but **the project must not be call
 
 ## Release notes draft — 0.1.0-alpha.1
 
-Planned initial preview includes the high-precision Rust conversion core, deterministic Flutter fallback, adaptive converter/library/history/settings UX, favorites/pins/custom units, batch conversion, local backup/restore, explicit rounding/notation controls, reduced-motion accessibility preference, localization infrastructure, project branding, bridge/release automation, security/privacy safeguards, and broad automated quality coverage.
+Planned initial preview includes the high-precision Rust conversion core, deterministic Flutter fallback, adaptive converter/library/history/settings UX, favorites/pins/custom units, batch conversion, local backup/restore, explicit rounding/notation controls, reduced-motion accessibility preference, localization infrastructure, project branding, bridge/release automation, strict bounded backup validation, security/privacy safeguards, and broad automated quality coverage.
 
 Release-note wording must be finalized only after the exact tagged candidate passes the required checks.
