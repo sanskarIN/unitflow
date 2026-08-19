@@ -4,6 +4,10 @@ All notable changes to UnitFlow are documented here. The format is based on Keep
 
 ## [Unreleased]
 
+No additional changes are queued beyond the `2.0.12` development snapshot documented below.
+
+## [2.0.12] - 2026-08-19
+
 ### Added
 
 - Rust `unitflow_core` domain crate with validated categories/units, exact decimal conversion, explicit rounding modes, catalog search, custom units, notation formatting, and educational category metadata.
@@ -32,7 +36,7 @@ All notable changes to UnitFlow are documented here. The format is based on Keep
 
 ### Changed
 
-- Flutter package version aligned with the Rust workspace at `0.1.0-alpha.1`.
+- Rust workspace, Flutter package metadata, and About screen version are aligned at `2.0.12` (Flutter build number `12`).
 - Main conversion and batch flows now use the persisted user-selected rounding strategy.
 - App navigation expanded with dedicated Batch and History workspaces and desktop shortcuts.
 - Custom-unit deletion now removes dangling favorites, pins, and history references.
@@ -64,6 +68,6 @@ All notable changes to UnitFlow are documented here. The format is based on Keep
 - Tagged release packaging now rejects a `v*` tag unless it exactly equals `v` plus the Cargo workspace package version.
 - Public issue intake instructs reporters to remove secrets and sensitive personal data.
 
-## [0.1.0-alpha.1] - Planned
+## [0.1.0-alpha.1] - Historical planning baseline
 
-Planned first runnable development preview. It is not considered release-ready until clean-clone verification, reviewed native Flutter platform projects, production Rust↔Flutter bridge integration, required native platform builds, and release-candidate checks are completed.
+The repository began with a planned first runnable development preview at `0.1.0-alpha.1`. That planning baseline was superseded by the requested `2.0.12` development version. Native release verification requirements remain evidence-based and are not implied by the version number alone.
