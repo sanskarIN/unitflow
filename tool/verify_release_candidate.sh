@@ -15,6 +15,7 @@ python3 -m py_compile tool/*.py
   cd tool
   python3 -m unittest discover -p 'test_*.py'
 )
+python3 tool/check_versions.py
 python3 tool/check_secrets.py
 python3 tool/check_data_files.py
 python3 tool/check_docs_links.py
