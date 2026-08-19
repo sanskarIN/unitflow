@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout pull request branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 0
@@ -34,6 +34,13 @@ jobs:
           channel: stable
           cache: true
 
+      - name: Generate Rust lockfile
+        run: cargo generate-lockfile
+
+      - name: Resolve Flutter dependencies
+        working-directory: apps/unitflow_app
+        run: flutter pub get
+
       - name: Format Rust
         run: cargo fmt --all
 
@@ -41,15 +48,19 @@ jobs:
         working-directory: apps/unitflow_app
         run: dart format lib test
 
-      - name: Commit formatting when needed
+      - name: Commit normalized sources when needed
         shell: bash
         run: |
-          if git diff --quiet; then
-            echo "Formatting is already clean."
+          if git diff --quiet && test -f Cargo.lock && test -f apps/unitflow_app/pubspec.lock; then
+            echo "Formatting and lockfiles are already clean."
             exit 0
           fi
           git config user.name "Sanskar"
           git config user.email "sanskarin@outlook.in"
-          git add crates apps
-          git commit -m "style: apply automated formatting"
+          git add Cargo.lock apps/unitflow_app/pubspec.lock crates apps/unitflow_app/lib apps/unitflow_app/test
+          if git diff --cached --quiet; then
+            echo "No tracked normalization changes to commit."
+            exit 0
+          fi
+          git commit -m "style: normalize sources and lock dependencies"
           git push origin HEAD:${{ github.event.pull_request.head.ref }}
