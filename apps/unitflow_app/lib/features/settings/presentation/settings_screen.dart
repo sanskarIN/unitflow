@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../../../app/app_controller.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../core/format/decimal_format.dart';
+import '../../../core/math/exact_decimal.dart';
 import '../../../core/persistence/user_state.dart';
 
 final class SettingsScreen extends StatelessWidget {
@@ -73,6 +74,25 @@ final class SettingsScreen extends StatelessWidget {
                       },
                     ),
                     const SizedBox(height: AppSpacing.sm),
+                    _DropdownSetting<DecimalRoundingMode>(
+                      label: 'Rounding mode',
+                      value: appController.state.roundingMode,
+                      values: DecimalRoundingMode.values,
+                      labelFor: (value) => switch (value) {
+                        DecimalRoundingMode.nearestEven => 'Nearest, ties to even',
+                        DecimalRoundingMode.halfAwayFromZero => 'Nearest, ties away from zero',
+                        DecimalRoundingMode.towardZero => 'Toward zero',
+                        DecimalRoundingMode.awayFromZero => 'Away from zero',
+                        DecimalRoundingMode.floor => 'Floor',
+                        DecimalRoundingMode.ceiling => 'Ceiling',
+                      },
+                      onChanged: (value) {
+                        if (value != null) {
+                          appController.setRoundingMode(value);
+                        }
+                      },
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
                     _DropdownSetting<int>(
                       label: 'Decimal places',
                       value: appController.state.decimalPlaces,
@@ -122,6 +142,29 @@ final class SettingsScreen extends StatelessWidget {
                           label: const Text('Clear local data'),
                         ),
                       ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.md),
+                _SectionCard(
+                  title: 'Accessibility and keyboard',
+                  icon: Icons.accessibility_new_outlined,
+                  children: const <Widget>[
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(Icons.keyboard_outlined),
+                      title: Text('Desktop shortcuts'),
+                      subtitle: Text(
+                        'Ctrl/Cmd+1 Convert · +2 Batch · +3 Library · +4 History · Ctrl/Cmd+, Settings',
+                      ),
+                    ),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(Icons.text_fields_outlined),
+                      title: Text('Scalable text and semantics'),
+                      subtitle: Text(
+                        'UnitFlow uses Flutter semantics, selectable results, and adaptive layouts designed to follow platform text scaling.',
+                      ),
                     ),
                   ],
                 ),
