@@ -34,6 +34,8 @@ The roadmap is milestone-oriented. A checked source-level item means the impleme
 - [x] Batch conversion table and deterministic CSV copying.
 - [x] File/clipboard backup and restore with bounded validation.
 - [x] Versioned backup schema and v1 → v2 migration.
+- [x] Strict backup property/identifier/collection validation aligned with checked-in schemas.
+- [x] Shared production/test backup decoding and canonical custom-unit persistence.
 - [x] Educational category explanations and examples.
 - [x] Locale-aware parsing/formatting foundations.
 - [x] Generated localization infrastructure and English source catalog.
@@ -69,7 +71,9 @@ The roadmap is milestone-oriented. A checked source-level item means the impleme
 - [x] Rust fuzz targets for catalog/decimal bridge inputs.
 - [x] Core profiling workload for lookup/search/single/batch conversion.
 - [x] Repository secret-pattern, JSON/ARB, and Markdown-link checks.
+- [x] Repository utility regression tests, including duplicate JSON-key detection.
 - [x] Backup corruption/version/migration regression coverage.
+- [x] Strict backup unknown-field, stable-ID, collection-bound, and custom-unit normalization coverage.
 - [x] Safe error-presentation regression coverage.
 - [ ] Latest exact-candidate Rust fmt/clippy/tests green in CI.
 - [ ] Latest exact-candidate Flutter gen-l10n/format/analyze/tests green in CI.
