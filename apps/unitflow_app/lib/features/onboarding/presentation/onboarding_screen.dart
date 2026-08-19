@@ -27,6 +27,8 @@ final class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final strings = AppLocalizations.of(context);
+    final reduceMotion = widget.appController.state.reduceMotion ||
+        (MediaQuery.maybeOf(context)?.disableAnimations ?? false);
     final pages = <({IconData icon, String title, String body})>[
       (
         icon: Icons.swap_calls,
@@ -127,7 +129,9 @@ final class _OnboardingScreenState extends State<OnboardingScreen> {
                         children: List<Widget>.generate(
                           pages.length,
                           (index) => AnimatedContainer(
-                            duration: const Duration(milliseconds: 180),
+                            duration: reduceMotion
+                                ? Duration.zero
+                                : const Duration(milliseconds: 180),
                             margin: const EdgeInsets.symmetric(
                               horizontal: AppSpacing.xxs,
                             ),
@@ -170,6 +174,12 @@ final class _OnboardingScreenState extends State<OnboardingScreen> {
   Future<void> _next() async {
     if (_page == 2) {
       await widget.appController.completeOnboarding();
+      return;
+    }
+    final reduceMotion = widget.appController.state.reduceMotion ||
+        (MediaQuery.maybeOf(context)?.disableAnimations ?? false);
+    if (reduceMotion) {
+      _pageController.jumpToPage(_page + 1);
       return;
     }
     await _pageController.nextPage(
