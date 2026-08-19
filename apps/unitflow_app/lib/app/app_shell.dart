@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../features/converter/domain/unit_models.dart';
+import '../features/converter/presentation/batch_screen.dart';
 import '../features/converter/presentation/converter_controller.dart';
 import '../features/converter/presentation/converter_screen.dart';
 import '../features/library/presentation/library_screen.dart';
@@ -38,10 +39,12 @@ final class _AppShellState extends State<AppShell> {
       bindings: <ShortcutActivator, VoidCallback>{
         const SingleActivator(LogicalKeyboardKey.digit1, control: true): () => _select(0),
         const SingleActivator(LogicalKeyboardKey.digit2, control: true): () => _select(1),
-        const SingleActivator(LogicalKeyboardKey.comma, control: true): () => _select(2),
+        const SingleActivator(LogicalKeyboardKey.digit3, control: true): () => _select(2),
+        const SingleActivator(LogicalKeyboardKey.comma, control: true): () => _select(3),
         const SingleActivator(LogicalKeyboardKey.digit1, meta: true): () => _select(0),
         const SingleActivator(LogicalKeyboardKey.digit2, meta: true): () => _select(1),
-        const SingleActivator(LogicalKeyboardKey.comma, meta: true): () => _select(2),
+        const SingleActivator(LogicalKeyboardKey.digit3, meta: true): () => _select(2),
+        const SingleActivator(LogicalKeyboardKey.comma, meta: true): () => _select(3),
       },
       child: Focus(
         autofocus: true,
@@ -62,7 +65,7 @@ final class _AppShellState extends State<AppShell> {
                 actions: <Widget>[
                   IconButton(
                     tooltip: 'Search unit library',
-                    onPressed: () => _select(1),
+                    onPressed: () => _select(2),
                     icon: const Icon(Icons.search),
                   ),
                   const SizedBox(width: AppSpacing.xs),
@@ -96,6 +99,11 @@ final class _AppShellState extends State<AppShell> {
                                     label: Text('Convert'),
                                   ),
                                   NavigationRailDestination(
+                                    icon: Icon(Icons.table_rows_outlined),
+                                    selectedIcon: Icon(Icons.table_rows),
+                                    label: Text('Batch'),
+                                  ),
+                                  NavigationRailDestination(
                                     icon: Icon(Icons.library_books_outlined),
                                     selectedIcon: Icon(Icons.library_books),
                                     label: Text('Library'),
@@ -127,6 +135,11 @@ final class _AppShellState extends State<AppShell> {
                           label: 'Convert',
                         ),
                         NavigationDestination(
+                          icon: Icon(Icons.table_rows_outlined),
+                          selectedIcon: Icon(Icons.table_rows),
+                          label: 'Batch',
+                        ),
+                        NavigationDestination(
                           icon: Icon(Icons.library_books_outlined),
                           selectedIcon: Icon(Icons.library_books),
                           label: 'Library',
@@ -149,6 +162,7 @@ final class _AppShellState extends State<AppShell> {
     index: _selectedIndex,
     children: <Widget>[
       ConverterScreen(controller: _converterController),
+      BatchScreen(controller: _converterController),
       LibraryScreen(
         appController: widget.appController,
         onOpenPair: _openPair,
