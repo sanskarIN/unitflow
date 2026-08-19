@@ -5,6 +5,7 @@ import '../../../app/theme/app_theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../domain/batch_export.dart';
 import '../domain/unit_models.dart';
+import 'category_localizations.dart';
 import 'converter_controller.dart';
 
 final class BatchScreen extends StatefulWidget {
@@ -102,7 +103,7 @@ final class _BatchScreenState extends State<BatchScreen> {
                               label: strings.categoryLabel,
                               value: widget.controller.category,
                               items: UnitCategory.values,
-                              labelFor: (value) => value.label,
+                              labelFor: (value) => value.localizedLabel(strings),
                               onChanged: (value) {
                                 if (value != null) {
                                   widget.controller.setCategory(value);
