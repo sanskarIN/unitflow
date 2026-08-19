@@ -5,6 +5,7 @@ import '../features/onboarding/presentation/onboarding_screen.dart';
 import '../l10n/app_localizations.dart';
 import 'app_controller.dart';
 import 'app_shell.dart';
+import 'branding/unitflow_mark.dart';
 import 'theme/app_theme.dart';
 
 final class UnitFlowApp extends StatefulWidget {
@@ -71,11 +72,7 @@ final class _StartupScreen extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            Icon(
-              Icons.swap_calls,
-              size: 64,
-              color: Theme.of(context).colorScheme.primary,
-            ),
+            UnitFlowMark(size: 76, semanticLabel: strings.appName),
             const SizedBox(height: AppSpacing.lg),
             Text(
               strings.appName,
