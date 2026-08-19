@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../core/logging/app_log.dart';
+import '../core/math/exact_decimal.dart';
 import '../core/persistence/user_state.dart';
 import '../core/persistence/user_state_repository.dart';
 import '../features/converter/data/unit_catalog.dart';
@@ -50,6 +51,9 @@ final class AppController extends ChangeNotifier {
 
   Future<void> setNotation(DecimalNotation notation) =>
       _update(_state.copyWith(notation: notation));
+
+  Future<void> setRoundingMode(DecimalRoundingMode roundingMode) =>
+      _update(_state.copyWith(roundingMode: roundingMode));
 
   Future<void> setDecimalPlaces(int decimalPlaces) {
     if (decimalPlaces < 0 || decimalPlaces > 28) {
@@ -134,7 +138,8 @@ final class AppController extends ChangeNotifier {
     return _update(_state.copyWith(recents: next));
   }
 
-  Future<void> clearHistory() => _update(_state.copyWith(recents: <RecentConversion>[]));
+  Future<void> clearHistory() =>
+      _update(_state.copyWith(recents: <RecentConversion>[]));
 
   Future<void> restoreHistory(List<RecentConversion> recents) =>
       _update(_state.copyWith(recents: recents));
