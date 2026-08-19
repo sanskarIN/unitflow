@@ -3,18 +3,15 @@ import 'package:flutter/material.dart';
 import '../../../app/app_controller.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../core/persistence/user_state.dart';
-import '../../converter/presentation/converter_controller.dart';
 
 final class HistoryScreen extends StatelessWidget {
   const HistoryScreen({
     required this.appController,
-    required this.converterController,
     required this.onOpenRecent,
     super.key,
   });
 
   final AppController appController;
-  final ConverterController converterController;
   final ValueChanged<RecentConversion> onOpenRecent;
 
   @override
@@ -87,7 +84,6 @@ final class HistoryScreen extends StatelessWidget {
                     child: _RecentTile(
                       recent: recents[index],
                       appController: appController,
-                      converterController: converterController,
                       onOpen: () => onOpenRecent(recents[index]),
                     ),
                   ),
@@ -129,13 +125,11 @@ final class _RecentTile extends StatelessWidget {
   const _RecentTile({
     required this.recent,
     required this.appController,
-    required this.converterController,
     required this.onOpen,
   });
 
   final RecentConversion recent;
   final AppController appController;
-  final ConverterController converterController;
   final VoidCallback onOpen;
 
   @override
