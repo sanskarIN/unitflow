@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../app/app_controller.dart';
 import '../../../app/theme/app_theme.dart';
+import '../../../core/logging/app_log.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../converter/domain/unit_models.dart';
 import 'custom_unit_dialog.dart';
 
@@ -34,6 +36,7 @@ final class _LibraryScreenState extends State<LibraryScreen> {
   Widget build(BuildContext context) => AnimatedBuilder(
     animation: widget.appController,
     builder: (context, _) {
+      final strings = AppLocalizations.of(context);
       final results = widget.appController.engine.catalog.search(
         _query,
         category: _category,
@@ -74,13 +77,13 @@ final class _LibraryScreenState extends State<LibraryScreen> {
                       TextField(
                         controller: _searchController,
                         decoration: InputDecoration(
-                          labelText: 'Search units',
-                          hintText: 'Name, symbol, or alias',
+                          labelText: strings.searchUnitsLabel,
+                          hintText: strings.searchUnitsHint,
                           prefixIcon: const Icon(Icons.search),
                           suffixIcon: _query.isEmpty
                               ? null
                               : IconButton(
-                                  tooltip: 'Clear search',
+                                  tooltip: strings.clearSearch,
                                   onPressed: () {
                                     _searchController.clear();
                                     setState(() => _query = '');
@@ -97,7 +100,7 @@ final class _LibraryScreenState extends State<LibraryScreen> {
                       ),
                       const SizedBox(height: AppSpacing.md),
                       Text(
-                        '${results.length} ${results.length == 1 ? 'unit' : 'units'}',
+                        strings.unitCount(results.length),
                         style: Theme.of(context).textTheme.labelLarge,
                       ),
                     ],
@@ -155,11 +158,15 @@ final class _LibraryScreenState extends State<LibraryScreen> {
     try {
       await widget.appController.addCustomUnit(data);
     } on Object catch (error) {
+      AppLog.warning(
+        'custom_unit_create_failed',
+        metadata: <String, Object?>{'errorType': error.runtimeType.toString()},
+      );
       if (!mounted) {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not create unit: $error')),
+        SnackBar(content: Text(AppLocalizations.of(context).couldNotCreateUnit)),
       );
       return;
     }
@@ -167,7 +174,7 @@ final class _LibraryScreenState extends State<LibraryScreen> {
       return;
     }
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${data.name} added.')),
+      SnackBar(content: Text(AppLocalizations.of(context).unitAdded(data.name))),
     );
   }
 
@@ -182,12 +189,13 @@ final class _LibraryScreenState extends State<LibraryScreen> {
     if (!mounted) {
       return;
     }
+    final strings = AppLocalizations.of(context);
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('${unit.name} removed.'),
+        content: Text(strings.unitRemoved(unit.name)),
         action: SnackBarAction(
-          label: 'Undo',
+          label: strings.undo,
           onPressed: () => widget.appController.addCustomUnit(data),
         ),
       ),
@@ -201,30 +209,33 @@ final class _Header extends StatelessWidget {
   final VoidCallback onAddCustom;
 
   @override
-  Widget build(BuildContext context) => Row(
-    crossAxisAlignment: CrossAxisAlignment.end,
-    children: <Widget>[
-      Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text('Unit library', style: Theme.of(context).textTheme.headlineMedium),
-            const SizedBox(height: AppSpacing.xxs),
-            Text(
-              'Search built-in units, favorites, and your own validated custom units.',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-          ],
+  Widget build(BuildContext context) {
+    final strings = AppLocalizations.of(context);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: <Widget>[
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(strings.libraryTitle, style: Theme.of(context).textTheme.headlineMedium),
+              const SizedBox(height: AppSpacing.xxs),
+              Text(
+                strings.libraryDescription,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ],
+          ),
         ),
-      ),
-      const SizedBox(width: AppSpacing.md),
-      FilledButton.icon(
-        onPressed: onAddCustom,
-        icon: const Icon(Icons.add),
-        label: const Text('Custom unit'),
-      ),
-    ],
-  );
+        const SizedBox(width: AppSpacing.md),
+        FilledButton.icon(
+          onPressed: onAddCustom,
+          icon: const Icon(Icons.add),
+          label: Text(strings.customUnitAction),
+        ),
+      ],
+    );
+  }
 }
 
 final class _PinnedPairs extends StatelessWidget {
@@ -245,7 +256,10 @@ final class _PinnedPairs extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text('Pinned pairs', style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              AppLocalizations.of(context).pinnedPairsTitle,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: AppSpacing.xs),
             Wrap(
               spacing: AppSpacing.xs,
@@ -284,7 +298,7 @@ final class _CategoryFilter extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.only(right: AppSpacing.xs),
           child: FilterChip(
-            label: const Text('All'),
+            label: Text(AppLocalizations.of(context).allFilter),
             selected: value == null,
             onSelected: (_) => onChanged(null),
           ),
@@ -318,33 +332,37 @@ final class _UnitTile extends StatelessWidget {
   final VoidCallback? onDeleteCustom;
 
   @override
-  Widget build(BuildContext context) => Card(
-    child: ListTile(
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.xs,
-      ),
-      leading: CircleAvatar(child: Text(unit.symbol, textAlign: TextAlign.center)),
-      title: Text(unit.name),
-      subtitle: Text('${unit.category.label} • ${unit.id}${unit.isBuiltIn ? '' : ' • Custom'}'),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          IconButton(
-            tooltip: isFavorite ? 'Remove from favorites' : 'Add to favorites',
-            onPressed: onFavorite,
-            icon: Icon(isFavorite ? Icons.star : Icons.star_border),
-          ),
-          if (onDeleteCustom != null)
+  Widget build(BuildContext context) {
+    final strings = AppLocalizations.of(context);
+    final customSuffix = unit.isBuiltIn ? '' : ' • ${strings.customLabel}';
+    return Card(
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.xs,
+        ),
+        leading: CircleAvatar(child: Text(unit.symbol, textAlign: TextAlign.center)),
+        title: Text(unit.name),
+        subtitle: Text('${unit.category.label} • ${unit.id}$customSuffix'),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
             IconButton(
-              tooltip: 'Remove custom unit',
-              onPressed: onDeleteCustom,
-              icon: const Icon(Icons.delete_outline),
+              tooltip: isFavorite ? strings.removeFromFavorites : strings.addToFavorites,
+              onPressed: onFavorite,
+              icon: Icon(isFavorite ? Icons.star : Icons.star_border),
             ),
-        ],
+            if (onDeleteCustom != null)
+              IconButton(
+                tooltip: strings.removeCustomUnit,
+                onPressed: onDeleteCustom,
+                icon: const Icon(Icons.delete_outline),
+              ),
+          ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 final class _EmptyLibrary extends StatelessWidget {
@@ -363,7 +381,10 @@ final class _EmptyLibrary extends StatelessWidget {
             color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
           const SizedBox(height: AppSpacing.md),
-          Text('No units match this search.', style: Theme.of(context).textTheme.titleMedium),
+          Text(
+            AppLocalizations.of(context).noUnitsMatch,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
         ],
       ),
     ),
