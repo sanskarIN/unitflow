@@ -45,14 +45,14 @@ void main() {
   });
 
   test('duplicate unit identifiers are rejected', () {
-    const UnitDefinition first = UnitDefinition(
+    final UnitDefinition first = UnitDefinition(
       id: 'duplicate',
       category: UnitCategory.length,
       name: 'First',
       symbol: 'f',
       scale: ExactDecimal.zero,
     );
-    const UnitDefinition second = UnitDefinition(
+    final UnitDefinition second = UnitDefinition(
       id: 'duplicate',
       category: UnitCategory.length,
       name: 'Second',
