@@ -1,0 +1,68 @@
+name: Bug report
+description: Report a reproducible defect in UnitFlow
+title: "bug: "
+labels: [bug, triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a problem. Remove secrets and personal data from logs before submitting.
+  - type: input
+    id: version
+    attributes:
+      label: UnitFlow version or commit
+      placeholder: v0.1.0-alpha.1 or commit SHA
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - Android
+        - Windows
+        - Linux
+        - macOS
+        - Web
+        - iOS
+        - Rust core only
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the observed behavior and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      placeholder: |
+        1. Open ...
+        2. Select ...
+        3. Enter ...
+        4. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: conversion
+    attributes:
+      label: Conversion details
+      description: For conversion defects, include exact input, source/target units, notation, rounding, and locale.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant non-sensitive logs
+      render: shell
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues for duplicates.
+          required: true
+        - label: I removed credentials, tokens, private data, and signing material.
+          required: true
