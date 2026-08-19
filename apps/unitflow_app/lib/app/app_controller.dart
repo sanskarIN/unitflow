@@ -66,6 +66,13 @@ final class AppController extends ChangeNotifier {
     return _update(_state.copyWith(favoriteUnitIds: next));
   }
 
+  Future<void> clearFavorites() {
+    if (_state.favoriteUnitIds.isEmpty) {
+      return Future<void>.value();
+    }
+    return _update(_state.copyWith(favoriteUnitIds: <String>{}));
+  }
+
   bool isPairPinned(PinnedPair pair) => _state.pinnedPairs.any(
     (candidate) =>
         candidate.category == pair.category &&
@@ -97,6 +104,13 @@ final class AppController extends ChangeNotifier {
     return _update(_state.copyWith(pinnedPairs: next));
   }
 
+  Future<void> clearPinnedPairs() {
+    if (_state.pinnedPairs.isEmpty) {
+      return Future<void>.value();
+    }
+    return _update(_state.copyWith(pinnedPairs: const <PinnedPair>[]));
+  }
+
   Future<void> recordRecent({
     required String input,
     required String fromUnitId,
@@ -124,6 +138,13 @@ final class AppController extends ChangeNotifier {
     return _update(_state.copyWith(recents: next));
   }
 
+  Future<void> clearRecents() {
+    if (_state.recents.isEmpty) {
+      return Future<void>.value();
+    }
+    return _update(_state.copyWith(recents: const <RecentConversion>[]));
+  }
+
   Future<void> addCustomUnit(CustomUnitData customUnit) {
     final definition = customUnit.toUnitDefinition();
     if (_engine.catalog.byId(definition.id) != null) {
@@ -145,10 +166,14 @@ final class AppController extends ChangeNotifier {
     final nextPins = _state.pinnedPairs
         .where((pair) => pair.fromUnitId != id && pair.toUnitId != id)
         .toList();
+    final nextRecents = _state.recents
+        .where((recent) => recent.fromUnitId != id && recent.toUnitId != id)
+        .toList();
     final newState = _state.copyWith(
       customUnits: nextCustom,
       favoriteUnitIds: nextFavorites,
       pinnedPairs: nextPins,
+      recents: nextRecents,
     );
     return _update(newState, engine: _buildEngine(newState));
   }
