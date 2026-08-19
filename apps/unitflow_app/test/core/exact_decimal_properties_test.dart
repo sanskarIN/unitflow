@@ -75,7 +75,7 @@ void main() {
       '++1',
       '--1',
       '1.2.3',
-      '${'9' * 1025}',
+      List<String>.filled(1025, '9').join(),
     ];
 
     for (final input in invalid) {
