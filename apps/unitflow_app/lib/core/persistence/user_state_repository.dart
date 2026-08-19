@@ -21,7 +21,6 @@ final class SharedPreferencesUserStateRepository implements UserStateRepository 
     : _preferences = preferences ?? SharedPreferencesAsync();
 
   static const _storageKey = 'unitflow.user_state.v1';
-  static const _maxImportCharacters = 1_000_000;
 
   final SharedPreferencesAsync _preferences;
 
@@ -55,25 +54,7 @@ final class SharedPreferencesUserStateRepository implements UserStateRepository 
       const JsonEncoder.withIndent('  ').convert(state.toJson());
 
   @override
-  UserState importJson(String content) {
-    if (content.isEmpty || content.length > _maxImportCharacters) {
-      throw const FormatException('UnitFlow import size is invalid.');
-    }
-
-    final Object? decoded = jsonDecode(content);
-    if (decoded is! Map<Object?, Object?>) {
-      throw const FormatException('UnitFlow import must be a JSON object.');
-    }
-    final normalized = <String, Object?>{};
-    for (final entry in decoded.entries) {
-      final key = entry.key;
-      if (key is! String) {
-        throw const FormatException('UnitFlow import contains an invalid key.');
-      }
-      normalized[key] = entry.value;
-    }
-    return UserState.fromJson(normalized);
-  }
+  UserState importJson(String content) => _decodeState(content);
 }
 
 final class MemoryUserStateRepository implements UserStateRepository {
@@ -91,21 +72,7 @@ final class MemoryUserStateRepository implements UserStateRepository {
       const JsonEncoder.withIndent('  ').convert(state.toJson());
 
   @override
-  UserState importJson(String content) {
-    final Object? decoded = jsonDecode(content);
-    if (decoded is! Map<Object?, Object?>) {
-      throw const FormatException('UnitFlow import must be a JSON object.');
-    }
-    final normalized = <String, Object?>{};
-    for (final entry in decoded.entries) {
-      final key = entry.key;
-      if (key is! String) {
-        throw const FormatException('Invalid import key.');
-      }
-      normalized[key] = entry.value;
-    }
-    return UserState.fromJson(normalized);
-  }
+  UserState importJson(String content) => _decodeState(content);
 
   @override
   Future<UserState> load() async => _state;
@@ -114,6 +81,35 @@ final class MemoryUserStateRepository implements UserStateRepository {
   Future<void> save(UserState state) async {
     _state = state;
   }
+}
+
+const _maxImportCharacters = 1_000_000;
+
+UserState _decodeState(String content) {
+  if (content.isEmpty || content.length > _maxImportCharacters) {
+    throw const FormatException('UnitFlow import size is invalid.');
+  }
+
+  final Object? decoded;
+  try {
+    decoded = jsonDecode(content);
+  } on FormatException {
+    rethrow;
+  } on Object {
+    throw const FormatException('UnitFlow import is not valid JSON.');
+  }
+  if (decoded is! Map<Object?, Object?>) {
+    throw const FormatException('UnitFlow import must be a JSON object.');
+  }
+  final normalized = <String, Object?>{};
+  for (final entry in decoded.entries) {
+    final key = entry.key;
+    if (key is! String) {
+      throw const FormatException('UnitFlow import contains an invalid key.');
+    }
+    normalized[key] = entry.value;
+  }
+  return UserState.fromJson(normalized);
 }
 
 final class StatePersistenceException implements Exception {
