@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/app_controller.dart';
 import '../../../app/theme/app_theme.dart';
@@ -17,6 +18,9 @@ final class SettingsScreen extends StatelessWidget {
   });
 
   static const _backupFiles = BackupFileService();
+  static final Uri _releasesUri = Uri.parse(
+    'https://github.com/sanskarIN/unitflow/releases',
+  );
 
   final AppController appController;
   final VoidCallback onOpenAbout;
@@ -126,6 +130,22 @@ final class SettingsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.md),
                   _SectionCard(
+                    title: strings.accessibility,
+                    icon: Icons.accessibility_new_outlined,
+                    children: <Widget>[
+                      SwitchListTile.adaptive(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(strings.reduceMotion),
+                        subtitle: Text(strings.reduceMotionSubtitle),
+                        value: appController.state.reduceMotion,
+                        onChanged: appController.setReduceMotion,
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(strings.systemAccessibility),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  _SectionCard(
                     title: strings.privacyLocalData,
                     icon: Icons.privacy_tip_outlined,
                     children: <Widget>[
@@ -162,6 +182,23 @@ final class SettingsScreen extends StatelessWidget {
                           ),
                         ],
                       ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  _SectionCard(
+                    title: strings.updates,
+                    icon: Icons.system_update_alt_outlined,
+                    children: <Widget>[
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: const Icon(Icons.new_releases_outlined),
+                        title: Text(strings.openReleases),
+                        subtitle: Text(strings.openReleasesSubtitle),
+                        trailing: const Icon(Icons.open_in_new, size: 18),
+                        onTap: () => _openReleases(context),
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(strings.updatesNetworkNote),
                     ],
                   ),
                   const SizedBox(height: AppSpacing.md),
@@ -284,6 +321,18 @@ final class SettingsScreen extends StatelessWidget {
     }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(strings.backupImported)),
+    );
+  }
+
+  Future<void> _openReleases(BuildContext context) async {
+    if (await launchUrl(_releasesUri)) {
+      return;
+    }
+    if (!context.mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Could not open UnitFlow releases.')),
     );
   }
 
