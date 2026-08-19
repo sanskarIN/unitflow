@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/sanskarIN/unitflow/blob/main/schemas/unitflow-backup-v2.schema.json",
   "title": "UnitFlow backup v2",
-  "description": "Portable local UnitFlow preferences, favorites, pinned pairs, recent conversions, custom units, and explicit decimal rounding preference.",
+  "description": "Portable local UnitFlow preferences, favorites, pinned pairs, recent conversions, custom units, explicit decimal rounding, and accessibility preferences.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -45,6 +45,7 @@
       "maximum": 28
     },
     "useGrouping": { "type": "boolean" },
+    "reduceMotion": { "type": "boolean", "default": false },
     "onboardingComplete": { "type": "boolean" },
     "favoriteUnitIds": {
       "type": "array",
