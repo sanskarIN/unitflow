@@ -300,11 +300,15 @@ final class UserState {
 
     final pins = <PinnedPair>[];
     for (final value in pinsRaw) {
-      if (value is! String) {
+      if (value is! String || value.length > 256) {
         throw const FormatException('Invalid pinned pair data.');
       }
       final pin = PinnedPair.tryParse(value);
-      if (pin == null) {
+      if (pin == null ||
+          pin.fromUnitId.isEmpty ||
+          pin.fromUnitId.length > 64 ||
+          pin.toUnitId.isEmpty ||
+          pin.toUnitId.length > 64) {
         throw const FormatException('Invalid pinned pair data.');
       }
       pins.add(pin);
