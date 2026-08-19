@@ -8,6 +8,7 @@ import '../features/history/presentation/history_screen.dart';
 import '../features/library/presentation/library_screen.dart';
 import '../features/settings/presentation/about_screen.dart';
 import '../features/settings/presentation/settings_screen.dart';
+import '../l10n/app_localizations.dart';
 import 'app_controller.dart';
 import 'theme/app_theme.dart';
 
@@ -33,144 +34,140 @@ final class _AppShellState extends State<AppShell> {
   }
 
   @override
-  Widget build(BuildContext context) => AnimatedBuilder(
-    animation: widget.appController,
-    builder: (context, _) => CallbackShortcuts(
-      bindings: <ShortcutActivator, VoidCallback>{
-        const SingleActivator(LogicalKeyboardKey.digit1, control: true): () =>
-            _select(0),
-        const SingleActivator(LogicalKeyboardKey.digit2, control: true): () =>
-            _select(1),
-        const SingleActivator(LogicalKeyboardKey.digit3, control: true): () =>
-            _select(2),
-        const SingleActivator(LogicalKeyboardKey.comma, control: true): () =>
-            _select(3),
-        const SingleActivator(LogicalKeyboardKey.digit1, meta: true): () =>
-            _select(0),
-        const SingleActivator(LogicalKeyboardKey.digit2, meta: true): () =>
-            _select(1),
-        const SingleActivator(LogicalKeyboardKey.digit3, meta: true): () =>
-            _select(2),
-        const SingleActivator(LogicalKeyboardKey.comma, meta: true): () =>
-            _select(3),
-      },
-      child: Focus(
-        autofocus: true,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final useRail = constraints.maxWidth >= 800;
-            final content = _content();
-            return Scaffold(
-              appBar: AppBar(
-                title: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    Icon(
-                      Icons.swap_calls,
-                      color: Theme.of(context).colorScheme.primary,
+  Widget build(BuildContext context) {
+    final strings = AppLocalizations.of(context);
+    return AnimatedBuilder(
+      animation: widget.appController,
+      builder: (context, _) => CallbackShortcuts(
+        bindings: <ShortcutActivator, VoidCallback>{
+          const SingleActivator(LogicalKeyboardKey.digit1, control: true): () =>
+              _select(0),
+          const SingleActivator(LogicalKeyboardKey.digit2, control: true): () =>
+              _select(1),
+          const SingleActivator(LogicalKeyboardKey.digit3, control: true): () =>
+              _select(2),
+          const SingleActivator(LogicalKeyboardKey.comma, control: true): () =>
+              _select(3),
+          const SingleActivator(LogicalKeyboardKey.digit1, meta: true): () =>
+              _select(0),
+          const SingleActivator(LogicalKeyboardKey.digit2, meta: true): () =>
+              _select(1),
+          const SingleActivator(LogicalKeyboardKey.digit3, meta: true): () =>
+              _select(2),
+          const SingleActivator(LogicalKeyboardKey.comma, meta: true): () =>
+              _select(3),
+        },
+        child: Focus(
+          autofocus: true,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final useRail = constraints.maxWidth >= 800;
+              final content = _content();
+              final destinations = <_NavigationItem>[
+                _NavigationItem(
+                  icon: Icons.swap_horiz_outlined,
+                  selectedIcon: Icons.swap_horiz,
+                  label: strings.convert,
+                ),
+                _NavigationItem(
+                  icon: Icons.library_books_outlined,
+                  selectedIcon: Icons.library_books,
+                  label: strings.library,
+                ),
+                _NavigationItem(
+                  icon: Icons.history_outlined,
+                  selectedIcon: Icons.history,
+                  label: strings.history,
+                ),
+                _NavigationItem(
+                  icon: Icons.settings_outlined,
+                  selectedIcon: Icons.settings,
+                  label: strings.settings,
+                ),
+              ];
+              return Scaffold(
+                appBar: AppBar(
+                  title: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Icon(
+                        Icons.swap_calls,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      const SizedBox(width: AppSpacing.xs),
+                      Text(strings.appName),
+                    ],
+                  ),
+                  actions: <Widget>[
+                    IconButton(
+                      tooltip: strings.searchUnitLibrary,
+                      onPressed: () => _select(1),
+                      icon: const Icon(Icons.search),
                     ),
                     const SizedBox(width: AppSpacing.xs),
-                    const Text('UnitFlow'),
                   ],
                 ),
-                actions: <Widget>[
-                  IconButton(
-                    tooltip: 'Search unit library',
-                    onPressed: () => _select(1),
-                    icon: const Icon(Icons.search),
-                  ),
-                  const SizedBox(width: AppSpacing.xs),
-                ],
-              ),
-              body: Column(
-                children: <Widget>[
-                  if (widget.appController.warning != null)
-                    MaterialBanner(
-                      content: Text(widget.appController.warning!),
-                      leading: const Icon(Icons.warning_amber_outlined),
-                      actions: <Widget>[
-                        TextButton(
-                          onPressed: widget.appController.clearWarning,
-                          child: const Text('Dismiss'),
-                        ),
-                      ],
-                    ),
-                  Expanded(
-                    child: useRail
-                        ? Row(
-                            children: <Widget>[
-                              NavigationRail(
-                                selectedIndex: _selectedIndex,
-                                onDestinationSelected: _select,
-                                labelType: NavigationRailLabelType.all,
-                                destinations:
-                                    const <NavigationRailDestination>[
-                                      NavigationRailDestination(
-                                        icon: Icon(Icons.swap_horiz_outlined),
-                                        selectedIcon: Icon(Icons.swap_horiz),
-                                        label: Text('Convert'),
-                                      ),
-                                      NavigationRailDestination(
-                                        icon: Icon(
-                                          Icons.library_books_outlined,
+                body: Column(
+                  children: <Widget>[
+                    if (widget.appController.warning != null)
+                      MaterialBanner(
+                        content: Text(widget.appController.warning!),
+                        leading: const Icon(Icons.warning_amber_outlined),
+                        actions: <Widget>[
+                          TextButton(
+                            onPressed: widget.appController.clearWarning,
+                            child: Text(strings.dismiss),
+                          ),
+                        ],
+                      ),
+                    Expanded(
+                      child: useRail
+                          ? Row(
+                              children: <Widget>[
+                                NavigationRail(
+                                  selectedIndex: _selectedIndex,
+                                  onDestinationSelected: _select,
+                                  labelType: NavigationRailLabelType.all,
+                                  destinations: destinations
+                                      .map(
+                                        (item) => NavigationRailDestination(
+                                          icon: Icon(item.icon),
+                                          selectedIcon: Icon(item.selectedIcon),
+                                          label: Text(item.label),
                                         ),
-                                        selectedIcon: Icon(Icons.library_books),
-                                        label: Text('Library'),
-                                      ),
-                                      NavigationRailDestination(
-                                        icon: Icon(Icons.history_outlined),
-                                        selectedIcon: Icon(Icons.history),
-                                        label: Text('History'),
-                                      ),
-                                      NavigationRailDestination(
-                                        icon: Icon(Icons.settings_outlined),
-                                        selectedIcon: Icon(Icons.settings),
-                                        label: Text('Settings'),
-                                      ),
-                                    ],
-                              ),
-                              const VerticalDivider(width: 1),
-                              Expanded(child: content),
-                            ],
-                          )
-                        : content,
-                  ),
-                ],
-              ),
-              bottomNavigationBar: useRail
-                  ? null
-                  : NavigationBar(
-                      selectedIndex: _selectedIndex,
-                      onDestinationSelected: _select,
-                      destinations: const <NavigationDestination>[
-                        NavigationDestination(
-                          icon: Icon(Icons.swap_horiz_outlined),
-                          selectedIcon: Icon(Icons.swap_horiz),
-                          label: 'Convert',
-                        ),
-                        NavigationDestination(
-                          icon: Icon(Icons.library_books_outlined),
-                          selectedIcon: Icon(Icons.library_books),
-                          label: 'Library',
-                        ),
-                        NavigationDestination(
-                          icon: Icon(Icons.history_outlined),
-                          selectedIcon: Icon(Icons.history),
-                          label: 'History',
-                        ),
-                        NavigationDestination(
-                          icon: Icon(Icons.settings_outlined),
-                          selectedIcon: Icon(Icons.settings),
-                          label: 'Settings',
-                        ),
-                      ],
+                                      )
+                                      .toList(growable: false),
+                                ),
+                                const VerticalDivider(width: 1),
+                                Expanded(child: content),
+                              ],
+                            )
+                          : content,
                     ),
-            );
-          },
+                  ],
+                ),
+                bottomNavigationBar: useRail
+                    ? null
+                    : NavigationBar(
+                        selectedIndex: _selectedIndex,
+                        onDestinationSelected: _select,
+                        destinations: destinations
+                            .map(
+                              (item) => NavigationDestination(
+                                icon: Icon(item.icon),
+                                selectedIcon: Icon(item.selectedIcon),
+                                label: item.label,
+                              ),
+                            )
+                            .toList(growable: false),
+                      ),
+              );
+            },
+          ),
         ),
       ),
-    ),
-  );
+    );
+  }
 
   Widget _content() => IndexedStack(
     index: _selectedIndex,
@@ -208,4 +205,16 @@ final class _AppShellState extends State<AppShell> {
       builder: (_) => const Scaffold(body: SafeArea(child: AboutScreen())),
     ),
   );
+}
+
+final class _NavigationItem {
+  const _NavigationItem({
+    required this.icon,
+    required this.selectedIcon,
+    required this.label,
+  });
+
+  final IconData icon;
+  final IconData selectedIcon;
+  final String label;
 }
