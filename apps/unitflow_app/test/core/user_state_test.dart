@@ -99,6 +99,93 @@ void main() {
     );
   });
 
+  test('unknown top-level fields are rejected', () {
+    final repository = MemoryUserStateRepository();
+    const payload = '{'
+        '"schemaVersion":2,'
+        '"theme":"system",'
+        '"notation":"plain",'
+        '"roundingMode":"nearestEven",'
+        '"decimalPlaces":12,'
+        '"useGrouping":true,'
+        '"onboardingComplete":true,'
+        '"favoriteUnitIds":[],'
+        '"pinnedPairs":[],'
+        '"recents":[],'
+        '"customUnits":[],'
+        '"unexpected":true'
+        '}';
+
+    expect(() => repository.importJson(payload), throwsFormatException);
+  });
+
+  test('unknown nested fields are rejected', () {
+    final repository = MemoryUserStateRepository();
+    const payload = '{'
+        '"schemaVersion":2,'
+        '"theme":"system",'
+        '"notation":"plain",'
+        '"roundingMode":"nearestEven",'
+        '"decimalPlaces":12,'
+        '"useGrouping":true,'
+        '"onboardingComplete":true,'
+        '"favoriteUnitIds":[],'
+        '"pinnedPairs":[],'
+        '"recents":[{'
+        '"input":"1",'
+        '"fromUnitId":"meter",'
+        '"toUnitId":"kilometer",'
+        '"createdAt":"2026-08-19T00:00:00Z",'
+        '"unexpected":true'
+        '}],'
+        '"customUnits":[]'
+        '}';
+
+    expect(() => repository.importJson(payload), throwsFormatException);
+  });
+
+  test('oversized pinned-pair collection is rejected', () {
+    final json = UserState(
+      onboardingComplete: true,
+      pinnedPairs: List<PinnedPair>.generate(
+        UserState.maxPinnedPairs + 1,
+        (index) => PinnedPair(
+          category: UnitCategory.length,
+          fromUnitId: 'meter',
+          toUnitId: 'unit_$index',
+        ),
+      ),
+    ).toJson();
+
+    expect(() => UserState.fromJson(json), throwsFormatException);
+  });
+
+  test('custom unit aliases are trimmed and deduplicated', () {
+    const unit = CustomUnitData(
+      id: 'double_meter',
+      category: UnitCategory.length,
+      name: ' Double Meter ',
+      symbol: ' dmx ',
+      scale: '2.0',
+      offset: '0.0',
+      aliases: <String>[' double ', 'DOUBLE', 'two meters'],
+      description: ' Example unit. ',
+    );
+
+    final definition = unit.toUnitDefinition();
+
+    expect(definition.name, 'Double Meter');
+    expect(definition.symbol, 'dmx');
+    expect(definition.aliases, <String>['double', 'two meters']);
+    expect(definition.description, 'Example unit.');
+  });
+
+  test('persisted pinned pair identifiers must be safe stable IDs', () {
+    expect(PinnedPair.tryParse('length|meter|kilometer'), isNotNull);
+    expect(PinnedPair.tryParse('length|../meter|kilometer'), isNull);
+    expect(PinnedPair.tryParse('length|meter|bad unit'), isNull);
+  });
+
   test('custom units reject built-in style formula with zero scale', () {
     const unit = CustomUnitData(
       id: 'bad_scale',
