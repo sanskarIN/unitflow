@@ -8,11 +8,11 @@ This inventory documents every tracked first-party file in UnitFlow and its role
 - `.env.example` — documents the offline/default environment boundary without storing secrets.
 - `.gitattributes` — repository text/binary and line-ending attributes.
 - `.gitignore` — excludes local environments, generated output, build products, signing material, and IDE state.
-- `Cargo.toml` — Rust workspace membership and shared package metadata/version.
+- `Cargo.toml` — Rust workspace membership plus shared `2.0.12` package metadata and Rust `1.82` minimum.
 - `rust-toolchain.toml` — Rust toolchain/channel and component expectations.
-- `README.md` — public project overview, status, quick start, architecture, quality, and support entry point.
-- `ROADMAP.md` — evidence-based milestone status and current release blockers.
-- `CHANGELOG.md` — user/maintainer-visible change history and planned alpha entry.
+- `README.md` — public project overview, current `2.0.12` source status, quick start, architecture, quality, and support entry point.
+- `ROADMAP.md` — evidence-based milestone status and current `2.0.12` release blockers.
+- `CHANGELOG.md` — user/maintainer-visible change history including the `2.0.12` development snapshot.
 - `what_changed.md` — current continuation handoff and exact development checkpoint.
 - `LICENSE` — MIT license text.
 - `CONTRIBUTING.md` — contribution workflow and quality expectations.
@@ -34,12 +34,12 @@ This inventory documents every tracked first-party file in UnitFlow and its role
 - `.github/workflows/codeql.yml` — CodeQL static security analysis.
 - `.github/workflows/dependency-review.yml` — pull-request dependency risk review.
 - `.github/workflows/platform-smoke.yml` — generated-scaffold build compatibility matrix for six platform targets.
-- `.github/workflows/release.yml` — source verification, exact tag guard, packaging, checksums, and GitHub release creation.
+- `.github/workflows/release.yml` — source verification, exact tag guard, clean Rust packaging, checksums, and GitHub release creation.
 
 ## Flutter application configuration
 
-- `apps/unitflow_app/analysis_options.yaml` — Dart/Flutter analyzer and lint configuration.
-- `apps/unitflow_app/pubspec.yaml` — Flutter application package metadata and dependencies.
+- `apps/unitflow_app/analysis_options.yaml` — Dart/Flutter analyzer/lint configuration plus repository-wide formatter width.
+- `apps/unitflow_app/pubspec.yaml` — Flutter application package metadata, `2.0.12+12` version, and dependencies.
 - `apps/unitflow_app/l10n.yaml` — Flutter localization generation configuration.
 - `apps/unitflow_app/lib/l10n/app_en.arb` — English source localization resource catalog.
 
@@ -47,14 +47,14 @@ This inventory documents every tracked first-party file in UnitFlow and its role
 
 - `apps/unitflow_app/lib/main.dart` — application process entry point and initial repository/controller wiring.
 - `apps/unitflow_app/lib/app/unitflow_app.dart` — top-level Material application, theme, localization, and onboarding/shell routing.
-- `apps/unitflow_app/lib/app/app_controller.dart` — application state, persistence serialization, custom-unit lifecycle, favorites/pins/history, import/reset behavior.
-- `apps/unitflow_app/lib/app/app_shell.dart` — adaptive main navigation and destination coordination.
+- `apps/unitflow_app/lib/app/app_controller.dart` — application state, serialized persistence, custom-unit lifecycle, favorites/pins/history, import/reset behavior, and safe reset-failure warning state.
+- `apps/unitflow_app/lib/app/app_shell.dart` — adaptive main navigation, destination coordination, and warning banner presentation.
 - `apps/unitflow_app/lib/app/theme/app_theme.dart` — centralized light/dark theme definitions and design tokens.
 
 ## Flutter core services
 
-- `apps/unitflow_app/lib/core/bridge/native_conversion_bridge.dart` — native-conversion bridge contract/fallback boundary used during bridge integration.
-- `apps/unitflow_app/lib/core/format/decimal_format.dart` — locale-aware decimal input parsing and presentation formatting.
+- `apps/unitflow_app/lib/core/bridge/native_conversion_bridge.dart` — native-conversion bridge contract plus canonical decimal/unit-ID/precision validation boundary.
+- `apps/unitflow_app/lib/core/format/decimal_format.dart` — locale-aware exact-decimal input parsing and locale-pattern-aware presentation grouping/formatting.
 - `apps/unitflow_app/lib/core/logging/app_log.dart` — bounded structured diagnostic logging with sensitive-key redaction.
 - `apps/unitflow_app/lib/core/math/exact_decimal.dart` — deterministic exact base-10 decimal value, parsing, arithmetic, comparison, and rounding logic.
 - `apps/unitflow_app/lib/core/persistence/user_state.dart` — versioned persisted state model, migration, item validation, and import ceilings.
@@ -77,8 +77,8 @@ This inventory documents every tracked first-party file in UnitFlow and its role
 - `apps/unitflow_app/lib/features/library/presentation/library_screen.dart` — searchable unit library, favorites, pins, and custom-unit management surface.
 - `apps/unitflow_app/lib/features/library/presentation/custom_unit_dialog.dart` — validated custom affine-unit editor.
 - `apps/unitflow_app/lib/features/onboarding/presentation/onboarding_screen.dart` — first-run offline/privacy/product onboarding.
-- `apps/unitflow_app/lib/features/settings/presentation/settings_screen.dart` — theme, notation, rounding, backup/reset, and related settings UI.
-- `apps/unitflow_app/lib/features/settings/presentation/about_screen.dart` — version, project links, license/support, and project-credit UI.
+- `apps/unitflow_app/lib/features/settings/presentation/settings_screen.dart` — theme, notation, rounding, backup/reset, safe reset-failure handling, and related settings UI.
+- `apps/unitflow_app/lib/features/settings/presentation/about_screen.dart` — `2.0.12` version, project links, license/support, and project-credit UI.
 
 ## Flutter tests
 
@@ -92,41 +92,41 @@ This inventory documents every tracked first-party file in UnitFlow and its role
 - `apps/unitflow_app/test/localization_smoke_test.dart` — generated localization availability/smoke behavior.
 - `apps/unitflow_app/test/navigation_smoke_test.dart` — adaptive shell destination reachability.
 - `apps/unitflow_app/test/recent_validation_test.dart` — recent-history unit/category/input bounds and locale-text preservation.
-- `apps/unitflow_app/test/reset_persistence_test.dart` — local reset persistence and queued-write ordering regression coverage.
+- `apps/unitflow_app/test/reset_persistence_test.dart` — local reset persistence, queued-write ordering, and safe reset-failure warning regression coverage.
 - `apps/unitflow_app/test/core/app_log_test.dart` — structured log redaction behavior.
 - `apps/unitflow_app/test/core/exact_decimal_properties_test.dart` — deterministic generated/property-style exact-decimal invariants.
-- `apps/unitflow_app/test/core/exact_decimal_test.dart` — exact-decimal parser/arithmetic/rounding examples and edge cases.
-- `apps/unitflow_app/test/core/native_conversion_bridge_test.dart` — bridge boundary/fallback behavior.
+- `apps/unitflow_app/test/core/exact_decimal_test.dart` — exact-decimal parser/arithmetic/rounding plus locale-specific grouping/parsing examples and edge cases.
+- `apps/unitflow_app/test/core/native_conversion_bridge_test.dart` — canonical bridge request/response boundary validation and safe failure behavior.
 - `apps/unitflow_app/test/core/user_state_reference_bounds_test.dart` — persisted identifier/history boundary validation.
 - `apps/unitflow_app/test/core/user_state_test.dart` — state schema migration, round-trip, import ceilings, and custom-unit validation.
 - `apps/unitflow_app/test/features/conversion_engine_test.dart` — Dart compatibility conversion engine correctness.
 
 ## Rust core crate
 
-- `crates/unitflow_core/Cargo.toml` — Rust core crate metadata and dependencies.
+- `crates/unitflow_core/Cargo.toml` — Rust core crate metadata and dependencies inherited from the workspace.
 - `crates/unitflow_core/src/lib.rs` — public module/re-export surface for the core crate.
-- `crates/unitflow_core/src/model.rs` — validated Rust category/unit definitions and stable domain models.
+- `crates/unitflow_core/src/model.rs` — validated Rust category/unit definitions, stable domain models, and bounded alias normalization.
 - `crates/unitflow_core/src/catalog.rs` — built-in unit catalog, lookup, category filtering, and search behavior.
-- `crates/unitflow_core/src/converter.rs` — checked exact-decimal single/batch conversion and explicit rounding strategies.
+- `crates/unitflow_core/src/converter.rs` — checked exact-decimal single/batch conversion, explicit rounding strategies, and camelCase bridge serialization identifiers.
 - `crates/unitflow_core/src/custom_unit.rs` — custom affine-unit construction/validation helpers.
 - `crates/unitflow_core/src/notation.rs` — plain/scientific/engineering notation formatting.
 - `crates/unitflow_core/src/education.rs` — offline educational category metadata.
-- `crates/unitflow_core/src/error.rs` — typed public domain/conversion errors.
+- `crates/unitflow_core/src/error.rs` — typed public domain/conversion errors including custom-alias count bounds.
 - `crates/unitflow_core/examples/benchmark.rs` — dependency-free conversion micro-benchmark entry point.
 
 ## Rust tests
 
 - `crates/unitflow_core/tests/catalog.rs` — catalog contents, lookup, aliases, and search ranking coverage.
-- `crates/unitflow_core/tests/conversion.rs` — multiplicative/affine conversion, rounding, batch, and error regression tests.
-- `crates/unitflow_core/tests/custom_units.rs` — custom-unit validation/conversion tests.
+- `crates/unitflow_core/tests/conversion.rs` — multiplicative/affine conversion, rounding, batch, error, and bridge-rounding serialization regression tests.
+- `crates/unitflow_core/tests/custom_units.rs` — custom-unit validation/conversion and alias-ceiling tests.
 - `crates/unitflow_core/tests/education.rs` — educational metadata integrity checks.
 - `crates/unitflow_core/tests/invariants.rs` — catalog-wide identity/round-trip/domain invariants.
 - `crates/unitflow_core/tests/notation.rs` — notation-formatting behavior.
-- `crates/unitflow_core/tests/bridge_parity.rs` — Rust execution of shared Rust↔Dart parity fixture vectors.
+- `crates/unitflow_core/tests/bridge_parity.rs` — Rust deserialization/execution of the shared Rust↔Dart parity fixture.
 
 ## Shared fixtures
 
-- `fixtures/bridge_parity_v1.json` — versioned decimal-string conversion vectors shared by Rust and Dart parity tests.
+- `fixtures/bridge_parity_v1.json` — versioned exact-decimal conversion and all-rounding-mode vectors shared directly by Rust and Dart parity tests.
 
 ## Documentation index and engineering guides
 
@@ -136,9 +136,9 @@ This inventory documents every tracked first-party file in UnitFlow and its role
 - `docs/bridge.md` — Rust↔Flutter integration direction and authority boundary.
 - `docs/bridge-protocol.md` — versioned decimal-string bridge contract and parity rules.
 - `docs/data-format.md` — local backup schema, migration, import bounds, and reset semantics.
-- `docs/setup.md` — Git/Python/Rust/Flutter/native setup and troubleshooting prerequisites.
+- `docs/setup.md` — Git/Python/Rust 1.82+/Flutter/native setup and troubleshooting prerequisites.
 - `docs/development.md` — contributor implementation conventions and verification workflow.
-- `docs/testing.md` — repository, Rust, Flutter, integration, property, platform, and regression testing strategy.
+- `docs/testing.md` — repository, Rust, Flutter, bridge parity, integration, property, platform, and regression testing strategy.
 - `docs/performance.md` — benchmark/profiling policy and measurement evidence rules.
 - `docs/accessibility.md` — semantics, keyboard, large-text/contrast/motion review requirements.
 - `docs/localization.md` — ARB/gen-l10n workflow and locale acceptance policy.
@@ -149,7 +149,7 @@ This inventory documents every tracked first-party file in UnitFlow and its role
 - `docs/platform-support.md` — target/support/release-verification terminology.
 - `docs/native-platforms.md` — required reviewed native project work and target-specific release checks.
 - `docs/platform-smoke.md` — generated-scaffold compatibility evidence and its limits.
-- `docs/release.md` — version/tag/source/native release procedure.
+- `docs/release.md` — `2.0.12` version/tag/source/native release procedure.
 - `docs/release-checklist.md` — auditable release-candidate checklist.
 - `docs/github-maintenance.md` — branch protection, security settings, labels, workflows, and repository administration.
 - `docs/troubleshooting.md` — common development/build/runtime troubleshooting guidance.
@@ -167,7 +167,7 @@ This inventory documents every tracked first-party file in UnitFlow and its role
 - `scripts/bootstrap_platforms.sh` — Bash helper for deliberate Flutter native-platform scaffold generation/review.
 - `scripts/bootstrap_platforms.ps1` — PowerShell equivalent for native-platform scaffold generation/review.
 - `scripts/check_markdown_links.py` — repository-local Markdown target validator.
-- `scripts/check_release_consistency.py` — package/version/changelog/schema/bridge-protocol declaration consistency validator.
+- `scripts/check_release_consistency.py` — package/version/changelog/Rust-minimum/schema/bridge-protocol declaration consistency validator.
 - `scripts/check_release_tag.py` — exact `v<workspace-version>` release tag validator.
 - `scripts/check_repository_hygiene.py` — critical-file presence and tracked secret/build/generated-artifact guard.
 - `scripts/check_repository_inventory.py` — exact tracked-file versus documented-inventory drift validator.
