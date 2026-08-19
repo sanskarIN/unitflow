@@ -59,14 +59,14 @@ final class DecimalDisplayFormatter {
     final parts = unsigned.split('.');
     var whole = parts[0];
 
-    if (useGrouping) {
-      final chunks = <String>[];
-      while (whole.length > 3) {
-        chunks.insert(0, whole.substring(whole.length - 3));
-        whole = whole.substring(0, whole.length - 3);
-      }
-      chunks.insert(0, whole);
-      whole = chunks.join(symbols.GROUP_SEP);
+    if (useGrouping && symbols.GROUP_SEP.isNotEmpty) {
+      final grouping = _groupingSizes(symbols.DECIMAL_PATTERN);
+      whole = _groupWhole(
+        whole,
+        separator: symbols.GROUP_SEP,
+        primarySize: grouping.$1,
+        secondarySize: grouping.$2,
+      );
     }
 
     final fraction = parts.length == 2 ? '${symbols.DECIMAL_SEP}${parts[1]}' : '';
@@ -93,9 +93,7 @@ final class DecimalDisplayFormatter {
     final negative = value.coefficient.isNegative;
     final digits = value.coefficient.abs().toString();
     final exponent = digits.length - 1 - value.scale;
-    final mantissa = digits.length == 1
-        ? digits
-        : '${digits[0]}.${digits.substring(1)}';
+    final mantissa = digits.length == 1 ? digits : '${digits[0]}.${digits.substring(1)}';
     return '${negative ? '-' : ''}$mantissa${_exponent(exponent)}';
   }
 
@@ -123,5 +121,46 @@ final class DecimalDisplayFormatter {
     final quotient = value ~/ divisor;
     final remainder = value.remainder(divisor);
     return remainder < 0 ? quotient - 1 : quotient;
+  }
+
+  (int, int) _groupingSizes(String decimalPattern) {
+    final positivePattern = decimalPattern.split(';').first;
+    final integerPattern = positivePattern.split('.').first;
+    final groups = integerPattern.split(',');
+    if (groups.length < 2) {
+      return (0, 0);
+    }
+
+    final primary = _digitPlaceholders(groups.last);
+    if (primary <= 0) {
+      return (0, 0);
+    }
+    final secondary = groups.length >= 3 ? _digitPlaceholders(groups[groups.length - 2]) : primary;
+    return (primary, secondary > 0 ? secondary : primary);
+  }
+
+  int _digitPlaceholders(String patternPart) =>
+      patternPart.split('').where((character) => character == '#' || character == '0').length;
+
+  String _groupWhole(
+    String whole, {
+    required String separator,
+    required int primarySize,
+    required int secondarySize,
+  }) {
+    if (primarySize <= 0 || secondarySize <= 0 || whole.length <= primarySize) {
+      return whole;
+    }
+
+    final chunks = <String>[];
+    var end = whole.length;
+    var size = primarySize;
+    while (end > 0) {
+      final start = (end - size).clamp(0, end);
+      chunks.add(whole.substring(start, end));
+      end = start;
+      size = secondarySize;
+    }
+    return chunks.reversed.join(separator);
   }
 }
