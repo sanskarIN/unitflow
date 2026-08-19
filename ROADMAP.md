@@ -76,7 +76,7 @@ The roadmap is milestone-oriented. Items are checked only when repository eviden
 - [x] Release workflow rejects a `v*` tag that does not exactly match the Cargo workspace version.
 - [ ] Native platform packaging guidance and binary artifacts validated per platform.
 - [x] Release checklist, changelog, data-migration notes, and platform-support documentation baseline.
-- [ ] Tag and verify `0.1.0-alpha.1` only after the blocking items below pass.
+- [ ] Tag and verify `2.0.12` only after the blocking items below pass.
 
 ## Phase 6 — Final audit
 
