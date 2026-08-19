@@ -12,6 +12,7 @@ final class RecentConversion {
     required this.createdAt,
   });
 
+  static const maxInputLength = 1024;
   static const _allowedKeys = <String>{
     'input',
     'fromUnitId',
@@ -46,7 +47,7 @@ final class RecentConversion {
     final timestamp = DateTime.tryParse(created);
     if (timestamp == null ||
         input.isEmpty ||
-        input.length > 1024 ||
+        input.length > maxInputLength ||
         !_unitIdPattern.hasMatch(from) ||
         !_unitIdPattern.hasMatch(to)) {
       return null;
@@ -126,8 +127,12 @@ final class CustomUnitData {
       throw const FormatException('Custom unit formula is invalid.');
     }
     final parsedScale = ExactDecimal.parse(scale);
+    final parsedOffset = ExactDecimal.parse(offset);
     if (parsedScale.compareTo(ExactDecimal.zero) <= 0) {
       throw const FormatException('Custom unit scale must be greater than zero.');
+    }
+    if (!parsedScale.isRustDecimalCompatible || !parsedOffset.isRustDecimalCompatible) {
+      throw const FormatException('Custom unit formula is outside the supported decimal range.');
     }
     return UnitDefinition(
       id: id,
@@ -135,7 +140,7 @@ final class CustomUnitData {
       name: normalizedName,
       symbol: normalizedSymbol,
       scale: parsedScale,
-      offset: ExactDecimal.parse(offset),
+      offset: parsedOffset,
       aliases: List<String>.unmodifiable(normalizedAliases),
       description: normalizedDescription,
       isBuiltIn: false,
