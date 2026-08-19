@@ -48,6 +48,13 @@ void main() {
     expect(restored.customUnits.single.id, 'double_meter');
   });
 
+  test('memory repository enforces production import size bound', () {
+    final repository = MemoryUserStateRepository();
+    final oversized = ' ' * 1_000_001;
+
+    expect(() => repository.importJson(oversized), throwsFormatException);
+  });
+
   test('schema version one backups migrate to nearest-even rounding', () {
     final repository = MemoryUserStateRepository();
     const legacy = '{'
