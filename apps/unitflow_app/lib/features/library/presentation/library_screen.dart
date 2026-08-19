@@ -180,26 +180,46 @@ final class _LibraryScreenState extends State<LibraryScreen> {
   }
 
   Future<void> _deleteCustomUnit(UnitDefinition unit) async {
-    final data = widget.appController.state.customUnits
-        .where((candidate) => candidate.id == unit.id)
-        .firstOrNull;
-    if (data == null) {
-      return;
-    }
-    await widget.appController.removeCustomUnit(unit.id);
-    if (!mounted) {
+    final snapshot = await widget.appController.removeCustomUnit(unit.id);
+    if (snapshot == null || !mounted) {
       return;
     }
     final strings = AppLocalizations.of(context);
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(strings.removeCustomUnit),
+        content: Text(strings.customUnitRemoved),
         action: SnackBarAction(
           label: strings.undo,
-          onPressed: () => widget.appController.addCustomUnit(data),
+          onPressed: () => _restoreCustomUnit(snapshot),
         ),
       ),
+    );
+  }
+
+  Future<void> _restoreCustomUnit(RemovedCustomUnitSnapshot snapshot) async {
+    final strings = AppLocalizations.of(context);
+    try {
+      await widget.appController.restoreCustomUnit(snapshot);
+    } on Object catch (error) {
+      final message = userSafeFailure(
+        error,
+        event: 'custom_unit_restore_failed',
+        fallback: strings.customUnitRestoreFailed,
+      );
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+      return;
+    }
+    if (!mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(strings.customUnitRestored)),
     );
   }
 }
@@ -404,12 +424,5 @@ final class _EmptyLibrary extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-extension<T> on Iterable<T> {
-  T? get firstOrNull {
-    final iterator = this.iterator;
-    return iterator.moveNext() ? iterator.current : null;
   }
 }
