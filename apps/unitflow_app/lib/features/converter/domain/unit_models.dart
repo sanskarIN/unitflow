@@ -126,6 +126,7 @@ final class UnitDefinition {
     return id.toLowerCase().contains(normalized) ||
         name.toLowerCase().contains(normalized) ||
         symbol.toLowerCase().contains(normalized) ||
+        description.toLowerCase().contains(normalized) ||
         aliases.any((alias) => alias.toLowerCase().contains(normalized));
   }
 }
