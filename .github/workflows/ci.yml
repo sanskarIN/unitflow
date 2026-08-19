@@ -133,4 +133,10 @@ jobs:
         run: flutter analyze --fatal-infos --fatal-warnings
 
       - name: Verify generated integration is committed
-        run: git diff --exit-code
+        shell: bash
+        run: |
+          if [[ -n "$(git status --porcelain --untracked-files=all)" ]]; then
+            echo "Generated bridge/platform integration differs from committed source." >&2
+            git status --short >&2
+            exit 1
+          fi
