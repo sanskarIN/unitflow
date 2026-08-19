@@ -44,6 +44,9 @@ pub enum UnitFlowError {
     #[error("field `{field}` exceeds the maximum length of {max} characters")]
     FieldTooLong { field: &'static str, max: usize },
 
+    #[error("custom unit aliases exceed the maximum of {max} entries")]
+    TooManyAliases { max: usize },
+
     #[error("alias cannot be empty")]
     EmptyAlias,
 }
