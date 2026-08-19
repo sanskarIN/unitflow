@@ -3,6 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/branding/unitflow_mark.dart';
 import '../../../app/theme/app_theme.dart';
+import '../../../core/errors/user_safe_error.dart';
 import '../../../l10n/app_localizations.dart';
 
 final class AboutScreen extends StatelessWidget {
@@ -182,13 +183,25 @@ final class _ExternalTile extends StatelessWidget {
   );
 
   Future<void> _open(BuildContext context) async {
-    if (!await launchUrl(uri)) {
-      if (!context.mounted) {
+    final strings = AppLocalizations.of(context);
+    String? message;
+    try {
+      if (await launchUrl(uri)) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not open $title.')),
+      message = strings.externalLinkOpenFailed(title);
+    } on Object catch (error) {
+      message = userSafeFailure(
+        error,
+        event: 'about_external_link_open_failed',
+        fallback: strings.externalLinkOpenFailed(title),
       );
     }
+    if (!context.mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 }
