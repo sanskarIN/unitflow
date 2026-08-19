@@ -9,6 +9,9 @@ analyzer:
     missing_required_param: error
     missing_return: error
 
+formatter:
+  page_width: 120
+
 linter:
   rules:
     always_declare_return_types: true
