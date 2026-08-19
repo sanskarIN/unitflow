@@ -15,3 +15,7 @@ crate-type = ["cdylib", "staticlib", "rlib"]
 flutter_rust_bridge.workspace = true
 rust_decimal.workspace = true
 unitflow_core = { path = "../unitflow_core" }
+
+[dev-dependencies]
+serde.workspace = true
+serde_json = "1.0"
