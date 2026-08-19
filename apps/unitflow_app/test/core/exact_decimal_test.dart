@@ -17,6 +17,22 @@ void main() {
       expect(() => ExactDecimal.parse('1.2.3'), throwsFormatException);
       expect(() => ExactDecimal.parse('1e1001'), throwsFormatException);
     });
+
+    test('reports Rust decimal compatibility bounds', () {
+      expect(
+        ExactDecimal.parse('79228162514264337593543950335')
+            .isRustDecimalCompatible,
+        isTrue,
+      );
+      expect(
+        ExactDecimal.parse('79228162514264337593543950336')
+            .isRustDecimalCompatible,
+        isFalse,
+      );
+      expect(ExactDecimal.parse('1e-28').isRustDecimalCompatible, isTrue);
+      expect(ExactDecimal.parse('1e-29').isRustDecimalCompatible, isFalse);
+      expect(ExactDecimal.parse('10e-29').isRustDecimalCompatible, isTrue);
+    });
   });
 
   group('ExactDecimal arithmetic', () {
