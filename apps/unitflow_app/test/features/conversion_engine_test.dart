@@ -71,6 +71,50 @@ void main() {
     expect(result.output.toCanonicalString(), '79228162514264337593543950335');
   });
 
+  test('rejects a multiplication intermediate that would overflow Rust', () {
+    expect(
+      () => engine.convert(
+        value: ExactDecimal.parse('79228162514264337593543950335'),
+        fromUnitId: 'kilometer',
+        toUnitId: 'meter',
+        decimalPlaces: 0,
+      ),
+      throwsA(isA<ConversionFailure>()),
+    );
+  });
+
+  test('rejects an affine intermediate that would overflow Rust', () {
+    final affineEngine = ExactConversionEngine(
+      catalog: UnitCatalog(<UnitDefinition>[
+        UnitDefinition(
+          id: 'shifted',
+          category: UnitCategory.temperature,
+          name: 'Shifted',
+          symbol: 's',
+          scale: ExactDecimal.parse('1'),
+          offset: ExactDecimal.parse('1'),
+        ),
+        UnitDefinition(
+          id: 'base',
+          category: UnitCategory.temperature,
+          name: 'Base',
+          symbol: 'b',
+          scale: ExactDecimal.parse('1'),
+        ),
+      ]),
+    );
+
+    expect(
+      () => affineEngine.convert(
+        value: ExactDecimal.parse('79228162514264337593543950335'),
+        fromUnitId: 'shifted',
+        toUnitId: 'base',
+        decimalPlaces: 0,
+      ),
+      throwsA(isA<ConversionFailure>()),
+    );
+  });
+
   test('batch conversion preserves target order', () {
     final results = engine.batchConvert(
       value: ExactDecimal.parse('1'),
