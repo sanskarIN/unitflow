@@ -10,11 +10,13 @@ Use this checklist for every tagged UnitFlow release. A checked item should repr
 - [ ] `CHANGELOG.md` includes user-visible changes and known limitations.
 - [ ] `ROADMAP.md` accurately distinguishes completed work from release blockers.
 - [ ] `what_changed.md` contains a current continuation checkpoint.
+- [ ] `docs/repository-inventory.md` documents every tracked file exactly once.
 - [ ] No temporary debugging code, generated secrets, local paths, `.env` files, or signing material are committed.
 
 ## Repository integrity gates
 
 - [ ] `python3 -m unittest discover -s scripts/tests -p 'test_*.py'` passes.
+- [ ] `python3 scripts/check_repository_inventory.py` passes.
 - [ ] `python3 scripts/check_markdown_links.py` passes.
 - [ ] `python3 scripts/check_release_consistency.py` passes.
 - [ ] `python3 scripts/check_repository_hygiene.py` passes.
@@ -44,6 +46,8 @@ Run from `apps/unitflow_app`:
 - [ ] Existing schema-version-1 backup imports successfully.
 - [ ] Invalid/oversized backups are rejected without replacing active data.
 - [ ] Production and memory/test repositories enforce the same import-size/object/key validation boundary.
+- [ ] Pending writes cannot repopulate pre-reset data after a completed reset.
+- [ ] Recent-history records reject invalid references/bounds while preserving valid locale-formatted original text.
 - [ ] Custom-unit deletion removes dangling favorites, pins, and recents.
 - [ ] Exported backup can be imported into a clean installation.
 - [ ] Stable built-in IDs were not changed without an explicit migration.
