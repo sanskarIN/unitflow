@@ -1,6 +1,6 @@
 # Testing Strategy
 
-UnitFlow treats conversion correctness as a core product requirement.
+UnitFlow treats conversion correctness and repository integrity as core product requirements.
 
 ## One-command verification
 
@@ -16,7 +16,37 @@ On PowerShell:
 ./scripts/verify.ps1
 ```
 
-Both scripts run the Rust and Flutter quality gates, including localization generation.
+Both scripts run the repository validator tests and integrity checks before the Rust and Flutter quality gates, including localization generation.
+
+## Repository integrity gates
+
+Run from the repository root:
+
+```bash
+python3 -m unittest discover -s scripts/tests -p 'test_*.py'
+python3 scripts/check_markdown_links.py
+python3 scripts/check_release_consistency.py
+python3 scripts/check_repository_hygiene.py
+```
+
+These checks cover:
+
+- regression tests for the dependency-free repository validators;
+- repository-local Markdown file targets;
+- Cargo/Flutter/About version consistency;
+- changelog coverage for the current version;
+- local-state schema documentation parity;
+- Rust↔Flutter bridge protocol fixture/documentation parity;
+- critical repository/configuration file presence;
+- tracked `.env`, signing material, generated localization output, and build-output hygiene.
+
+For a tagged release, also run:
+
+```bash
+python3 scripts/check_release_tag.py v0.1.0-alpha.1
+```
+
+Use the actual intended tag. The validator requires it to equal `v` plus the Cargo workspace version exactly.
 
 ## Rust quality gates
 
@@ -67,7 +97,7 @@ Coverage priorities:
 - settings and About page content;
 - semantics for major controls;
 - custom-unit validation;
-- import/export failure states;
+- import/export failure states and consistent import bounds across repositories;
 - CSV/TSV batch export escaping;
 - structured-log redaction;
 - schema migration and local collection cleanup.
@@ -95,6 +125,10 @@ Primary journeys should eventually cover:
 
 Native end-to-end automation should be added after platform scaffolding is committed. Until then, source-level and widget tests must not be described as proof that native release builds pass.
 
+## Generated platform smoke builds
+
+`.github/workflows/platform-smoke.yml` generates temporary Flutter platform scaffolds in clean runners and attempts target builds. These jobs are useful source/toolchain compatibility evidence, but they are intentionally distinct from release verification of committed native projects. See `docs/platform-smoke.md` for the exact evidence boundary.
+
 ## Property/fuzz testing
 
 Useful invariants include:
@@ -119,8 +153,8 @@ Do not compare results across machines without recording the environment. See `d
 
 ## Regression policy
 
-Every confirmed defect should receive a failing regression test before or with the fix when practical.
+Every confirmed defect should receive a failing regression test before or with the fix when practical. Test-only repositories/adapters must enforce the same externally relevant parsing and import limits as production adapters so passing tests cannot rely on weaker validation.
 
 ## CI policy
 
-CI fails on formatting, lint, localization generation, analysis, or test failures. Security scanning and dependency review run in separate workflows. A skipped platform check must be explicit rather than silently treated as success.
+CI fails on repository-integrity validation, validator regression tests, formatting, lint, localization generation, analysis, or test failures. Security scanning, dependency review, generated platform smoke builds, and release packaging run in their respective workflows. A skipped platform check must be explicit rather than silently treated as success.
