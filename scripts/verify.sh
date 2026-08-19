@@ -12,6 +12,9 @@ cd "$ROOT_DIR"
 echo "==> Repository validator tests"
 python3 -m unittest discover -s scripts/tests -p 'test_*.py'
 
+echo "==> Repository inventory"
+python3 scripts/check_repository_inventory.py
+
 echo "==> Markdown links"
 python3 scripts/check_markdown_links.py
 
