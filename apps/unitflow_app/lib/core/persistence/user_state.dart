@@ -169,6 +169,7 @@ final class UserState {
   UserState({
     this.theme = ThemePreference.system,
     this.notation = DecimalNotation.plain,
+    this.roundingMode = DecimalRoundingMode.nearestEven,
     this.decimalPlaces = 12,
     this.useGrouping = true,
     this.onboardingComplete = false,
@@ -181,10 +182,12 @@ final class UserState {
        recents = List<RecentConversion>.unmodifiable(recents ?? const <RecentConversion>[]),
        customUnits = List<CustomUnitData>.unmodifiable(customUnits ?? const <CustomUnitData>[]);
 
-  static const schemaVersion = 1;
+  static const schemaVersion = 2;
+  static const oldestSupportedSchemaVersion = 1;
 
   final ThemePreference theme;
   final DecimalNotation notation;
+  final DecimalRoundingMode roundingMode;
   final int decimalPlaces;
   final bool useGrouping;
   final bool onboardingComplete;
@@ -196,6 +199,7 @@ final class UserState {
   UserState copyWith({
     ThemePreference? theme,
     DecimalNotation? notation,
+    DecimalRoundingMode? roundingMode,
     int? decimalPlaces,
     bool? useGrouping,
     bool? onboardingComplete,
@@ -206,6 +210,7 @@ final class UserState {
   }) => UserState(
     theme: theme ?? this.theme,
     notation: notation ?? this.notation,
+    roundingMode: roundingMode ?? this.roundingMode,
     decimalPlaces: decimalPlaces ?? this.decimalPlaces,
     useGrouping: useGrouping ?? this.useGrouping,
     onboardingComplete: onboardingComplete ?? this.onboardingComplete,
@@ -219,6 +224,7 @@ final class UserState {
     'schemaVersion': schemaVersion,
     'theme': theme.name,
     'notation': notation.name,
+    'roundingMode': roundingMode.name,
     'decimalPlaces': decimalPlaces,
     'useGrouping': useGrouping,
     'onboardingComplete': onboardingComplete,
@@ -230,7 +236,9 @@ final class UserState {
 
   static UserState fromJson(Map<String, Object?> json) {
     final version = json['schemaVersion'];
-    if (version != schemaVersion) {
+    if (version is! int ||
+        version < oldestSupportedSchemaVersion ||
+        version > schemaVersion) {
       throw const FormatException('Unsupported UnitFlow data schema.');
     }
 
@@ -247,8 +255,13 @@ final class UserState {
 
     final theme = ThemePreference.values.where((item) => item.name == json['theme']).firstOrNull;
     final notation = DecimalNotation.values.where((item) => item.name == json['notation']).firstOrNull;
-    if (theme == null || notation == null) {
-      throw const FormatException('Invalid UnitFlow appearance settings.');
+    final roundingMode = version == 1
+        ? DecimalRoundingMode.nearestEven
+        : DecimalRoundingMode.values
+              .where((item) => item.name == json['roundingMode'])
+              .firstOrNull;
+    if (theme == null || notation == null || roundingMode == null) {
+      throw const FormatException('Invalid UnitFlow appearance or conversion settings.');
     }
 
     final favoritesRaw = json['favoriteUnitIds'];
@@ -305,6 +318,7 @@ final class UserState {
     return UserState(
       theme: theme,
       notation: notation,
+      roundingMode: roundingMode,
       decimalPlaces: decimalPlaces,
       useGrouping: useGrouping,
       onboardingComplete: onboardingComplete,
