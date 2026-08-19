@@ -42,10 +42,13 @@ Run the repository-only checks without Rust or Flutter:
 
 ```bash
 python3 -m unittest discover -s scripts/tests -p 'test_*.py'
+python3 scripts/check_repository_inventory.py
 python3 scripts/check_markdown_links.py
 python3 scripts/check_release_consistency.py
 python3 scripts/check_repository_hygiene.py
 ```
+
+The inventory check requires every tracked file to be documented exactly once in `docs/repository-inventory.md`.
 
 ## 3. Rust
 
@@ -134,10 +137,11 @@ On Windows PowerShell:
 Both scripts run, in order:
 
 1. standard-library tests for the Python repository validators;
-2. Markdown-link, release-consistency, and repository-hygiene validation;
-3. Rust formatting, Clippy, and tests;
-4. Flutter dependency resolution and localization generation;
-5. Dart formatting, Flutter analysis, and Flutter tests.
+2. exhaustive tracked-file inventory validation;
+3. Markdown-link, release-consistency, and repository-hygiene validation;
+4. Rust formatting, Clippy, and tests;
+5. Flutter dependency resolution and localization generation;
+6. Dart formatting, Flutter analysis, and Flutter tests.
 
 A complete run therefore requires Git, Python 3, Rust/Cargo, Flutter, and Dart on `PATH`. Native platform release builds are separate checks because they require platform-specific toolchains and reviewed native projects.
 
@@ -184,6 +188,8 @@ On PowerShell, place the command on one line or use PowerShell continuation synt
 
 Do not blindly commit regenerated files. Review package identifiers, minimum OS versions, permissions, entitlements, signing configuration, network capabilities, and any changes to existing source/configuration. See `docs/native-platforms.md` and `docs/platform-smoke.md`.
 
+If reviewed platform files are committed, also update `docs/repository-inventory.md`; CI will reject an undocumented tracked-file change.
+
 ## 8. IDE recommendations
 
 VS Code works well with the Rust Analyzer and Dart/Flutter extensions. Android Studio is useful for Android SDK/emulator management, and Xcode/Visual Studio are required for their respective native builds.
@@ -220,6 +226,10 @@ flutter gen-l10n
 ```
 
 Then rerun analysis/tests. Do not hand-create the generated `app_localizations.dart` file.
+
+### Repository inventory validation fails
+
+Run `git ls-files` and compare the reported missing/stale path with `docs/repository-inventory.md`. Add or remove the exact backticked inventory entry in the same change as the tracked file. Do not silence the validator by excluding ordinary source/documentation files.
 
 ### `flutter doctor` reports a native toolchain problem
 
