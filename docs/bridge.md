@@ -29,15 +29,34 @@ bash tool/generate_bridge.sh
 
 ## Bridge API
 
-The bridge exposes safe string/primitive DTOs for:
+The Rust bridge source currently exposes synchronous FRB functions for:
 
-- single conversion;
-- batch conversion;
-- built-in unit listing;
-- catalog search;
-- explicit rounding-mode selection.
+- `bridge_version` — reports the authoritative core release version;
+- `list_units` — returns built-in unit DTOs;
+- `search_units` — searches the built-in catalog with an optional category and bounded result count;
+- `convert_value` — converts one decimal-string value between two built-in units;
+- `batch_convert_value` — converts one decimal-string source value to an ordered target-ID list and preserves target order;
+- `format_value` — formats one decimal string using explicit notation, precision, and rounding.
+
+Batch conversion is all-or-error at the Rust core boundary: if a requested target is invalid, the bridge does not return a misleading partial batch.
 
 Decimal values cross the FFI boundary as strings. Rust parses and validates them before executing domain behavior. This avoids silently converting high-precision decimal input through a binary floating-point representation.
+
+Bridge regression tests exercise single conversion, ordered batch conversion, empty batches, invalid batch targets, explicit notation formatting, category-scoped search, invalid decimal input, and the shared conversion parity corpus covering all categories and rounding modes represented by `test_vectors/conversions.json`.
+
+## Custom units and native adapter strategy
+
+The current bridge catalog is intentionally the built-in Rust catalog. Flutter user-created units are stored locally and merged into the Dart-side application catalog. Therefore a native production adapter must not blindly route every pair to the built-in-only Rust bridge.
+
+The intended adapter boundary is hybrid:
+
+1. initialize the generated native Rust library on supported native platforms;
+2. use Rust bridge conversion for pairs where both unit IDs are built-in and the native bridge is available;
+3. retain the deterministic exact-decimal engine for custom-unit pairs and for web/fallback operation;
+4. preserve the same `ConversionEngine` interface so presentation code does not depend on generated FRB classes/functions directly;
+5. fail back safely when native initialization/loading is unavailable rather than crashing startup.
+
+Do **not** implement this adapter by guessing generated Dart identifiers. First let the pinned generator produce/normalize `apps/unitflow_app/lib/src/rust`, inspect the exact generated API, and only then add the adapter imports/calls. This rule prevents hand-written source from depending on code-generator names that have not actually been produced for the pinned version.
 
 ## Generated sources
 
@@ -56,11 +75,13 @@ The release checklist therefore distinguishes:
 1. Rust core compiles/tests;
 2. FRB bindings generate;
 3. generated Rust/Dart analyze;
-4. native application builds;
-5. installed app executes a conversion through the intended native boundary;
-6. web fallback executes deterministic Dart conversion without a native library.
+4. the application adapter initializes and routes built-in conversion through the generated native API;
+5. native application builds;
+6. installed app executes a built-in conversion through the intended native boundary;
+7. custom units continue through the deterministic application fallback path;
+8. web fallback executes deterministic Dart conversion without requiring a native library.
 
-Until steps 4–5 have platform evidence, native bridge packaging is not considered release-verified.
+Until native adapter and platform evidence exist for steps 4–6, native bridge runtime use is not considered release-verified.
 
 ## API change policy
 
@@ -71,7 +92,8 @@ When bridge-visible Rust types/functions change:
 3. run `cargo fmt`, `cargo clippy`, and workspace tests;
 4. run Flutter generation, formatting, analysis, and tests;
 5. confirm no modified or untracked generated source remains;
-6. update this document and `what_changed.md` when integration behavior changes.
+6. inspect adapter compilation against the generated API;
+7. update this document and `what_changed.md` when integration behavior changes.
 
 ## Troubleshooting
 
