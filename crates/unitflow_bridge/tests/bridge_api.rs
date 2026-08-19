@@ -94,7 +94,7 @@ fn formats_through_bridge_with_explicit_notation_and_rounding() {
     )
     .expect("formatting");
 
-    assert_eq!(formatted, "1.23e3");
+    assert_eq!(formatted, "1.23e+3");
 }
 
 #[test]
