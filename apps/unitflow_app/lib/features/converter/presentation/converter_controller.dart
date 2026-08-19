@@ -202,10 +202,27 @@ final class ConverterController extends ChangeNotifier {
     if (from == null || to == null || from.category != to.category) {
       return;
     }
+
+    ExactDecimal canonicalInput;
+    try {
+      canonicalInput = ExactDecimal.parse(recent.input);
+    } on FormatException {
+      _category = from.category;
+      _fromUnitId = from.id;
+      _toUnitId = to.id;
+      recompute();
+      return;
+    }
+
     _category = from.category;
     _fromUnitId = from.id;
     _toUnitId = to.id;
-    _input = recent.input;
+    _input = _formatter.format(
+      canonicalInput,
+      localeName: _localeName,
+      notation: DecimalNotation.plain,
+      useGrouping: false,
+    );
     recompute();
   }
 
