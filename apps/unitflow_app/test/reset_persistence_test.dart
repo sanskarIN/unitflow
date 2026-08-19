@@ -40,6 +40,20 @@ void main() {
     expect(restored.theme, ThemePreference.system);
     expect(restored.onboardingComplete, isTrue);
   });
+
+  test('local reset reports persistence failure through safe warning', () async {
+    final controller = AppController(repository: _FailingResetRepository());
+    await controller.initialize();
+
+    await expectLater(controller.resetLocalData(), throwsStateError);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(
+      controller.warning,
+      'Local data could not be cleared from storage. Please try again.',
+    );
+    expect(controller.state.onboardingComplete, isTrue);
+  });
 }
 
 final class _DelayedRepository implements UserStateRepository {
@@ -60,6 +74,27 @@ final class _DelayedRepository implements UserStateRepository {
   Future<void> clear() async {
     operations.add('clear');
     await _delegate.clear();
+  }
+
+  @override
+  String exportJson(UserState state) => _delegate.exportJson(state);
+
+  @override
+  UserState importJson(String content) => _delegate.importJson(content);
+}
+
+final class _FailingResetRepository implements UserStateRepository {
+  final MemoryUserStateRepository _delegate = MemoryUserStateRepository();
+
+  @override
+  Future<UserState> load() => _delegate.load();
+
+  @override
+  Future<void> save(UserState state) => _delegate.save(state);
+
+  @override
+  Future<void> clear() async {
+    throw StateError('simulated clear failure');
   }
 
   @override
