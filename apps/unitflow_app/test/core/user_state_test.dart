@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:unitflow/core/format/decimal_format.dart';
 import 'package:unitflow/core/math/exact_decimal.dart';
@@ -105,4 +107,37 @@ void main() {
     );
     expect(unit.toUnitDefinition, throwsFormatException);
   });
+
+  test('backup rejects more recent conversions than the import limit', () {
+    final repository = MemoryUserStateRepository();
+    final backup = _emptyBackup()
+      ..['recents'] = List<Object?>.generate(
+        UserState.maxImportedRecents + 1,
+        (index) => <String, Object?>{
+          'input': '$index',
+          'fromUnitId': 'meter',
+          'toUnitId': 'kilometer',
+          'createdAt': DateTime.utc(2026, 8, 19).toIso8601String(),
+        },
+      );
+
+    expect(
+      () => repository.importJson(jsonEncode(backup)),
+      throwsFormatException,
+    );
+  });
 }
+
+Map<String, Object?> _emptyBackup() => <String, Object?>{
+  'schemaVersion': UserState.schemaVersion,
+  'theme': 'system',
+  'notation': 'plain',
+  'roundingMode': 'nearestEven',
+  'decimalPlaces': 12,
+  'useGrouping': true,
+  'onboardingComplete': true,
+  'favoriteUnitIds': <Object?>[],
+  'pinnedPairs': <Object?>[],
+  'recents': <Object?>[],
+  'customUnits': <Object?>[],
+};
