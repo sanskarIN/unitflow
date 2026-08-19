@@ -64,7 +64,7 @@ jobs:
           flutter test
 
       - name: Package Rust crate
-        run: cargo package -p unitflow_core --allow-dirty
+        run: cargo package -p unitflow_core
 
       - name: Package Flutter source
         run: |
