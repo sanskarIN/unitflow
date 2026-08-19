@@ -43,5 +43,9 @@ void main() {
       () => decodeStrictJson('[[[0]]]', maxNesting: 2),
       throwsFormatException,
     );
+    expect(
+      () => decodeStrictJson('[[[]]]', maxNesting: 2),
+      throwsFormatException,
+    );
   });
 }
