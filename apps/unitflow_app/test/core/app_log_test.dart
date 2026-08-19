@@ -23,7 +23,7 @@ void main() {
 
   test('bounds long string metadata', () {
     final sanitized = AppLog.sanitizeMetadata(<String, Object?>{
-      'message': 'x' * 400,
+      'message': List<String>.filled(400, 'x').join(),
     });
 
     final message = sanitized['message'] as String;
