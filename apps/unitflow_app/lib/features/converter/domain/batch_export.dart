@@ -1,13 +1,8 @@
+import 'dart:convert';
+
 import 'unit_models.dart';
 
-enum BatchExportFormat { csv, tsv }
-
-extension BatchExportFormatInfo on BatchExportFormat {
-  String get delimiter => switch (this) {
-    BatchExportFormat.csv => ',',
-    BatchExportFormat.tsv => '\t',
-  };
-}
+enum BatchExportFormat { csv, tsv, json }
 
 /// Deterministic text export for batch-conversion results.
 ///
@@ -21,7 +16,27 @@ final class BatchExportFormatter {
     BatchExportFormat format = BatchExportFormat.csv,
     bool includeHeader = true,
   }) {
-    final delimiter = format.delimiter;
+    final materialized = results.toList(growable: false);
+    return switch (format) {
+      BatchExportFormat.csv => _encodeDelimited(
+        materialized,
+        delimiter: ',',
+        includeHeader: includeHeader,
+      ),
+      BatchExportFormat.tsv => _encodeDelimited(
+        materialized,
+        delimiter: '\t',
+        includeHeader: includeHeader,
+      ),
+      BatchExportFormat.json => _encodeJson(materialized),
+    };
+  }
+
+  String _encodeDelimited(
+    List<ConversionResult> results, {
+    required String delimiter,
+    required bool includeHeader,
+  }) {
     final lines = <String>[];
     if (includeHeader) {
       lines.add(
@@ -54,6 +69,23 @@ final class BatchExportFormatter {
     }
     return lines.join('\n');
   }
+
+  String _encodeJson(List<ConversionResult> results) => const JsonEncoder.withIndent('  ').convert(
+    results
+        .map(
+          (result) => <String, String>{
+            'input': result.input.toCanonicalString(),
+            'from_unit_id': result.from.id,
+            'from_unit': result.from.name,
+            'from_symbol': result.from.symbol,
+            'output': result.output.toCanonicalString(),
+            'to_unit_id': result.to.id,
+            'to_unit': result.to.name,
+            'to_symbol': result.to.symbol,
+          },
+        )
+        .toList(growable: false),
+  );
 
   String _escape(String value, String delimiter) {
     if (!value.contains(delimiter) &&
