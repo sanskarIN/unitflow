@@ -1,0 +1,56 @@
+name: Feature request
+description: Propose an improvement that fits UnitFlow's offline-first scope
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        UnitFlow prioritizes accurate conversion, privacy, accessibility, and an offline-first experience. Describe the user problem before the implementation idea.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem to solve
+      description: What user need or workflow is currently difficult?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Explain the smallest useful behavior and any UI or API changes.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Conversion engine
+        - Unit catalog
+        - Custom units
+        - Flutter UI/UX
+        - Accessibility
+        - Persistence / backup
+        - Platform integration
+        - Documentation
+        - Build / release
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: checkboxes
+    id: constraints
+    attributes:
+      label: Scope checks
+      options:
+        - label: The core proposal can work without requiring an account.
+          required: true
+        - label: The proposal does not require uploading local conversion history by default.
+          required: true
+        - label: I searched existing issues for similar proposals.
+          required: true
