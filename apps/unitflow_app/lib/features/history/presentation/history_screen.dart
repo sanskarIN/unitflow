@@ -5,17 +5,16 @@ import '../../../app/app_controller.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../core/persistence/user_state.dart';
 import '../../../l10n/app_localizations.dart';
-import '../../converter/domain/unit_models.dart';
 
 final class HistoryScreen extends StatelessWidget {
   const HistoryScreen({
     required this.appController,
-    required this.onOpenPair,
+    required this.onOpenRecent,
     super.key,
   });
 
   final AppController appController;
-  final ValueChanged<PinnedPair> onOpenPair;
+  final ValueChanged<RecentConversion> onOpenRecent;
 
   @override
   Widget build(BuildContext context) => AnimatedBuilder(
@@ -90,13 +89,7 @@ final class HistoryScreen extends StatelessWidget {
                             '${from.name} → ${to.name} • ${DateFormat.yMMMd(Localizations.localeOf(context).toLanguageTag()).add_jm().format(recent.createdAt.toLocal())}',
                           ),
                           trailing: const Icon(Icons.chevron_right),
-                          onTap: () => onOpenPair(
-                            PinnedPair(
-                              category: from.category,
-                              fromUnitId: from.id,
-                              toUnitId: to.id,
-                            ),
-                          ),
+                          onTap: () => onOpenRecent(recent),
                         ),
                       ),
                     );
