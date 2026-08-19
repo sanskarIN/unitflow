@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:unitflow/app/app_controller.dart';
+import 'package:unitflow/core/math/exact_decimal.dart';
 import 'package:unitflow/core/persistence/user_state.dart';
 import 'package:unitflow/core/persistence/user_state_repository.dart';
 import 'package:unitflow/features/converter/domain/unit_models.dart';
@@ -40,7 +41,10 @@ void main() {
 
     await controller.togglePinnedPair(pair);
     expect(controller.isPairPinned(pair), isTrue);
-    expect(controller.state.pinnedPairs.single.storageValue, 'length|meter|kilometer');
+    expect(
+      controller.state.pinnedPairs.single.storageValue,
+      'length|meter|kilometer',
+    );
 
     await controller.togglePinnedPair(pair);
     expect(controller.isPairPinned(pair), isFalse);
@@ -64,6 +68,25 @@ void main() {
 
     await controller.restoreHistory(snapshot);
     expect(controller.state.recents, hasLength(50));
+  });
+
+  test('conversion settings persist through the repository', () async {
+    await controller.setRoundingMode(DecimalRoundingMode.ceiling);
+    await controller.setDecimalPlaces(4);
+    await controller.setUseGrouping(false);
+
+    final restored = await repository.load();
+    expect(restored.roundingMode, DecimalRoundingMode.ceiling);
+    expect(restored.decimalPlaces, 4);
+    expect(restored.useGrouping, isFalse);
+  });
+
+  test('reduced motion preference persists through the repository', () async {
+    await controller.setReduceMotion(true);
+
+    final restored = await repository.load();
+    expect(controller.state.reduceMotion, isTrue);
+    expect(restored.reduceMotion, isTrue);
   });
 
   test('valid custom unit becomes available to conversion engine', () async {
@@ -95,10 +118,7 @@ void main() {
       offset: '0',
     );
 
-    expect(
-      () => controller.addCustomUnit(custom),
-      throwsArgumentError,
-    );
+    expect(() => controller.addCustomUnit(custom), throwsArgumentError);
   });
 
   test('invalid import preserves current state', () async {
