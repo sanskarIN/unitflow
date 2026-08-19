@@ -12,6 +12,17 @@ bash tool/check.sh
 
 The script runs the same primary Rust and Flutter quality gates used by CI.
 
+## Repository safety tests
+
+Run the dependency-free repository utility tests with:
+
+```bash
+cd tool
+python3 -m unittest discover -p 'test_*.py'
+```
+
+CI also validates shell/Python syntax, scans tracked files for common credential signatures, validates tracked JSON/ARB files as UTF-8 JSON with unique object keys, and verifies internal Markdown targets.
+
 ## Rust quality gates
 
 Run:
@@ -29,7 +40,7 @@ Coverage priorities:
 - multiplicative and affine conversion accuracy;
 - zero/negative/large/small decimal values;
 - round-trip conversion invariants where exact decimal factors permit it;
-- search by name, symbol, and alias;
+- search by name, symbol, alias, and descriptive metadata where supported;
 - custom-unit validation;
 - scientific/engineering notation edge cases;
 - batch conversion order and error behavior;
@@ -63,6 +74,8 @@ Coverage priorities:
 - semantics for major controls;
 - custom-unit form validation;
 - backup schema round trips and rejected imports;
+- strict backup collection/property/identifier validation;
+- custom-unit normalization and collection limits;
 - batch CSV escaping.
 
 ## Rust–Flutter bridge generation
