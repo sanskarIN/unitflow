@@ -21,7 +21,9 @@ pub fn format_decimal(
     round_mode: RoundMode,
 ) -> Result<String, UnitFlowError> {
     if decimal_places.is_some_and(|places| places > 28) {
-        return Err(UnitFlowError::InvalidPrecision(decimal_places.unwrap_or(29)));
+        return Err(UnitFlowError::InvalidPrecision(
+            decimal_places.unwrap_or(29),
+        ));
     }
 
     match notation {

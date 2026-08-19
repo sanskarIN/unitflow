@@ -100,7 +100,8 @@ final class _CustomUnitDialogState extends State<_CustomUnitDialog> {
                 decoration: const InputDecoration(labelText: 'Name'),
                 textInputAction: TextInputAction.next,
                 maxLength: 128,
-                validator: (value) => (value?.trim().isEmpty ?? true) ? 'Enter a name.' : null,
+                validator: (value) =>
+                    (value?.trim().isEmpty ?? true) ? 'Enter a name.' : null,
               ),
               const SizedBox(height: AppSpacing.sm),
               TextFormField(
@@ -108,7 +109,8 @@ final class _CustomUnitDialogState extends State<_CustomUnitDialog> {
                 decoration: const InputDecoration(labelText: 'Symbol'),
                 textInputAction: TextInputAction.next,
                 maxLength: 32,
-                validator: (value) => (value?.trim().isEmpty ?? true) ? 'Enter a symbol.' : null,
+                validator: (value) =>
+                    (value?.trim().isEmpty ?? true) ? 'Enter a symbol.' : null,
               ),
               const SizedBox(height: AppSpacing.sm),
               Row(
@@ -122,7 +124,8 @@ final class _CustomUnitDialogState extends State<_CustomUnitDialog> {
                         decimal: true,
                         signed: true,
                       ),
-                      validator: (value) => (value?.trim().isEmpty ?? true) ? 'Required.' : null,
+                      validator: (value) =>
+                          (value?.trim().isEmpty ?? true) ? 'Required.' : null,
                     ),
                   ),
                   const SizedBox(width: AppSpacing.sm),
@@ -134,7 +137,8 @@ final class _CustomUnitDialogState extends State<_CustomUnitDialog> {
                         decimal: true,
                         signed: true,
                       ),
-                      validator: (value) => (value?.trim().isEmpty ?? true) ? 'Required.' : null,
+                      validator: (value) =>
+                          (value?.trim().isEmpty ?? true) ? 'Required.' : null,
                     ),
                   ),
                 ],
@@ -171,10 +175,7 @@ final class _CustomUnitDialogState extends State<_CustomUnitDialog> {
         onPressed: () => Navigator.of(context).pop(),
         child: const Text('Cancel'),
       ),
-      FilledButton(
-        onPressed: _submit,
-        child: const Text('Create unit'),
-      ),
+      FilledButton(onPressed: _submit, child: const Text('Create unit')),
     ],
   );
 

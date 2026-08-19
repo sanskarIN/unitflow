@@ -29,7 +29,10 @@ final class SettingsScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
                 const SizedBox(height: AppSpacing.md),
-                Text('Settings', style: Theme.of(context).textTheme.headlineMedium),
+                Text(
+                  'Settings',
+                  style: Theme.of(context).textTheme.headlineMedium,
+                ),
                 const SizedBox(height: AppSpacing.lg),
                 _SectionCard(
                   title: 'Appearance',
@@ -87,7 +90,9 @@ final class SettingsScreen extends StatelessWidget {
                     SwitchListTile.adaptive(
                       contentPadding: EdgeInsets.zero,
                       title: const Text('Digit grouping'),
-                      subtitle: const Text('Use locale-aware grouping separators in displayed results.'),
+                      subtitle: const Text(
+                        'Use locale-aware grouping separators in displayed results.',
+                      ),
                       value: appController.state.useGrouping,
                       onChanged: appController.setUseGrouping,
                     ),
@@ -133,7 +138,9 @@ final class SettingsScreen extends StatelessWidget {
                     ListTile(
                       contentPadding: EdgeInsets.zero,
                       title: const Text('UnitFlow'),
-                      subtitle: const Text('License, privacy, support, GitHub, funding, and credits'),
+                      subtitle: const Text(
+                        'License, privacy, support, GitHub, funding, and credits',
+                      ),
                       trailing: const Icon(Icons.chevron_right),
                       onTap: onOpenAbout,
                     ),
@@ -173,7 +180,9 @@ final class SettingsScreen extends StatelessWidget {
     }
     if (content == null || content.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('The clipboard does not contain backup JSON.')),
+        const SnackBar(
+          content: Text('The clipboard does not contain backup JSON.'),
+        ),
       );
       return;
     }
@@ -184,17 +193,16 @@ final class SettingsScreen extends StatelessWidget {
       if (!context.mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Import rejected: $error')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Import rejected: $error')));
       return;
     }
     if (!context.mounted) {
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('UnitFlow backup imported.')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('UnitFlow backup imported.')));
   }
 
   Future<void> _confirmReset(BuildContext context) async {

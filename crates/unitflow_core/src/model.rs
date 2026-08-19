@@ -127,10 +127,12 @@ impl UnitDefinition {
                 max: 64,
             });
         }
-        if !id
-            .chars()
-            .all(|character| character.is_ascii_lowercase() || character.is_ascii_digit() || character == '_' || character == '-')
-        {
+        if !id.chars().all(|character| {
+            character.is_ascii_lowercase()
+                || character.is_ascii_digit()
+                || character == '_'
+                || character == '-'
+        }) {
             return Err(UnitFlowError::InvalidUnitId(id));
         }
         if name.is_empty() {

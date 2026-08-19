@@ -40,19 +40,25 @@ final class AboutScreen extends StatelessWidget {
                     icon: Icons.support_agent,
                     title: 'Support email',
                     subtitle: 'supportramsandesh@gmail.com',
-                    uri: Uri.parse('mailto:supportramsandesh@gmail.com?subject=UnitFlow%20Support'),
+                    uri: Uri.parse(
+                      'mailto:supportramsandesh@gmail.com?subject=UnitFlow%20Support',
+                    ),
                   ),
                   _ExternalTile(
                     icon: Icons.business_outlined,
                     title: 'Business email',
                     subtitle: 'sanskarin@outlook.in',
-                    uri: Uri.parse('mailto:sanskarin@outlook.in?subject=UnitFlow'),
+                    uri: Uri.parse(
+                      'mailto:sanskarin@outlook.in?subject=UnitFlow',
+                    ),
                   ),
                   _ExternalTile(
                     icon: Icons.alternate_email,
                     title: 'Business email (alternate)',
                     subtitle: 'sanskarin.business@gmail.com',
-                    uri: Uri.parse('mailto:sanskarin.business@gmail.com?subject=UnitFlow'),
+                    uri: Uri.parse(
+                      'mailto:sanskarin.business@gmail.com?subject=UnitFlow',
+                    ),
                   ),
                 ],
               ),
@@ -63,7 +69,10 @@ final class AboutScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      Text('Privacy', style: Theme.of(context).textTheme.titleLarge),
+                      Text(
+                        'Privacy',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
                       const SizedBox(height: AppSpacing.sm),
                       const Text(
                         'Static conversions work offline and do not require an account. Preferences, favorites, history, pinned pairs, and custom units are designed to remain on this device unless you explicitly export them.',
@@ -105,7 +114,10 @@ final class _IdentityCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.md),
             Text('UnitFlow', style: theme.textTheme.headlineMedium),
             const SizedBox(height: AppSpacing.xs),
-            Text('Version ${AboutScreen.appVersion}', style: theme.textTheme.bodyMedium),
+            Text(
+              'Version ${AboutScreen.appVersion}',
+              style: theme.textTheme.bodyMedium,
+            ),
             const SizedBox(height: AppSpacing.md),
             const Text(
               'A precise, offline-first unit converter with a Rust domain core and Flutter interface.',
@@ -114,7 +126,9 @@ final class _IdentityCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.lg),
             Text(
               'Made by the Sanskar',
-              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
             ),
             const SizedBox(height: AppSpacing.xs),
             const Text('Open source under the MIT License.'),
@@ -181,9 +195,8 @@ final class _ExternalTile extends StatelessWidget {
       if (!context.mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not open $title.')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Could not open $title.')));
     }
   }
 }

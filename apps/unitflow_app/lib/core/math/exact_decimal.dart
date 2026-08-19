@@ -27,9 +27,8 @@ final class ExactDecimal implements Comparable<ExactDecimal> {
       throw const FormatException('Invalid decimal input');
     }
 
-    final match = RegExp(
-      r'^([+-]?)(\d*)(?:\.(\d*))?(?:[eE]([+-]?\d+))?$',
-    ).firstMatch(input);
+    final match = RegExp(r'^([+-]?)(\d*)(?:\.(\d*))?(?:[eE]([+-]?\d+))?$')
+        .firstMatch(input);
     if (match == null) {
       throw const FormatException('Invalid decimal input');
     }

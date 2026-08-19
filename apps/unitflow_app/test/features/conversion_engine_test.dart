@@ -47,6 +47,10 @@ void main() {
       toUnitIds: const <String>['centimeter', 'kilometer', 'inch'],
       decimalPlaces: 6,
     );
-    expect(results.map((result) => result.to.id), <String>['centimeter', 'kilometer', 'inch']);
+    expect(results.map((result) => result.to.id), <String>[
+      'centimeter',
+      'kilometer',
+      'inch',
+    ]);
   });
 }

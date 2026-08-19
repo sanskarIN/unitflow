@@ -7,7 +7,8 @@ import '../features/converter/domain/conversion_engine.dart';
 import '../features/converter/domain/unit_models.dart';
 
 final class AppController extends ChangeNotifier {
-  AppController({required UserStateRepository repository}) : _repository = repository;
+  AppController({required UserStateRepository repository})
+    : _repository = repository;
 
   final UserStateRepository _repository;
   UserState _state = UserState();
@@ -76,7 +77,10 @@ final class AppController extends ChangeNotifier {
   Future<void> togglePinnedPair(PinnedPair pair) {
     final from = _engine.catalog.byId(pair.fromUnitId);
     final to = _engine.catalog.byId(pair.toUnitId);
-    if (from == null || to == null || from.category != pair.category || to.category != pair.category) {
+    if (from == null ||
+        to == null ||
+        from.category != pair.category ||
+        to.category != pair.category) {
       throw ArgumentError('Pinned pair references invalid units.');
     }
     final next = _state.pinnedPairs.toList();
@@ -127,7 +131,11 @@ final class AppController extends ChangeNotifier {
   Future<void> addCustomUnit(CustomUnitData customUnit) {
     final definition = customUnit.toUnitDefinition();
     if (_engine.catalog.byId(definition.id) != null) {
-      throw ArgumentError.value(definition.id, 'id', 'unit identifier already exists');
+      throw ArgumentError.value(
+        definition.id,
+        'id',
+        'unit identifier already exists',
+      );
     }
     final next = <CustomUnitData>[..._state.customUnits, customUnit];
     final newState = _state.copyWith(customUnits: next);
@@ -140,8 +148,12 @@ final class AppController extends ChangeNotifier {
     if (existing.isEmpty) {
       return Future<void>.value();
     }
-    final nextCustom = _state.customUnits.where((item) => item.id != id).toList();
-    final nextFavorites = _state.favoriteUnitIds.where((item) => item != id).toSet();
+    final nextCustom = _state.customUnits
+        .where((item) => item.id != id)
+        .toList();
+    final nextFavorites = _state.favoriteUnitIds
+        .where((item) => item != id)
+        .toSet();
     final nextPins = _state.pinnedPairs
         .where((pair) => pair.fromUnitId != id && pair.toUnitId != id)
         .toList();

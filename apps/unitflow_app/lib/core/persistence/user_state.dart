@@ -32,11 +32,17 @@ final class RecentConversion {
     final from = value['fromUnitId'];
     final to = value['toUnitId'];
     final created = value['createdAt'];
-    if (input is! String || from is! String || to is! String || created is! String) {
+    if (input is! String ||
+        from is! String ||
+        to is! String ||
+        created is! String) {
       return null;
     }
     final timestamp = DateTime.tryParse(created);
-    if (timestamp == null || from.isEmpty || to.isEmpty || input.length > 1024) {
+    if (timestamp == null ||
+        from.isEmpty ||
+        to.isEmpty ||
+        input.length > 1024) {
       return null;
     }
     return RecentConversion(
@@ -79,7 +85,8 @@ final class CustomUnitData {
     if (symbol.trim().isEmpty || symbol.length > 32) {
       throw const FormatException('Custom unit symbol is invalid.');
     }
-    if (aliases.length > 32 || aliases.any((value) => value.isEmpty || value.length > 64)) {
+    if (aliases.length > 32 ||
+        aliases.any((value) => value.isEmpty || value.length > 64)) {
       throw const FormatException('Custom unit aliases are invalid.');
     }
     if (description.length > 512) {
@@ -87,7 +94,9 @@ final class CustomUnitData {
     }
     final parsedScale = ExactDecimal.parse(scale);
     if (parsedScale.compareTo(ExactDecimal.zero) <= 0) {
-      throw const FormatException('Custom unit scale must be greater than zero.');
+      throw const FormatException(
+        'Custom unit scale must be greater than zero.',
+      );
     }
     return UnitDefinition(
       id: id,
@@ -176,10 +185,18 @@ final class UserState {
     List<PinnedPair>? pinnedPairs,
     List<RecentConversion>? recents,
     List<CustomUnitData>? customUnits,
-  }) : favoriteUnitIds = Set<String>.unmodifiable(favoriteUnitIds ?? <String>{}),
-       pinnedPairs = List<PinnedPair>.unmodifiable(pinnedPairs ?? const <PinnedPair>[]),
-       recents = List<RecentConversion>.unmodifiable(recents ?? const <RecentConversion>[]),
-       customUnits = List<CustomUnitData>.unmodifiable(customUnits ?? const <CustomUnitData>[]);
+  }) : favoriteUnitIds = Set<String>.unmodifiable(
+         favoriteUnitIds ?? <String>{},
+       ),
+       pinnedPairs = List<PinnedPair>.unmodifiable(
+         pinnedPairs ?? const <PinnedPair>[],
+       ),
+       recents = List<RecentConversion>.unmodifiable(
+         recents ?? const <RecentConversion>[],
+       ),
+       customUnits = List<CustomUnitData>.unmodifiable(
+         customUnits ?? const <CustomUnitData>[],
+       );
 
   static const schemaVersion = 1;
 
@@ -223,9 +240,13 @@ final class UserState {
     'useGrouping': useGrouping,
     'onboardingComplete': onboardingComplete,
     'favoriteUnitIds': favoriteUnitIds.toList(growable: false),
-    'pinnedPairs': pinnedPairs.map((pair) => pair.storageValue).toList(growable: false),
+    'pinnedPairs': pinnedPairs
+        .map((pair) => pair.storageValue)
+        .toList(growable: false),
     'recents': recents.map((recent) => recent.toJson()).toList(growable: false),
-    'customUnits': customUnits.map((unit) => unit.toJson()).toList(growable: false),
+    'customUnits': customUnits
+        .map((unit) => unit.toJson())
+        .toList(growable: false),
   };
 
   static UserState fromJson(Map<String, Object?> json) {
@@ -245,8 +266,12 @@ final class UserState {
       throw const FormatException('Invalid UnitFlow preferences.');
     }
 
-    final theme = ThemePreference.values.where((item) => item.name == json['theme']).firstOrNull;
-    final notation = DecimalNotation.values.where((item) => item.name == json['notation']).firstOrNull;
+    final theme = ThemePreference.values
+        .where((item) => item.name == json['theme'])
+        .firstOrNull;
+    final notation = DecimalNotation.values
+        .where((item) => item.name == json['notation'])
+        .firstOrNull;
     if (theme == null || notation == null) {
       throw const FormatException('Invalid UnitFlow appearance settings.');
     }

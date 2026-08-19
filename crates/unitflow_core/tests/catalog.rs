@@ -4,7 +4,10 @@ use unitflow_core::{Category, UnitCatalog};
 fn built_in_catalog_covers_every_declared_category() {
     let catalog = UnitCatalog::built_in().expect("built-in constants must be valid");
 
-    assert!(catalog.len() >= 100, "catalog should remain broad enough for the MVP");
+    assert!(
+        catalog.len() >= 100,
+        "catalog should remain broad enough for the MVP"
+    );
     for category in Category::ALL {
         assert!(
             catalog.get(category.base_unit_id()).is_some(),
@@ -22,7 +25,10 @@ fn search_matches_symbols_names_and_aliases() {
     let catalog = UnitCatalog::built_in().expect("catalog");
 
     assert_eq!(catalog.search("psi", None, 5)[0].id, "psi");
-    assert_eq!(catalog.search("metre", Some(Category::Length), 5)[0].id, "meter");
+    assert_eq!(
+        catalog.search("metre", Some(Category::Length), 5)[0].id,
+        "meter"
+    );
     assert!(catalog
         .search("gallon", Some(Category::Volume), 10)
         .iter()

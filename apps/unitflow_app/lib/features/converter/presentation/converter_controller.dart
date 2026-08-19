@@ -36,7 +36,8 @@ final class ConverterController extends ChangeNotifier {
   List<UnitDefinition> get categoryUnits =>
       _appController.engine.catalog.forCategory(_category);
 
-  UnitDefinition? get fromUnit => _appController.engine.catalog.byId(_fromUnitId);
+  UnitDefinition? get fromUnit =>
+      _appController.engine.catalog.byId(_fromUnitId);
   UnitDefinition? get toUnit => _appController.engine.catalog.byId(_toUnitId);
 
   PinnedPair get currentPair => PinnedPair(
@@ -180,7 +181,10 @@ final class ConverterController extends ChangeNotifier {
   void applyPinnedPair(PinnedPair pair) {
     final from = _appController.engine.catalog.byId(pair.fromUnitId);
     final to = _appController.engine.catalog.byId(pair.toUnitId);
-    if (from == null || to == null || from.category != pair.category || to.category != pair.category) {
+    if (from == null ||
+        to == null ||
+        from.category != pair.category ||
+        to.category != pair.category) {
       return;
     }
     _category = pair.category;
