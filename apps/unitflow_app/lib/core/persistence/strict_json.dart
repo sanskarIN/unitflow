@@ -29,9 +29,7 @@ final class _JsonObjectKeyScanner {
   }
 
   void _parseValue(int depth) {
-    if (depth > maxNesting) {
-      throw FormatException('JSON nesting exceeds the limit of $maxNesting.');
-    }
+    _checkDepth(depth);
     _skipWhitespace();
     if (_index >= source.length) {
       throw const FormatException('Unexpected end of JSON input.');
@@ -50,6 +48,7 @@ final class _JsonObjectKeyScanner {
   }
 
   void _parseObject(int depth) {
+    _checkDepth(depth);
     _expect('{');
     _skipWhitespace();
     if (_consumeIf('}')) {
@@ -83,6 +82,7 @@ final class _JsonObjectKeyScanner {
   }
 
   void _parseArray(int depth) {
+    _checkDepth(depth);
     _expect('[');
     _skipWhitespace();
     if (_consumeIf(']')) {
@@ -155,6 +155,12 @@ final class _JsonObjectKeyScanner {
   void _expect(String expected) {
     if (!_consumeIf(expected)) {
       throw FormatException('Expected `$expected` in JSON input.');
+    }
+  }
+
+  void _checkDepth(int depth) {
+    if (depth > maxNesting) {
+      throw FormatException('JSON nesting exceeds the limit of $maxNesting.');
     }
   }
 
