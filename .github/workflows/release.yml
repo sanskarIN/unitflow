@@ -10,8 +10,21 @@ permissions:
   contents: read
 
 jobs:
+  release-metadata:
+    name: Release metadata
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Validate source version consistency
+        run: python3 tool/check_versions.py
+      - name: Validate tag matches workspace version
+        if: startsWith(github.ref, 'refs/tags/')
+        run: python3 tool/check_release_tag.py "$GITHUB_REF_NAME"
+
   rust-core:
     name: Rust core
+    needs: release-metadata
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -29,6 +42,7 @@ jobs:
 
   flutter-web:
     name: Flutter web
+    needs: release-metadata
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -64,6 +78,7 @@ jobs:
 
   flutter-android:
     name: Flutter Android
+    needs: release-metadata
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -112,6 +127,7 @@ jobs:
 
   flutter-linux:
     name: Flutter Linux
+    needs: release-metadata
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -157,6 +173,7 @@ jobs:
 
   flutter-windows:
     name: Flutter Windows
+    needs: release-metadata
     runs-on: windows-latest
     defaults:
       run:
@@ -202,6 +219,7 @@ jobs:
 
   flutter-macos-ios:
     name: Flutter macOS and iOS validation
+    needs: release-metadata
     runs-on: macos-latest
     defaults:
       run:
