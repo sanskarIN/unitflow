@@ -144,6 +144,51 @@ void main() {
     expect(controller.engine.catalog.byId(custom.id), isNull);
   });
 
+  test('initialization prunes stale persisted unit references', () async {
+    controller.dispose();
+    repository = MemoryUserStateRepository(
+      UserState(
+        onboardingComplete: true,
+        favoriteUnitIds: <String>{'meter', 'missing_unit'},
+        pinnedPairs: const <PinnedPair>[
+          PinnedPair(
+            category: UnitCategory.length,
+            fromUnitId: 'meter',
+            toUnitId: 'kilometer',
+          ),
+          PinnedPair(
+            category: UnitCategory.length,
+            fromUnitId: 'meter',
+            toUnitId: 'missing_unit',
+          ),
+        ],
+        recents: <RecentConversion>[
+          RecentConversion(
+            input: '1',
+            fromUnitId: 'meter',
+            toUnitId: 'kilometer',
+            createdAt: DateTime.utc(2026, 1, 1),
+          ),
+          RecentConversion(
+            input: '2',
+            fromUnitId: 'meter',
+            toUnitId: 'missing_unit',
+            createdAt: DateTime.utc(2026, 1, 2),
+          ),
+        ],
+      ),
+    );
+    controller = AppController(repository: repository);
+
+    await controller.initialize();
+
+    expect(controller.state.favoriteUnitIds, <String>{'meter'});
+    expect(controller.state.pinnedPairs, hasLength(1));
+    expect(controller.state.pinnedPairs.single.toUnitId, 'kilometer');
+    expect(controller.state.recents, hasLength(1));
+    expect(controller.state.recents.single.toUnitId, 'kilometer');
+  });
+
   test('custom unit cannot replace a built-in stable id', () async {
     const custom = CustomUnitData(
       id: 'meter',
