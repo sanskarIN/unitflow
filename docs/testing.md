@@ -2,6 +2,16 @@
 
 UnitFlow treats conversion correctness as a core product requirement.
 
+## One-command local audit
+
+From the repository root:
+
+```bash
+bash tool/check.sh
+```
+
+The script runs the same primary Rust and Flutter quality gates used by CI.
+
 ## Rust quality gates
 
 Run:
@@ -9,7 +19,7 @@ Run:
 ```bash
 cargo fmt --all -- --check
 cargo clippy --workspace --all-targets --all-features -- -D warnings
-cargo test --workspace
+cargo test --workspace --all-features
 ```
 
 Coverage priorities:
@@ -18,11 +28,14 @@ Coverage priorities:
 - source/target category mismatch handling;
 - multiplicative and affine conversion accuracy;
 - zero/negative/large/small decimal values;
-- round-trip conversion tolerances where exact decimal factors permit it;
+- round-trip conversion invariants where exact decimal factors permit it;
 - search by name, symbol, and alias;
 - custom-unit validation;
 - scientific/engineering notation edge cases;
-- batch conversion order and error behavior.
+- batch conversion order and error behavior;
+- Rust↔Flutter bridge DTO/end-point behavior.
+
+`crates/unitflow_core/tests/properties.rs` uses property-based tests for identity conversion, exact metric round trips, and batch target ordering across generated values.
 
 ## Flutter quality gates
 
@@ -31,47 +44,74 @@ Run:
 ```bash
 cd apps/unitflow_app
 flutter pub get
-flutter analyze
+flutter gen-l10n
+dart format --output=none --set-exit-if-changed lib test
+flutter analyze --fatal-infos --fatal-warnings
 flutter test
 ```
 
 Coverage priorities:
 
+- exact-decimal parsing/arithmetic without binary floating point;
 - converter input validation;
 - source/target selection and swap;
+- primary app/onboarding journey;
 - responsive layout at representative widths;
 - theme switching;
 - favorites/pin/history state behavior;
 - settings and About page content;
 - semantics for major controls;
 - custom-unit form validation;
-- import/export failure states.
+- backup schema round trips and rejected imports;
+- batch CSV escaping.
 
-## Integration and end-to-end tests
+## Rust–Flutter bridge generation
 
-Primary journeys should eventually cover:
+The bridge is generated from checked-in Rust API source:
+
+```bash
+cargo install flutter_rust_bridge_codegen --version 2.12.0 --locked
+bash tool/generate_bridge.sh
+cargo check --workspace --all-features
+cd apps/unitflow_app
+flutter analyze --fatal-infos --fatal-warnings
+```
+
+CI runs this as an independent job so bridge generation cannot silently drift from the source API.
+
+## Integration and end-to-end journeys
+
+Primary journeys are tracked as layered widget/integration coverage:
 
 1. launch the app offline;
-2. select a category and pair;
-3. enter a decimal value;
-4. observe a correct conversion;
-5. swap units;
-6. favorite or pin the pair;
-7. restart and verify persisted state;
-8. create a valid custom unit and use it;
-9. reject an invalid imported backup without corrupting local state;
-10. export user data and restore it into a clean profile.
+2. complete or skip onboarding;
+3. select a category and pair;
+4. enter a decimal value;
+5. observe a correct conversion;
+6. swap units;
+7. favorite or pin the pair;
+8. restart and verify persisted state;
+9. create a valid custom unit and use it;
+10. reject an invalid imported backup without corrupting local state;
+11. export user data and restore it into a clean profile;
+12. copy deterministic batch CSV results.
 
-## Property/fuzz testing
+Device-level integration tests are added when a platform runner is available; widget/domain tests remain deterministic and do not require production credentials.
 
-Useful invariants include:
+## Fuzz testing
 
-- converting a value from a unit to itself returns the same value;
-- for valid units A/B and representable decimals, A→B→A remains within the defined rounding policy;
-- invalid scales (zero/negative when prohibited) never construct a custom unit;
-- parsers never panic on arbitrary Unicode input.
+Cargo-fuzz harnesses live under `fuzz/` and are intentionally outside the normal workspace so release builds do not pull fuzz dependencies.
 
-Fuzzing should be isolated from normal CI time budgets unless a short smoke target is maintained.
+Install cargo-fuzz and run, for example:
+
+```bash
+cargo install cargo-fuzz
+cd fuzz
+cargo fuzz run catalog_search
+cargo fuzz run decimal_bridge_inputs
+```
+
+The harnesses exercise arbitrary UTF-8 catalog search input and valid parsed decimal values through notation formatting. Fuzzing must never be converted into a fake passing CI result when the tool is unavailable.
 
 ## Regression policy
 
@@ -79,4 +119,4 @@ Every confirmed defect should receive a failing regression test before or with t
 
 ## CI policy
 
-CI fails on formatting, lint, analysis, tests, security checks, or build failures. A skipped platform check must be explicit rather than silently treated as success.
+CI fails on formatting, lint, analysis, tests, generated bridge verification, security checks, or build failures. A skipped platform check must be explicit rather than silently treated as success.
