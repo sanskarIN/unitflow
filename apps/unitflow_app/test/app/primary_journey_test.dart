@@ -25,6 +25,7 @@ void main() {
 
     expect(find.text('1'), findsWidgets);
     expect(controller.state.recents, hasLength(1));
+    expect(controller.state.recents.single.input, '1000');
     expect(controller.state.recents.single.fromUnitId, 'meter');
     expect(controller.state.recents.single.toUnitId, 'kilometer');
 
@@ -42,5 +43,9 @@ void main() {
     await tester.tap(find.textContaining('1000 m'));
     await tester.pumpAndSettle();
     expect(find.text('Convert units'), findsOneWidget);
+
+    final reopenedField = tester.widget<TextField>(find.byType(TextField));
+    expect(reopenedField.controller?.text, '1000');
+    expect(find.text('1'), findsWidgets);
   });
 }
