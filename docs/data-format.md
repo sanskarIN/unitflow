@@ -24,15 +24,31 @@ The current schema version is **2**. Its machine-readable contract is published 
 
 A backup is a UTF-8 JSON object. The root `schemaVersion` field is mandatory. UnitFlow validates the complete object before replacing the in-memory state; malformed or unsupported imports must not partially overwrite an existing profile.
 
+The decoder intentionally rejects unknown object properties instead of silently discarding them. This keeps runtime behavior aligned with the checked-in JSON Schemas, which use `additionalProperties: false`, and prevents misspelled or future fields from appearing to import successfully when their meaning was actually ignored.
+
 Current safety bounds include:
 
-- file/import text size: at most 1 MB;
+- file/import text size: at most 1,000,000 characters;
 - recent conversions: at most 100 accepted from an imported document, with the app normally retaining at most 50 active recents;
 - pinned pairs: at most 20 active pairs;
-- custom units: at most 200 accepted from an imported document;
+- custom units: at most 200 accepted from an imported document and at most 200 created locally;
 - custom aliases: at most 32 per unit;
+- custom scale/offset text: at most 1024 characters each;
 - decimal precision preference: 0–28 places;
-- stable identifiers: lowercase ASCII letters, digits, `_`, and `-` only.
+- stable identifiers: 1–64 lowercase ASCII letters, digits, `_`, and `-` only.
+
+Collection bounds are validated before iterating imported entries. Oversized arrays are rejected; their tail is never silently discarded during parsing.
+
+## Canonicalization
+
+Custom-unit text is normalized at the trust boundary before it becomes durable state:
+
+- names, symbols, descriptions, and aliases are trimmed;
+- aliases are deduplicated case-insensitively while preserving first-occurrence order;
+- scale and offset are parsed through UnitFlow's exact decimal implementation and persisted in canonical decimal form;
+- stable identifiers are validated rather than rewritten.
+
+Canonicalization ensures a unit created interactively and the same unit restored from backup have equivalent durable representation.
 
 ## Rounding modes
 
@@ -84,12 +100,17 @@ An import is rejected when, among other validation failures:
 - JSON is malformed;
 - the root is not an object;
 - the schema version is unsupported;
+- an object contains unsupported properties;
 - required settings have invalid types or ranges;
+- favorite or pinned identifiers do not match the stable-ID grammar;
+- duplicate favorite, pinned-pair, or custom-unit identifiers are present where uniqueness is required;
 - a custom-unit identifier or formula is invalid;
 - duplicate identifiers would collide with built-in or imported custom units;
 - the import exceeds configured size/count limits.
 
 The application preserves the existing state when validation fails. A structurally valid import may have stale convenience references normalized as described above after its catalog is successfully rebuilt.
+
+Production and in-memory repositories share the same decoder so tests do not accidentally exercise a more permissive import path than the shipped application.
 
 ## Export behavior
 
@@ -113,6 +134,10 @@ For future schema versions:
 4. update the JSON Schema and this document;
 5. update `CHANGELOG.md` with user-visible compatibility notes;
 6. reject unknown future schemas rather than destructively rewriting them.
+
+## Repository data validation
+
+`tool/check_data_files.py` parses every tracked JSON and ARB file as UTF-8 JSON and rejects duplicate object keys. Duplicate keys are forbidden because ordinary JSON parsers may silently keep one value and discard another, creating ambiguous configuration or schema evidence.
 
 ## Privacy
 
