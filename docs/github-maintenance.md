@@ -1,20 +1,21 @@
 # GitHub repository maintenance
 
-This guide describes repository settings that cannot be fully represented by committed files.
+This guide describes repository settings that cannot be fully represented by committed files and explains how those settings should complement the automation that is committed in the repository.
 
 ## Default branch protection
 
 For `main`, prefer a ruleset or branch-protection rule that:
 
 - requires pull requests before merge for normal contributor work;
-- requires the `Rust quality` and `Flutter quality` CI jobs once their check names are stable;
+- requires the `Repository integrity`, `Rust quality`, and `Flutter quality` CI jobs once their check names have run successfully and are stable;
+- requires appropriate generated-platform smoke jobs for changes that affect supported-platform source/tooling;
 - requires branches to be up to date before merge when practical;
 - requires conversation resolution;
 - blocks force pushes and branch deletion;
 - requires review from code owners for sensitive paths when collaboration grows;
 - allows repository administrators to recover from emergencies without weakening the everyday rule permanently.
 
-Do not configure required checks until each named workflow has run successfully at least once; otherwise the branch can become impossible to merge into through normal pull requests.
+Do not configure a required status check until that exact check name has run successfully at least once; otherwise the branch can become impossible to merge into through normal pull requests.
 
 ## Discussions
 
@@ -58,10 +59,12 @@ Avoid labels that duplicate issue state without adding useful triage information
 
 Use milestones for release-oriented work rather than every small internal task. Suggested near-term milestones:
 
-1. `0.1.0-alpha` — core conversion, persistence, batch, history, documentation baseline.
-2. `0.2.0-alpha` — native bridge and generated platform scaffolding.
-3. `0.3.0-beta` — platform packaging, end-to-end tests, accessibility audit.
+1. `0.1.0-alpha.1` — conversion/product baseline plus repository/release hardening.
+2. `0.2.0-alpha` — production native bridge and reviewed platform scaffolding.
+3. `0.3.0-beta` — native packaging, end-to-end tests, performance/accessibility audits.
 4. `1.0.0` — supported-platform release verification and documentation freeze.
+
+Milestones describe planning; the actual package version remains controlled by repository metadata and must satisfy the release-consistency/tag validators.
 
 ## Security settings
 
@@ -71,10 +74,30 @@ When available for the public repository, enable:
 - secret scanning and push protection;
 - dependency graph;
 - Dependabot alerts;
-- automated dependency update tooling after repository automation policy is reviewed.
+- security updates.
 
-The repository already contains CodeQL and pull-request dependency review workflows. Security findings should be triaged before release rather than hidden by disabling checks.
+The repository contains CodeQL, pull-request dependency review, repository-hygiene validation, and `.github/dependabot.yml` update configuration for Cargo, Flutter/Dart, and GitHub Actions. Security findings should be triaged before release rather than hidden by disabling checks.
+
+## Dependabot review
+
+Dependabot update pull requests are proposals, not trusted automatic upgrades. Require the same review appropriate to a manual dependency change, including manifest/lockfile inspection, repository CI, and relevant native platform checks. Do not enable unconditional auto-merge for dependency updates.
+
+## Workflow permissions
+
+Keep workflow permissions least-privileged. Normal CI and platform-smoke workflows should remain read-only unless a concrete write is required. The release workflow needs `contents: write` because it creates GitHub releases; changes to that workflow deserve security-sensitive review.
 
 ## Merge strategy
 
 Prefer squash merge for noisy external contribution branches or merge commits when preserving a carefully structured multi-commit feature history is valuable. Do not rewrite the protected default branch simply to make history look cleaner.
+
+## Periodic maintenance
+
+Periodically review:
+
+- required status-check names after workflow refactors;
+- stale Actions/dependency versions;
+- branch/ruleset effectiveness;
+- open Dependabot/security findings;
+- repository collaborators and permissions;
+- release tags/assets for accidental drift;
+- issue templates, support addresses, and vulnerability-reporting settings.
