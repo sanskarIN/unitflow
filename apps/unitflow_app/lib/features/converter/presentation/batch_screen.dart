@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../app/theme/app_theme.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../domain/batch_export.dart';
 import '../domain/unit_models.dart';
 import 'converter_controller.dart';
@@ -37,6 +38,7 @@ final class _BatchScreenState extends State<BatchScreen> {
     animation: widget.controller,
     builder: (context, _) {
       final theme = Theme.of(context);
+      final strings = AppLocalizations.of(context);
       final units = widget.controller.categoryUnits;
       final results = widget.controller.batchResults();
       return ListView(
@@ -57,10 +59,10 @@ final class _BatchScreenState extends State<BatchScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
-                          Text('Batch conversion', style: theme.textTheme.headlineMedium),
+                          Text(strings.batchTitle, style: theme.textTheme.headlineMedium),
                           const SizedBox(height: AppSpacing.xxs),
                           Text(
-                            'Convert one value to every compatible unit in the selected category.',
+                            strings.batchDescription,
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: theme.colorScheme.onSurfaceVariant,
                             ),
@@ -75,14 +77,14 @@ final class _BatchScreenState extends State<BatchScreen> {
                                 ? null
                                 : () => _copyExport(BatchExportFormat.csv),
                             icon: const Icon(Icons.content_copy_outlined),
-                            label: const Text('Copy CSV'),
+                            label: Text(strings.copyCsv),
                           ),
                           OutlinedButton.icon(
                             onPressed: results.isEmpty
                                 ? null
                                 : () => _copyExport(BatchExportFormat.tsv),
                             icon: const Icon(Icons.table_view_outlined),
-                            label: const Text('Copy TSV'),
+                            label: Text(strings.copyTsv),
                           ),
                         ],
                       ),
@@ -97,7 +99,7 @@ final class _BatchScreenState extends State<BatchScreen> {
                           final horizontal = constraints.maxWidth >= 720;
                           final fields = <Widget>[
                             _BatchField<UnitCategory>(
-                              label: 'Category',
+                              label: strings.categoryLabel,
                               value: widget.controller.category,
                               items: UnitCategory.values,
                               labelFor: (value) => value.label,
@@ -108,7 +110,7 @@ final class _BatchScreenState extends State<BatchScreen> {
                               },
                             ),
                             _BatchField<String>(
-                              label: 'Source unit',
+                              label: strings.sourceUnitLabel,
                               value: widget.controller.fromUnitId,
                               items: units.map((unit) => unit.id).toList(growable: false),
                               labelFor: (id) {
@@ -128,7 +130,7 @@ final class _BatchScreenState extends State<BatchScreen> {
                                 signed: true,
                               ),
                               decoration: InputDecoration(
-                                labelText: 'Value',
+                                labelText: strings.valueLabel,
                                 errorText: widget.controller.error,
                               ),
                               onChanged: widget.controller.setInput,
@@ -175,8 +177,8 @@ final class _BatchScreenState extends State<BatchScreen> {
                                     color: theme.colorScheme.onSurfaceVariant,
                                   ),
                                   const SizedBox(height: AppSpacing.sm),
-                                  const Text(
-                                    'Enter a valid value to generate the batch table.',
+                                  Text(
+                                    strings.batchEmpty,
                                     textAlign: TextAlign.center,
                                   ),
                                 ],
@@ -185,10 +187,10 @@ final class _BatchScreenState extends State<BatchScreen> {
                           : SingleChildScrollView(
                               scrollDirection: Axis.horizontal,
                               child: DataTable(
-                                columns: const <DataColumn>[
-                                  DataColumn(label: Text('Unit')),
-                                  DataColumn(label: Text('Symbol')),
-                                  DataColumn(label: Text('Value'), numeric: true),
+                                columns: <DataColumn>[
+                                  DataColumn(label: Text(strings.batchUnitColumn)),
+                                  DataColumn(label: Text(strings.batchSymbolColumn)),
+                                  DataColumn(label: Text(strings.batchValueColumn), numeric: true),
                                 ],
                                 rows: results
                                     .map(
@@ -231,7 +233,7 @@ final class _BatchScreenState extends State<BatchScreen> {
     }
     final label = format == BatchExportFormat.csv ? 'CSV' : 'TSV';
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$label batch table copied.')),
+      SnackBar(content: Text(AppLocalizations.of(context).batchCopied(label))),
     );
   }
 }
