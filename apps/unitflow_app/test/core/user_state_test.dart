@@ -140,6 +140,20 @@ void main() {
       throwsFormatException,
     );
   });
+
+  test('backup rejects more pinned pairs than the import limit', () {
+    final repository = MemoryUserStateRepository();
+    final backup = _emptyBackup()
+      ..['pinnedPairs'] = List<Object?>.filled(
+        UserState.maxImportedPinnedPairs + 1,
+        'length|meter|kilometer',
+      );
+
+    expect(
+      () => repository.importJson(jsonEncode(backup)),
+      throwsFormatException,
+    );
+  });
 }
 
 Map<String, Object?> _emptyBackup() => <String, Object?>{
