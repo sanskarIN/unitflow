@@ -49,6 +49,7 @@ REQUIRED_FILES = (
     "docs/threat-model.md",
     "scripts/check_markdown_links.py",
     "scripts/check_release_consistency.py",
+    "scripts/check_release_tag.py",
     "scripts/check_repository_hygiene.py",
     "scripts/verify.sh",
     "scripts/verify.ps1",
