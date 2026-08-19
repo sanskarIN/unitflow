@@ -25,6 +25,11 @@ impl UnitCatalog {
     }
 
     /// Builds the versioned static catalog shipped with UnitFlow.
+    ///
+    /// The catalog intentionally keeps one dense row per built-in unit so factors, aliases, and
+    /// descriptions remain easy to audit side-by-side. Skip rustfmt for this data table only;
+    /// executable logic in the rest of the module remains normally formatted.
+    #[rustfmt::skip]
     pub fn built_in() -> Result<Self, UnitFlowError> {
         let units = vec![
             // Length — base meter.
