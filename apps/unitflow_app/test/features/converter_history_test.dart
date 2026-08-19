@@ -52,4 +52,38 @@ void main() {
     expect(converter.toUnitId, 'kilometer');
     expect(converter.result?.output.toCanonicalString(), '2.5');
   });
+
+  test('canonical recent input is localized before German parsing', () {
+    converter.setLocale('de_DE');
+    final recent = RecentConversion(
+      input: '1.25',
+      fromUnitId: 'meter',
+      toUnitId: 'kilometer',
+      createdAt: DateTime.utc(2026, 8, 19),
+    );
+
+    converter.applyRecentConversion(recent);
+
+    expect(converter.input, '1,25');
+    expect(converter.result?.input.toCanonicalString(), '1.25');
+    expect(converter.result?.output.toCanonicalString(), '0.00125');
+  });
+
+  test('legacy localized recent input is never reinterpreted as canonical', () {
+    converter.setLocale('en_US');
+    converter.setInput('7');
+    final recent = RecentConversion(
+      input: '1,25',
+      fromUnitId: 'meter',
+      toUnitId: 'kilometer',
+      createdAt: DateTime.utc(2026, 8, 19),
+    );
+
+    converter.applyRecentConversion(recent);
+
+    expect(converter.input, '7');
+    expect(converter.fromUnitId, 'meter');
+    expect(converter.toUnitId, 'kilometer');
+    expect(converter.result?.input.toCanonicalString(), '7');
+  });
 }
