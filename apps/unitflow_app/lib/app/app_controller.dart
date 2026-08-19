@@ -124,6 +124,24 @@ final class AppController extends ChangeNotifier {
     required String fromUnitId,
     required String toUnitId,
   }) {
+    if (input.isEmpty || input.length > 1024) {
+      throw ArgumentError.value(input, 'input', 'conversion input is invalid');
+    }
+    try {
+      ExactDecimal.parse(input);
+    } on FormatException {
+      throw ArgumentError.value(input, 'input', 'conversion input is invalid');
+    }
+
+    final from = _engine.catalog.byId(fromUnitId);
+    final to = _engine.catalog.byId(toUnitId);
+    if (from == null || to == null) {
+      throw ArgumentError('Recent conversion references unknown units.');
+    }
+    if (from.category != to.category) {
+      throw ArgumentError('Recent conversion units must share a category.');
+    }
+
     final next = _state.recents.toList();
     if (next.isNotEmpty &&
         next.first.input == input &&
