@@ -1,0 +1,53 @@
+name: Feature request
+description: Propose a coherent improvement to UnitFlow
+title: "feat: "
+labels: [enhancement, triage]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or opportunity
+      description: What user need would this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed experience
+      description: Describe the desired behavior without prescribing unnecessary implementation details.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Conversion engine
+        - Unit catalog
+        - Custom units
+        - Converter UI
+        - Search/library
+        - Favorites/history/pins
+        - Import/export
+        - Accessibility
+        - Performance
+        - Platform integration
+        - Documentation
+        - Other
+    validations:
+      required: true
+  - type: checkboxes
+    id: principles
+    attributes:
+      label: Product principles
+      options:
+        - label: This keeps core static conversion usable offline.
+          required: true
+        - label: This does not require an intrusive donation or sign-in flow.
+          required: true
+        - label: I searched existing issues for similar requests.
+          required: true
