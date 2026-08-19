@@ -10,9 +10,9 @@ UnitFlow is an open-source conversion project designed around deterministic offl
 
 ## Status
 
-**Active alpha development — not yet release-verified.**
+**Current source version: `2.0.12`. Active development — not yet native release-verified.**
 
-The Rust core, Flutter feature code, persistence model, tests, localization architecture, repository-integrity automation, dependency updates, and generated platform smoke-build matrix are implemented substantially. Reviewed native Flutter platform projects and the production Rust↔Flutter bridge still need to be committed/integrated and validated before UnitFlow claims tested Android, Windows, Linux, macOS, Web, or iOS release binaries.
+The Rust core, Flutter feature code, persistence model, tests, localization architecture, repository-integrity automation, dependency updates, and generated platform smoke-build matrix are implemented substantially. Reviewed native Flutter platform projects and the production Rust↔Flutter bridge still need to be committed/integrated and validated before UnitFlow claims tested Android, Windows, Linux, macOS, Web, or iOS release binaries. The source version alone is not a claim that those platform artifacts have passed release verification.
 
 See [`what_changed.md`](what_changed.md) for the exact continuation checkpoint and [`ROADMAP.md`](ROADMAP.md) for remaining blockers.
 
@@ -49,7 +49,7 @@ Generated-scaffold smoke jobs cover all six targets as early compatibility check
 
 ## Tech Stack
 
-- **Rust** — authoritative native conversion/domain core.
+- **Rust 1.82+** — authoritative native conversion/domain core.
 - **rust_decimal** — deterministic decimal arithmetic in Rust.
 - **Flutter / Dart** — adaptive cross-platform UI and exact-decimal fallback.
 - **Flutter gen-l10n / ARB** — generated localization resources.
@@ -87,7 +87,7 @@ flutter test
 flutter run
 ```
 
-Native `flutter run` targets require the corresponding Flutter platform project and toolchain; those reviewed scaffolds remain a documented alpha release task.
+Native `flutter run` targets require the corresponding Flutter platform project and toolchain; those reviewed scaffolds remain a documented release task.
 
 See [`docs/setup.md`](docs/setup.md) for prerequisites.
 
@@ -105,13 +105,13 @@ PowerShell:
 ./scripts/verify.ps1
 ```
 
-The scripts test the repository validators, validate Markdown/release consistency/repository hygiene, then run Rust formatting/Clippy/tests and Flutter dependency resolution/localization/formatting/analysis/tests. A successful run in your environment is evidence for that checkout; this README does not assume a build passed merely because source files or workflow definitions exist.
+The scripts test the repository validators, validate the exhaustive tracked-file inventory plus Markdown/release consistency/repository hygiene, then run Rust formatting/Clippy/tests and Flutter dependency resolution/localization/formatting/analysis/tests. A successful run in your environment is evidence for that checkout; this README does not assume a build passed merely because source files or workflow definitions exist.
 
 ## Architecture
 
 The Rust crate owns validated unit definitions, conversion rules, exact-decimal behavior, catalog search, custom-unit validation, notation, and native educational metadata. Flutter owns presentation, accessibility, adaptive navigation, local preferences/state, clipboard workflows, localization resources, and platform integration.
 
-The current Dart conversion implementation is intentionally deterministic so Flutter/Web work remains testable before the native bridge is complete. Native clients should move to the Rust bridge only after parity and packaging are proven.
+The current Dart conversion implementation is intentionally deterministic so Flutter/Web work remains testable before the native bridge is complete. Native clients should move to the Rust bridge only after parity and packaging are proven. Rust and Dart parity tests consume the same versioned decimal-string fixture.
 
 Read:
 
@@ -129,15 +129,16 @@ Read:
 The repository includes:
 
 - Rust conversion/catalog invariant and regression tests;
-- Flutter exact-decimal, persistence/migration, batch-export, safe-logging, collection-cleanup, recent-reference, reset-ordering, and adaptive-navigation tests;
+- shared Rust/Dart bridge parity vectors covering representative affine/scaling conversions and every rounding mode;
+- Flutter exact-decimal, persistence/migration, batch-export, safe-logging, collection-cleanup, recent-reference, reset-ordering/failure, native-bridge-validation, and adaptive-navigation tests;
 - deterministic property-style decimal tests;
 - dependency-free Python regression tests for repository validators;
-- Markdown-link, release-consistency, repository-hygiene, and exact release-tag guards;
+- exhaustive tracked-file inventory, Markdown-link, release-consistency, repository-hygiene, and exact release-tag guards;
 - a dependency-free Rust conversion micro-benchmark;
 - CI formatting/lint/analysis/test and repository-integrity gates;
 - CodeQL and pull-request dependency review;
 - generated-scaffold smoke builds for Android, Web, Linux, Windows, macOS, and iOS;
-- a release workflow that re-runs source quality gates, rejects mismatched tags, and emits SHA-256 checksums.
+- a release workflow that re-runs source quality gates, rejects mismatched tags, requires a clean Rust package tree, and emits SHA-256 checksums.
 
 See [`docs/testing.md`](docs/testing.md), [`docs/performance.md`](docs/performance.md), and [`docs/release-checklist.md`](docs/release-checklist.md).
 
@@ -151,7 +152,7 @@ See [`docs/localization.md`](docs/localization.md).
 
 UnitFlow does not require an account for static conversions and is designed to work offline. Preferences, favorites, history, pins, and custom units are stored locally by default and only leave the local state through explicit user actions such as copy/export.
 
-Repository hygiene rejects commonly accidental tracked environment/signing/build artifacts, but maintainers should still keep GitHub secret scanning/push protection enabled where available.
+Repository hygiene rejects commonly accidental tracked environment/signing/build artifacts, and the native bridge DTO boundary rejects malformed decimal/unit payloads before future generated bindings are trusted. Maintainers should still keep GitHub secret scanning/push protection enabled where available.
 
 Read [`SECURITY.md`](SECURITY.md), [`PRIVACY.md`](PRIVACY.md), and [`docs/threat-model.md`](docs/threat-model.md).
 
