@@ -68,7 +68,7 @@ fn aliases_are_trimmed_and_deduplicated_case_insensitively() {
 #[test]
 fn alias_count_is_bounded() {
     let mut draft = custom_scale(Decimal::ONE);
-    draft.aliases = (0..33).map(|index| format!("alias-{index}" )).collect();
+    draft.aliases = (0..33).map(|index| format!("alias-{index}")).collect();
 
     assert_eq!(
         draft.validate(),
