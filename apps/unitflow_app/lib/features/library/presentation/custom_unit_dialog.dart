@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../../app/theme/app_theme.dart';
 import '../../../core/persistence/user_state.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../converter/domain/unit_models.dart';
+import '../../converter/presentation/category_localizations.dart';
 
 Future<CustomUnitData?> showCustomUnitDialog(
   BuildContext context, {
@@ -46,137 +48,144 @@ final class _CustomUnitDialogState extends State<_CustomUnitDialog> {
   }
 
   @override
-  Widget build(BuildContext context) => AlertDialog(
-    title: const Text('Create custom unit'),
-    content: SizedBox(
-      width: 560,
-      child: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Text(
-                'Define a safe affine relationship: base = value × scale + offset.',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: AppSpacing.md),
-              DropdownButtonFormField<UnitCategory>(
-                initialValue: _category,
-                decoration: const InputDecoration(labelText: 'Category'),
-                items: UnitCategory.values
-                    .map(
-                      (category) => DropdownMenuItem<UnitCategory>(
-                        value: category,
-                        child: Text(category.label),
-                      ),
-                    )
-                    .toList(growable: false),
-                onChanged: (category) {
-                  if (category != null) {
-                    setState(() => _category = category);
-                  }
-                },
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              TextFormField(
-                controller: _idController,
-                decoration: const InputDecoration(
-                  labelText: 'Stable ID',
-                  hintText: 'my_custom_unit',
+  Widget build(BuildContext context) {
+    final strings = AppLocalizations.of(context);
+    return AlertDialog(
+      title: Text(strings.createCustomUnitTitle),
+      content: SizedBox(
+        width: 560,
+        child: Form(
+          key: _formKey,
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Text(
+                  strings.customUnitFormulaHelp,
+                  style: Theme.of(context).textTheme.bodyMedium,
                 ),
-                textInputAction: TextInputAction.next,
-                validator: (value) {
-                  final id = value?.trim() ?? '';
-                  return RegExp(r'^[a-z0-9_-]{1,64}$').hasMatch(id)
-                      ? null
-                      : 'Use 1–64 lowercase letters, digits, _ or -.';
-                },
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Name'),
-                textInputAction: TextInputAction.next,
-                maxLength: 128,
-                validator: (value) => (value?.trim().isEmpty ?? true) ? 'Enter a name.' : null,
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              TextFormField(
-                controller: _symbolController,
-                decoration: const InputDecoration(labelText: 'Symbol'),
-                textInputAction: TextInputAction.next,
-                maxLength: 32,
-                validator: (value) => (value?.trim().isEmpty ?? true) ? 'Enter a symbol.' : null,
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Expanded(
-                    child: TextFormField(
-                      controller: _scaleController,
-                      decoration: const InputDecoration(labelText: 'Scale'),
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                        signed: true,
-                      ),
-                      validator: (value) => (value?.trim().isEmpty ?? true) ? 'Required.' : null,
-                    ),
+                const SizedBox(height: AppSpacing.md),
+                DropdownButtonFormField<UnitCategory>(
+                  initialValue: _category,
+                  decoration: InputDecoration(labelText: strings.categoryLabel),
+                  items: UnitCategory.values
+                      .map(
+                        (category) => DropdownMenuItem<UnitCategory>(
+                          value: category,
+                          child: Text(category.localizedLabel(strings)),
+                        ),
+                      )
+                      .toList(growable: false),
+                  onChanged: (category) {
+                    if (category != null) {
+                      setState(() => _category = category);
+                    }
+                  },
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                TextFormField(
+                  controller: _idController,
+                  decoration: InputDecoration(
+                    labelText: strings.stableIdLabel,
+                    hintText: strings.stableIdHint,
                   ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _offsetController,
-                      decoration: const InputDecoration(labelText: 'Offset'),
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                        signed: true,
+                  textInputAction: TextInputAction.next,
+                  validator: (value) {
+                    final id = value?.trim() ?? '';
+                    return RegExp(r'^[a-z0-9_-]{1,64}$').hasMatch(id)
+                        ? null
+                        : strings.stableIdValidation;
+                  },
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                TextFormField(
+                  controller: _nameController,
+                  decoration: InputDecoration(labelText: strings.nameLabel),
+                  textInputAction: TextInputAction.next,
+                  maxLength: 128,
+                  validator: (value) =>
+                      (value?.trim().isEmpty ?? true) ? strings.nameRequired : null,
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                TextFormField(
+                  controller: _symbolController,
+                  decoration: InputDecoration(labelText: strings.symbolLabel),
+                  textInputAction: TextInputAction.next,
+                  maxLength: 32,
+                  validator: (value) =>
+                      (value?.trim().isEmpty ?? true) ? strings.symbolRequired : null,
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Expanded(
+                      child: TextFormField(
+                        controller: _scaleController,
+                        decoration: InputDecoration(labelText: strings.scaleLabel),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                          signed: true,
+                        ),
+                        validator: (value) =>
+                            (value?.trim().isEmpty ?? true) ? strings.requiredField : null,
                       ),
-                      validator: (value) => (value?.trim().isEmpty ?? true) ? 'Required.' : null,
                     ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _offsetController,
+                        decoration: InputDecoration(labelText: strings.offsetLabel),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                          signed: true,
+                        ),
+                        validator: (value) =>
+                            (value?.trim().isEmpty ?? true) ? strings.requiredField : null,
+                      ),
+                    ),
+                  ],
+                ),
+                if (_formulaError != null) ...<Widget>[
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    _formulaError!,
+                    style: TextStyle(color: Theme.of(context).colorScheme.error),
                   ),
                 ],
-              ),
-              if (_formulaError != null) ...<Widget>[
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  _formulaError!,
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                const SizedBox(height: AppSpacing.sm),
+                TextFormField(
+                  controller: _aliasesController,
+                  decoration: InputDecoration(
+                    labelText: strings.aliasesLabel,
+                    hintText: strings.aliasesHint,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                TextFormField(
+                  controller: _descriptionController,
+                  decoration: InputDecoration(labelText: strings.descriptionLabel),
+                  maxLength: 512,
+                  maxLines: 3,
                 ),
               ],
-              const SizedBox(height: AppSpacing.sm),
-              TextFormField(
-                controller: _aliasesController,
-                decoration: const InputDecoration(
-                  labelText: 'Aliases',
-                  hintText: 'comma, separated, aliases',
-                ),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              TextFormField(
-                controller: _descriptionController,
-                decoration: const InputDecoration(labelText: 'Description'),
-                maxLength: 512,
-                maxLines: 3,
-              ),
-            ],
+            ),
           ),
         ),
       ),
-    ),
-    actions: <Widget>[
-      TextButton(
-        onPressed: () => Navigator.of(context).pop(),
-        child: const Text('Cancel'),
-      ),
-      FilledButton(
-        onPressed: _submit,
-        child: const Text('Create unit'),
-      ),
-    ],
-  );
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(strings.cancel),
+        ),
+        FilledButton(
+          onPressed: _submit,
+          child: Text(strings.createUnitAction),
+        ),
+      ],
+    );
+  }
 
   void _submit() {
     setState(() => _formulaError = null);
@@ -201,8 +210,10 @@ final class _CustomUnitDialogState extends State<_CustomUnitDialog> {
     );
     try {
       data.toUnitDefinition();
-    } on FormatException catch (error) {
-      setState(() => _formulaError = error.message);
+    } on FormatException {
+      setState(
+        () => _formulaError = AppLocalizations.of(context).invalidCustomFormula,
+      );
       return;
     }
     Navigator.of(context).pop(data);
