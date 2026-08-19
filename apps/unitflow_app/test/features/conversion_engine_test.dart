@@ -42,6 +42,35 @@ void main() {
     );
   });
 
+  test('rejects values outside the Rust decimal input domain', () {
+    for (final value in <String>[
+      '79228162514264337593543950336',
+      '-79228162514264337593543950336',
+      '1e-29',
+      '1e1000',
+    ]) {
+      expect(
+        () => engine.convert(
+          value: ExactDecimal.parse(value),
+          fromUnitId: 'meter',
+          toUnitId: 'kilometer',
+        ),
+        throwsA(isA<ConversionFailure>()),
+        reason: value,
+      );
+    }
+  });
+
+  test('accepts Rust decimal boundary values', () {
+    final result = engine.convert(
+      value: ExactDecimal.parse('79228162514264337593543950335'),
+      fromUnitId: 'meter',
+      toUnitId: 'meter',
+      decimalPlaces: 0,
+    );
+    expect(result.output.toCanonicalString(), '79228162514264337593543950335');
+  });
+
   test('batch conversion preserves target order', () {
     final results = engine.batchConvert(
       value: ExactDecimal.parse('1'),
