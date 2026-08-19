@@ -1,5 +1,7 @@
 use rust_decimal::Decimal;
-use unitflow_core::{convert_between, Category, CustomUnitDraft, RoundMode, UnitCatalog, UnitFlowError};
+use unitflow_core::{
+    convert_between, Category, CustomUnitDraft, RoundMode, UnitCatalog, UnitFlowError,
+};
 
 fn custom_scale(scale: Decimal) -> CustomUnitDraft {
     CustomUnitDraft {
@@ -18,7 +20,9 @@ fn custom_scale(scale: Decimal) -> CustomUnitDraft {
 fn validates_and_converts_custom_affine_unit() {
     let catalog = UnitCatalog::built_in().expect("catalog");
     let meter = catalog.get("meter").expect("meter");
-    let custom = custom_scale(Decimal::from(2_u32)).validate().expect("valid custom unit");
+    let custom = custom_scale(Decimal::from(2_u32))
+        .validate()
+        .expect("valid custom unit");
 
     let value = convert_between(
         Decimal::from(3_u32),
@@ -59,4 +63,15 @@ fn aliases_are_trimmed_and_deduplicated_case_insensitively() {
 
     let unit = draft.validate().expect("unit");
     assert_eq!(unit.aliases, vec!["Example"]);
+}
+
+#[test]
+fn alias_count_is_bounded() {
+    let mut draft = custom_scale(Decimal::ONE);
+    draft.aliases = (0..33).map(|index| format!("alias-{index}" )).collect();
+
+    assert_eq!(
+        draft.validate(),
+        Err(UnitFlowError::TooManyAliases { max: 32 })
+    );
 }
