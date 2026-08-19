@@ -36,7 +36,12 @@ final class RecentConversion {
       return null;
     }
     final timestamp = DateTime.tryParse(created);
-    if (timestamp == null || from.isEmpty || to.isEmpty || input.length > 1024) {
+    if (timestamp == null ||
+        from.isEmpty ||
+        from.length > 64 ||
+        to.isEmpty ||
+        to.length > 64 ||
+        input.length > 1024) {
       return null;
     }
     return RecentConversion(
@@ -184,6 +189,10 @@ final class UserState {
 
   static const schemaVersion = 2;
   static const oldestSupportedSchemaVersion = 1;
+  static const maxImportedFavorites = 500;
+  static const maxImportedPinnedPairs = 100;
+  static const maxImportedRecents = 100;
+  static const maxImportedCustomUnits = 200;
 
   final ThemePreference theme;
   final DecimalNotation notation;
@@ -274,10 +283,16 @@ final class UserState {
         customRaw is! List<Object?>) {
       throw const FormatException('Invalid UnitFlow user data.');
     }
+    if (favoritesRaw.length > maxImportedFavorites ||
+        pinsRaw.length > maxImportedPinnedPairs ||
+        recentsRaw.length > maxImportedRecents ||
+        customRaw.length > maxImportedCustomUnits) {
+      throw const FormatException('UnitFlow backup contains too many saved items.');
+    }
 
     final favorites = <String>{};
     for (final value in favoritesRaw) {
-      if (value is! String || value.length > 64) {
+      if (value is! String || value.isEmpty || value.length > 64) {
         throw const FormatException('Invalid favorite unit data.');
       }
       favorites.add(value);
@@ -296,7 +311,7 @@ final class UserState {
     }
 
     final recents = <RecentConversion>[];
-    for (final value in recentsRaw.take(100)) {
+    for (final value in recentsRaw) {
       final normalized = _stringKeyedMap(value);
       final recent = RecentConversion.tryFromJson(normalized);
       if (recent == null) {
@@ -306,7 +321,7 @@ final class UserState {
     }
 
     final customUnits = <CustomUnitData>[];
-    for (final value in customRaw.take(200)) {
+    for (final value in customRaw) {
       final normalized = _stringKeyedMap(value);
       final unit = CustomUnitData.tryFromJson(normalized);
       if (unit == null) {
