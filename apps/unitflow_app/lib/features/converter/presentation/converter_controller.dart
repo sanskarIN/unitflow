@@ -129,6 +129,7 @@ final class ConverterController extends ChangeNotifier {
         fromUnitId: _fromUnitId,
         toUnitId: _toUnitId,
         decimalPlaces: _appController.state.decimalPlaces,
+        rounding: _appController.state.roundingMode,
       );
       _error = null;
     } on FormatException {
@@ -156,6 +157,7 @@ final class ConverterController extends ChangeNotifier {
           .where((unit) => unit.id != _fromUnitId)
           .map((unit) => unit.id),
       decimalPlaces: _appController.state.decimalPlaces,
+      rounding: _appController.state.roundingMode,
     );
   }
 
