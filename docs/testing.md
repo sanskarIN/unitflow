@@ -1,6 +1,6 @@
 # Testing Strategy
 
-UnitFlow treats conversion correctness and repository integrity as core product requirements.
+UnitFlow treats conversion correctness, persistence integrity, and repository/documentation integrity as core product requirements.
 
 ## One-command verification
 
@@ -24,6 +24,7 @@ Run from the repository root:
 
 ```bash
 python3 -m unittest discover -s scripts/tests -p 'test_*.py'
+python3 scripts/check_repository_inventory.py
 python3 scripts/check_markdown_links.py
 python3 scripts/check_release_consistency.py
 python3 scripts/check_repository_hygiene.py
@@ -32,12 +33,13 @@ python3 scripts/check_repository_hygiene.py
 These checks cover:
 
 - regression tests for the dependency-free repository validators;
+- exact `git ls-files` parity with the exhaustive documented repository inventory;
 - repository-local Markdown file targets;
 - Cargo/Flutter/About version consistency;
 - changelog coverage for the current version;
 - local-state schema documentation parity;
 - Rust↔Flutter bridge protocol fixture/documentation parity;
-- critical repository/configuration file presence;
+- complete critical repository/configuration/documentation file presence;
 - tracked `.env`, signing material, generated localization output, and build-output hygiene.
 
 For a tagged release, also run:
@@ -98,6 +100,8 @@ Coverage priorities:
 - semantics for major controls;
 - custom-unit validation;
 - import/export failure states and consistent import bounds across repositories;
+- persistence ordering for reset/save operations;
+- recent-history reference/category/input bounds while retaining locale-formatted original text;
 - CSV/TSV batch export escaping;
 - structured-log redaction;
 - schema migration and local collection cleanup.
@@ -127,7 +131,7 @@ Native end-to-end automation should be added after platform scaffolding is commi
 
 ## Generated platform smoke builds
 
-`.github/workflows/platform-smoke.yml` generates temporary Flutter platform scaffolds in clean runners and attempts target builds. These jobs are useful source/toolchain compatibility evidence, but they are intentionally distinct from release verification of committed native projects. See `docs/platform-smoke.md` for the exact evidence boundary.
+`.github/workflows/platform-smoke.yml` generates temporary Flutter platform scaffolds in clean runners and attempts Android, Web, Linux, Windows, macOS, and iOS target builds. These jobs are useful source/toolchain compatibility evidence, but they are intentionally distinct from release verification of committed native projects. See `docs/platform-smoke.md` for the exact evidence boundary.
 
 ## Property/fuzz testing
 
@@ -155,6 +159,8 @@ Do not compare results across machines without recording the environment. See `d
 
 Every confirmed defect should receive a failing regression test before or with the fix when practical. Test-only repositories/adapters must enforce the same externally relevant parsing and import limits as production adapters so passing tests cannot rely on weaker validation.
 
+A repository-structure change must update `docs/repository-inventory.md` in the same change. This is enforced automatically rather than relying on review memory.
+
 ## CI policy
 
-CI fails on repository-integrity validation, validator regression tests, formatting, lint, localization generation, analysis, or test failures. Security scanning, dependency review, generated platform smoke builds, and release packaging run in their respective workflows. A skipped platform check must be explicit rather than silently treated as success.
+CI fails on repository-inventory/integrity validation, validator regression tests, formatting, lint, localization generation, analysis, or test failures. Security scanning, dependency review, generated platform smoke builds, and release packaging run in their respective workflows. A skipped platform check must be explicit rather than silently treated as success.
