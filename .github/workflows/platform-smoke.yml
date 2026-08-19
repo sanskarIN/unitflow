@@ -22,7 +22,7 @@ concurrency:
 
 jobs:
   web:
-    name: Generated Web build
+    name: Generated Web release build
     runs-on: ubuntu-latest
     timeout-minutes: 30
     defaults:
@@ -82,3 +82,121 @@ jobs:
 
       - name: Build Android debug APK
         run: flutter build apk --debug
+
+  linux:
+    name: Generated Linux debug build
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    defaults:
+      run:
+        working-directory: apps/unitflow_app
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Generate Linux scaffold
+        run: flutter create --platforms=linux --org in.sanskar --project-name unitflow .
+
+      - name: Resolve and generate
+        run: |
+          flutter pub get
+          flutter gen-l10n
+
+      - name: Build Linux debug bundle
+        run: flutter build linux --debug
+
+  windows:
+    name: Generated Windows debug build
+    runs-on: windows-latest
+    timeout-minutes: 40
+    defaults:
+      run:
+        working-directory: apps/unitflow_app
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Generate Windows scaffold
+        run: flutter create --platforms=windows --org in.sanskar --project-name unitflow .
+
+      - name: Resolve dependencies
+        run: flutter pub get
+
+      - name: Generate localizations
+        run: flutter gen-l10n
+
+      - name: Build Windows debug bundle
+        run: flutter build windows --debug
+
+  macos:
+    name: Generated macOS debug build
+    runs-on: macos-latest
+    timeout-minutes: 40
+    defaults:
+      run:
+        working-directory: apps/unitflow_app
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Generate macOS scaffold
+        run: flutter create --platforms=macos --org in.sanskar --project-name unitflow .
+
+      - name: Resolve and generate
+        run: |
+          flutter pub get
+          flutter gen-l10n
+
+      - name: Build macOS debug app
+        run: flutter build macos --debug
+
+  ios:
+    name: Generated iOS simulator debug build
+    runs-on: macos-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: apps/unitflow_app
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Generate iOS scaffold
+        run: flutter create --platforms=ios --org in.sanskar --project-name unitflow .
+
+      - name: Resolve and generate
+        run: |
+          flutter pub get
+          flutter gen-l10n
+
+      - name: Build iOS simulator debug app
+        run: flutter build ios --debug --simulator
