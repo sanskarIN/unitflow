@@ -101,6 +101,8 @@ Bridge responsibilities implemented at source level:
 - reproducible generation command in `tool/generate_bridge.sh`;
 - CI/audit normalization that installs the pinned generator and regenerates bindings.
 
+Generated FRB Dart source is now intentionally trackable rather than ignored. CI, local development checks, and release-candidate verification use working-tree status including untracked files when checking generated-source cleanliness. This closes the earlier gap where `git diff --exit-code` could miss newly generated untracked bridge/platform files.
+
 Important release boundary: generated bindings and native-library packaging/loading still require exact-candidate CI/platform evidence. Binding source code existing in the repository is not the same as proving that every final platform artifact loads the native Rust library correctly.
 
 ### Deterministic Dart fallback
@@ -332,7 +334,7 @@ No release performance number is claimed until output is recorded with machine/t
 bash tool/check.sh
 ```
 
-This covers repository utility regression tests, safety/data/docs checks, and Rust and Flutter gates. It regenerates the bridge only when the generator is installed and warns when that extra check is skipped.
+This covers repository utility regression tests, safety/data/docs checks, and Rust and Flutter gates. When the pinned bridge generator is installed, it also rejects modified or untracked generated-source drift.
 
 ### Bridge generation
 
@@ -347,7 +349,7 @@ bash tool/generate_bridge.sh
 bash tool/verify_release_candidate.sh
 ```
 
-The strict verifier requires the pinned bridge generator and runs repository utility regression tests, repository checks, Rust formatting/lint/tests/release build, Flutter localization/format/analyze/tests, bridge regeneration, post-generation analysis/tests, web release build, clean generated-source check, and core profiling harness.
+The strict verifier requires the pinned bridge generator and runs repository utility regression tests, repository checks, Rust formatting/lint/tests/release build, Flutter localization/format/analyze/tests, bridge regeneration, post-generation analysis/tests, web release build, modified/untracked generated-source cleanliness checks, and the core profiling harness.
 
 Native platform builds/manual review remain separate platform gates.
 
@@ -359,10 +361,10 @@ Configured workflows include:
   - repository safety and repository utility regression tests;
   - Rust quality;
   - Flutter quality;
-  - Rust/Flutter bridge generation/check;
+  - Rust/Flutter bridge generation/check including untracked generated-source drift detection;
 - CodeQL;
 - dependency review;
-- audit-branch generated-source/format normalization;
+- audit-branch generated-source/format normalization including untracked generated files;
 - multi-platform release workflow.
 
 ### Current verification truth
@@ -438,6 +440,7 @@ docs/bridge.md
 docs/platform-support.md
 docs/branding.md
 docs/data-format.md
+docs/verification.md
 ```
 
 ## Latest continuation commits
@@ -463,6 +466,14 @@ The latest hardening sequence before this handoff commit is:
 - `9dd233969e8d59f11b9a36a59a8ba0118689006c` — `build: run utility tests in release verification`
 - `a8f511dc58d0c2d04d767c300921443bf8750956` — `docs: include repository utility regression command`
 - `ff794c6a4c2baf8def3a46071ec849b5f541ddeb` — `docs: record completed backup hardening gates`
+- `91b4a602855bf6a8ce8cff4df9c4a0f08abe2358` — `fix: build oversized backup fixture with Dart API`
+- `6c5330c270a9c3b81ee4c120c21c265b6fdf2750` — `fix: track generated Flutter Rust bridge sources`
+- `e470045bf8964c553def860e1f76e8ef00602402` — `ci: detect untracked generated bridge drift`
+- `336d652b29d485bcfc1711a88b2814bf03f213a2` — `ci: normalize untracked generated sources`
+- `cecc26c1e4397bfda6e1a9f27890eac20102ed04` — `build: detect bridge generation drift locally`
+- `f9dd20076772ac7a4e655c2890a803812721f935` — `build: reject untracked release generation drift`
+- `e3049c2c9472dba6354de030c1dadd3dab20b43a` — `docs: require clean generated working tree`
+- `4bad4b6c9f5ac9a2e176cf8f20fe62512adca776` — `docs: document tracked bridge generation`
 
 These commits deliberately remain granular rather than combining unrelated fixes.
 
@@ -474,7 +485,9 @@ Static repository inspection confirmed:
 - there were no open repository issues at the time checked;
 - no `TODO`, `FIXME`, `unimplemented`, `panic!`, or production `unwrap()`/`expect()` matches were surfaced by repository search;
 - `Cargo.lock` and `apps/unitflow_app/pubspec.lock` were still absent before the newest audit-normalization run; the configured audit workflow is responsible for resolving and committing normalized lock/generated output on this branch;
-- the Flutter Rust Bridge generated Rust module is still a placeholder until the pinned generator executes, so native bridge completion must not be claimed before exact workflow evidence exists.
+- the Flutter Rust Bridge generated Rust module is still a placeholder until the pinned generator executes, so native bridge completion must not be claimed before exact workflow evidence exists;
+- generated FRB Dart sources had previously been ignored by `.gitignore`; that reproducibility defect is now fixed;
+- generated-source cleanliness gates previously based only on `git diff` could miss new untracked generated files; CI, audit normalization, local checks, and strict release verification now account for untracked files.
 
 The execution environment used for connector-driven work still does not provide the project Rust/Flutter toolchains locally. Therefore compiler/analyzer/test success is intentionally not fabricated. GitHub Actions on the newest exact head remains the authoritative automated evidence source.
 
@@ -485,7 +498,7 @@ These are not hidden TODOs; they are explicit release gates.
 1. Stop source churn long enough for workflows on the newest exact PR head to execute.
 2. Inspect latest CI jobs/logs rather than relying on older runs.
 3. Fix every formatter/compiler/analyzer/test/repository-safety failure discovered by those workflows.
-4. Ensure the audit normalization workflow successfully produces lockfiles, regenerates Flutter localizations, and regenerates FRB bindings using pinned versions.
+4. Ensure the audit normalization workflow successfully produces lockfiles, regenerates Flutter localizations, tracks/regenerates FRB bindings, and commits all required generated/platform files using the pinned versions.
 5. Inspect the generated Dart/Rust bridge API and wire/validate the native runtime adapter without guessing generated API names.
 6. Prove native Rust library packaging/loading on Android/Windows/Linux/macOS/iOS-ready builds.
 7. Prove deterministic web fallback behavior against representative Rust regression vectors.
@@ -498,7 +511,7 @@ These are not hidden TODOs; they are explicit release gates.
 14. Run a documented fuzzing campaign budget for the release candidate.
 15. Generate and publish checksum metadata for final downloadable artifacts.
 16. Configure signing/notarization/store credentials only in private platform/repository secret facilities, never in source.
-17. Run `tool/verify_release_candidate.sh` on the exact release candidate and ensure it leaves no tracked changes.
+17. Run `tool/verify_release_candidate.sh` on the exact release candidate and ensure it leaves no modified or untracked repository files.
 18. Re-read this file, `ROADMAP.md`, `CHANGELOG.md`, and release docs for stale claims before tagging.
 19. Tag/release `0.1.0-alpha.1` only after the applicable automated/manual gates are satisfied.
 
@@ -508,6 +521,6 @@ UnitFlow source is substantially implemented, but **the project must not be call
 
 ## Release notes draft — 0.1.0-alpha.1
 
-Planned initial preview includes the high-precision Rust conversion core, deterministic Flutter fallback, adaptive converter/library/history/settings UX, favorites/pins/custom units, batch conversion, local backup/restore, explicit rounding/notation controls, reduced-motion accessibility preference, localization infrastructure, project branding, bridge/release automation, strict bounded backup validation, security/privacy safeguards, and broad automated quality coverage.
+Planned initial preview includes the high-precision Rust conversion core, deterministic Flutter fallback, adaptive converter/library/history/settings UX, favorites/pins/custom units, batch conversion, local backup/restore, explicit rounding/notation controls, reduced-motion accessibility preference, localization infrastructure, project branding, reproducible tracked bridge generation, strict bounded backup validation, security/privacy safeguards, and broad automated quality coverage.
 
 Release-note wording must be finalized only after the exact tagged candidate passes the required checks.
