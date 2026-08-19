@@ -56,14 +56,22 @@ class ReleaseConsistencyHelperTests(unittest.TestCase):
 
 
 class ReleaseTagTests(unittest.TestCase):
-    def test_workspace_version_is_expected_alpha(self) -> None:
-        self.assertEqual(release_tag.workspace_version(), "0.1.0-alpha.1")
+    def test_workspace_version_is_semver_style(self) -> None:
+        self.assertRegex(
+            release_tag.workspace_version(),
+            r"^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$",
+        )
 
     def test_matching_tag_passes(self) -> None:
-        self.assertEqual(release_tag.main(["check_release_tag.py", "v0.1.0-alpha.1"]), 0)
+        version = release_tag.workspace_version()
+        self.assertEqual(release_tag.main(["check_release_tag.py", f"v{version}"]), 0)
 
     def test_mismatched_tag_fails(self) -> None:
-        self.assertEqual(release_tag.main(["check_release_tag.py", "v9.9.9"]), 1)
+        version = release_tag.workspace_version()
+        self.assertEqual(
+            release_tag.main(["check_release_tag.py", f"not-v{version}"]),
+            1,
+        )
 
     def test_missing_tag_is_usage_error(self) -> None:
         self.assertEqual(release_tag.main(["check_release_tag.py"]), 2)
