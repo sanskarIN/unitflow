@@ -27,7 +27,7 @@ final class AppController extends ChangeNotifier {
     try {
       final loaded = await _repository.load();
       final rebuilt = _buildEngine(loaded);
-      _state = loaded;
+      _state = _normalizeStateReferences(loaded, rebuilt);
       _engine = rebuilt;
       AppLog.write(LogLevel.info, 'state_loaded');
     } on Object catch (error) {
@@ -119,6 +119,11 @@ final class AppController extends ChangeNotifier {
     required String fromUnitId,
     required String toUnitId,
   }) {
+    final from = _engine.catalog.byId(fromUnitId);
+    final to = _engine.catalog.byId(toUnitId);
+    if (from == null || to == null || from.category != to.category) {
+      throw ArgumentError('Recent conversion references invalid units.');
+    }
     final next = _state.recents.toList();
     if (next.isNotEmpty &&
         next.first.input == input &&
@@ -144,8 +149,10 @@ final class AppController extends ChangeNotifier {
   Future<void> clearHistory() =>
       _update(_state.copyWith(recents: <RecentConversion>[]));
 
-  Future<void> restoreHistory(List<RecentConversion> recents) =>
-      _update(_state.copyWith(recents: recents));
+  Future<void> restoreHistory(List<RecentConversion> recents) {
+    final restored = _state.copyWith(recents: recents.take(50).toList());
+    return _update(_normalizeStateReferences(restored, _engine));
+  }
 
   Future<void> addCustomUnit(CustomUnitData customUnit) {
     final definition = customUnit.toUnitDefinition();
@@ -195,7 +202,8 @@ final class AppController extends ChangeNotifier {
   Future<void> importState(String content) {
     final imported = _repository.importJson(content);
     final importedEngine = _buildEngine(imported);
-    return _update(imported, engine: importedEngine);
+    final normalized = _normalizeStateReferences(imported, importedEngine);
+    return _update(normalized, engine: importedEngine);
   }
 
   Future<void> resetLocalData() async {
@@ -223,6 +231,50 @@ final class AppController extends ChangeNotifier {
       units.add(definition);
     }
     return ExactConversionEngine(catalog: UnitCatalog(units));
+  }
+
+  UserState _normalizeStateReferences(
+    UserState state,
+    ConversionEngine engine,
+  ) {
+    final validIds = engine.catalog.units.map((unit) => unit.id).toSet();
+    final favorites = state.favoriteUnitIds
+        .where(validIds.contains)
+        .toSet();
+    final pins = state.pinnedPairs.where((pair) {
+      final from = engine.catalog.byId(pair.fromUnitId);
+      final to = engine.catalog.byId(pair.toUnitId);
+      return from != null &&
+          to != null &&
+          from.category == pair.category &&
+          to.category == pair.category;
+    }).take(20).toList();
+    final recents = state.recents.where((recent) {
+      final from = engine.catalog.byId(recent.fromUnitId);
+      final to = engine.catalog.byId(recent.toUnitId);
+      return from != null && to != null && from.category == to.category;
+    }).take(50).toList();
+
+    final removedFavorites = state.favoriteUnitIds.length - favorites.length;
+    final removedPins = state.pinnedPairs.length - pins.length;
+    final removedRecents = state.recents.length - recents.length;
+    if (removedFavorites + removedPins + removedRecents > 0) {
+      AppLog.write(
+        LogLevel.warning,
+        'state_references_normalized',
+        fields: <String, Object?>{
+          'removed_favorites': removedFavorites,
+          'removed_pins': removedPins,
+          'removed_recents': removedRecents,
+        },
+      );
+    }
+
+    return state.copyWith(
+      favoriteUnitIds: favorites,
+      pinnedPairs: pins,
+      recents: recents,
+    );
   }
 
   Future<void> _update(UserState state, {ConversionEngine? engine}) {
