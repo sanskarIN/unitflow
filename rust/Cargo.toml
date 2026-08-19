@@ -1,0 +1,26 @@
+[package]
+name = "unitflow-core"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.82"
+description = "High-precision offline unit conversion core for UnitFlow"
+license = "MIT"
+repository = "https://github.com/sanskarIN/unitflow"
+readme = "../README.md"
+
+[lib]
+name = "unitflow_core"
+crate-type = ["rlib", "cdylib", "staticlib"]
+
+[dependencies]
+rust_decimal = { version = "1", default-features = false, features = ["std"] }
+
+[[bin]]
+name = "unitflow"
+path = "src/bin/unitflow.rs"
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+all = "warn"
