@@ -30,7 +30,8 @@ final class AppController extends ChangeNotifier {
       _state = loaded;
       _engine = rebuilt;
     } on Object catch (error) {
-      _warning = 'Saved preferences could not be loaded. Defaults are being used; existing saved data was not overwritten.';
+      _warning =
+          'Saved preferences could not be loaded. Defaults are being used; existing saved data was not overwritten.';
       AppLog.error(
         'state_load_failed',
         metadata: <String, Object?>{'errorType': error.runtimeType.toString()},
@@ -43,14 +44,11 @@ final class AppController extends ChangeNotifier {
     }
   }
 
-  Future<void> setTheme(ThemePreference preference) =>
-      _update(_state.copyWith(theme: preference));
+  Future<void> setTheme(ThemePreference preference) => _update(_state.copyWith(theme: preference));
 
-  Future<void> setNotation(DecimalNotation notation) =>
-      _update(_state.copyWith(notation: notation));
+  Future<void> setNotation(DecimalNotation notation) => _update(_state.copyWith(notation: notation));
 
-  Future<void> setRoundingMode(DecimalRoundingMode roundingMode) =>
-      _update(_state.copyWith(roundingMode: roundingMode));
+  Future<void> setRoundingMode(DecimalRoundingMode roundingMode) => _update(_state.copyWith(roundingMode: roundingMode));
 
   Future<void> setDecimalPlaces(int decimalPlaces) {
     if (decimalPlaces < 0 || decimalPlaces > 28) {
@@ -59,11 +57,9 @@ final class AppController extends ChangeNotifier {
     return _update(_state.copyWith(decimalPlaces: decimalPlaces));
   }
 
-  Future<void> setUseGrouping(bool enabled) =>
-      _update(_state.copyWith(useGrouping: enabled));
+  Future<void> setUseGrouping(bool enabled) => _update(_state.copyWith(useGrouping: enabled));
 
-  Future<void> completeOnboarding() =>
-      _update(_state.copyWith(onboardingComplete: true));
+  Future<void> completeOnboarding() => _update(_state.copyWith(onboardingComplete: true));
 
   Future<void> toggleFavorite(String unitId) {
     if (_engine.catalog.byId(unitId) == null) {
@@ -184,12 +180,8 @@ final class AppController extends ChangeNotifier {
     }
     final nextCustom = _state.customUnits.where((item) => item.id != id).toList();
     final nextFavorites = _state.favoriteUnitIds.where((item) => item != id).toSet();
-    final nextPins = _state.pinnedPairs
-        .where((pair) => pair.fromUnitId != id && pair.toUnitId != id)
-        .toList();
-    final nextRecents = _state.recents
-        .where((recent) => recent.fromUnitId != id && recent.toUnitId != id)
-        .toList();
+    final nextPins = _state.pinnedPairs.where((pair) => pair.fromUnitId != id && pair.toUnitId != id).toList();
+    final nextRecents = _state.recents.where((recent) => recent.fromUnitId != id && recent.toUnitId != id).toList();
     final newState = _state.copyWith(
       customUnits: nextCustom,
       favoriteUnitIds: nextFavorites,
@@ -219,10 +211,12 @@ final class AppController extends ChangeNotifier {
       await _repository.save(baseline);
     });
     _writeChain = operation.catchError((Object error) {
+      _warning = 'Local data could not be cleared from storage. Please try again.';
       AppLog.error(
         'state_reset_failed',
         metadata: <String, Object?>{'errorType': error.runtimeType.toString()},
       );
+      notifyListeners();
     });
     return operation;
   }
@@ -257,10 +251,7 @@ final class AppController extends ChangeNotifier {
     for (final pair in state.pinnedPairs) {
       final from = engine.catalog.byId(pair.fromUnitId);
       final to = engine.catalog.byId(pair.toUnitId);
-      if (from == null ||
-          to == null ||
-          from.category != pair.category ||
-          to.category != pair.category) {
+      if (from == null || to == null || from.category != pair.category || to.category != pair.category) {
         throw const FormatException('Pinned pair references invalid units.');
       }
     }
