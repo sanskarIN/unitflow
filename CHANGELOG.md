@@ -20,9 +20,13 @@ All notable changes to UnitFlow are documented here. The format is based on Keep
 - Rust catalog/conversion invariant tests, Flutter persistence/export/navigation tests, and deterministic exact-decimal property checks.
 - Dependency-free Rust conversion micro-benchmark.
 - CI, CodeQL, dependency-review, and verified source-release workflows.
+- Generated-scaffold compatibility builds for Android, Web, Linux, Windows, macOS, and iOS; these remain preliminary evidence rather than reviewed native release verification.
+- Dependabot update discovery for Cargo, Flutter/Dart, and GitHub Actions dependencies.
+- Dependency-free Python validators for repository-local Markdown targets, release/version/schema/protocol consistency, tracked-file hygiene, and exact release-tag/version matching.
+- Standard-library regression tests for the repository validators.
 - Structured bug/feature issue templates, pull-request quality checklist, CODEOWNERS, funding metadata, and security/support issue routing.
 - Cross-platform verification scripts for Bash and PowerShell.
-- Documentation for architecture decisions, bridge contract, data schema, unit model, threat model, platform support, native platform completion, localization, keyboard shortcuts, testing, performance, releases, and GitHub maintenance.
+- Documentation for architecture decisions, bridge contract, data schema, unit model, threat model, platform support, native platform completion, generated platform smoke builds, dependency maintenance, localization, keyboard shortcuts, testing, performance, releases, and GitHub maintenance.
 - `.env.example` documenting that core UnitFlow features require no secrets or online configuration.
 
 ### Changed
@@ -32,7 +36,11 @@ All notable changes to UnitFlow are documented here. The format is based on Keep
 - App navigation expanded with dedicated Batch and History workspaces and desktop shortcuts.
 - Custom-unit deletion now removes dangling favorites, pins, and history references.
 - Backup/custom-unit error surfaces now avoid displaying raw internal exception text.
-- Flutter CI/release verification now runs localization generation explicitly.
+- Production and in-memory state repositories now share the same bounded JSON decoder so tests cannot rely on weaker backup-import validation.
+- Recent-history persistence now validates nonblank/bounded input plus existing same-category unit references while preserving locale-formatted original input text.
+- Normal Bash/PowerShell verification, CI, and release packaging now execute repository-integrity validators before language/toolchain checks.
+- Flutter CI/release verification runs localization generation explicitly.
+- Release documentation and roadmap now distinguish generated scaffold compatibility from reviewed native project/build evidence.
 
 ### Fixed
 
@@ -40,13 +48,20 @@ All notable changes to UnitFlow are documented here. The format is based on Keep
 - Corrected dependency-review workflow permissions required for pull-request summaries.
 - Hardened history symbol preview so it does not depend on an additional characters package.
 - Ensured JSON batch export is represented correctly in copy feedback.
+- Fixed a persistence race where a queued pre-reset save could repopulate local data after reset; reset now serializes behind pending writes, clears storage, and persists a clean baseline.
+- Fixed `recordRecent` accepting unknown or cross-category units and oversized/blank input.
+- Fixed imported conversion history accepting whitespace-only input.
+- Fixed in-memory backup imports bypassing the production 1,000,000-character payload and JSON-object/string-key boundary.
+- Fixed the generated platform-smoke workflow/documentation mismatch by implementing the previously documented Linux, Windows, macOS, and iOS jobs in addition to Web and Android.
 
 ### Security
 
 - Added responsible disclosure guidance and secret-handling rules.
 - Added CodeQL analysis, pull-request dependency review, import size/schema validation, safe debug logging, and a project threat model.
+- Repository hygiene now rejects nested tracked `.env` variants, common signing credentials, generated localization output, and build artifacts in addition to checking critical repository files.
+- Tagged release packaging now rejects a `v*` tag unless it exactly equals `v` plus the Cargo workspace package version.
 - Public issue intake instructs reporters to remove secrets and sensitive personal data.
 
 ## [0.1.0-alpha.1] - Planned
 
-Planned first runnable development preview. It is not considered release-ready until clean-clone verification, the native Flutter platform projects, Rust↔Flutter bridge integration, required platform builds, and release-candidate checks are completed.
+Planned first runnable development preview. It is not considered release-ready until clean-clone verification, reviewed native Flutter platform projects, production Rust↔Flutter bridge integration, required native platform builds, and release-candidate checks are completed.
