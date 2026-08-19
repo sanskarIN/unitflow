@@ -11,6 +11,11 @@ import '../features/converter/domain/unit_models.dart';
 final class AppController extends ChangeNotifier {
   AppController({required UserStateRepository repository}) : _repository = repository;
 
+  static const _saveWarning =
+      'Changes are available for this session but could not be saved locally. Export a backup before closing UnitFlow.';
+  static const _clearWarning =
+      'Local data could not be cleared. Your existing saved data was left in place.';
+
   final UserStateRepository _repository;
   UserState _state = UserState();
   ConversionEngine _engine = ExactConversionEngine();
@@ -207,7 +212,19 @@ final class AppController extends ChangeNotifier {
   }
 
   Future<void> resetLocalData() async {
-    await _repository.clear();
+    try {
+      await _writeChain;
+      await _repository.clear();
+    } on Object catch (error) {
+      _warning = _clearWarning;
+      AppLog.write(
+        LogLevel.error,
+        'local_data_clear_failed',
+        fields: <String, Object?>{'error_type': error.runtimeType.toString()},
+      );
+      notifyListeners();
+      return;
+    }
     _state = UserState(onboardingComplete: true);
     _engine = ExactConversionEngine();
     _warning = null;
@@ -238,9 +255,7 @@ final class AppController extends ChangeNotifier {
     ConversionEngine engine,
   ) {
     final validIds = engine.catalog.units.map((unit) => unit.id).toSet();
-    final favorites = state.favoriteUnitIds
-        .where(validIds.contains)
-        .toSet();
+    final favorites = state.favoriteUnitIds.where(validIds.contains).toSet();
     final pins = state.pinnedPairs.where((pair) {
       final from = engine.catalog.byId(pair.fromUnitId);
       final to = engine.catalog.byId(pair.toUnitId);
@@ -286,13 +301,16 @@ final class AppController extends ChangeNotifier {
 
     final snapshot = state;
     final operation = _writeChain.then((_) => _repository.save(snapshot));
-    _writeChain = operation.catchError((Object error) {
+    final handled = operation.catchError((Object error) {
+      _warning = _saveWarning;
       AppLog.write(
         LogLevel.error,
         'state_save_failed',
         fields: <String, Object?>{'error_type': error.runtimeType.toString()},
       );
+      notifyListeners();
     });
-    return operation;
+    _writeChain = handled;
+    return handled;
   }
 }
