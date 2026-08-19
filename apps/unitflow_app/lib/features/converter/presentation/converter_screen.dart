@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../app/theme/app_theme.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../domain/unit_models.dart';
+import 'category_localizations.dart';
 import 'converter_controller.dart';
 
 final class ConverterScreen extends StatefulWidget {
@@ -84,6 +86,7 @@ final class _ConverterScreenState extends State<ConverterScreen> {
     if (!mounted) {
       return;
     }
+    final strings = AppLocalizations.of(context);
     await showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
@@ -101,10 +104,12 @@ final class _ConverterScreenState extends State<ConverterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
-                Text('Batch conversion', style: Theme.of(context).textTheme.headlineSmall),
+                Text(strings.batchTitle, style: Theme.of(context).textTheme.headlineSmall),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
-                  'From ${widget.controller.fromUnit?.name ?? 'selected unit'}',
+                  strings.batchFromUnit(
+                    widget.controller.fromUnit?.name ?? strings.selectedUnit,
+                  ),
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 const SizedBox(height: AppSpacing.md),
@@ -148,6 +153,7 @@ final class _ConverterCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final strings = AppLocalizations.of(context);
     final units = controller.categoryUnits;
     return Card(
       child: Padding(
@@ -161,10 +167,10 @@ final class _ConverterCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      Text('Convert units', style: theme.textTheme.headlineMedium),
+                      Text(strings.convertTitle, style: theme.textTheme.headlineMedium),
                       const SizedBox(height: AppSpacing.xxs),
                       Text(
-                        'Precise, local, and distraction-free.',
+                        strings.convertSubtitle,
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
@@ -173,7 +179,9 @@ final class _ConverterCard extends StatelessWidget {
                   ),
                 ),
                 IconButton.filledTonal(
-                  tooltip: controller.isCurrentPairPinned ? 'Unpin unit pair' : 'Pin unit pair',
+                  tooltip: controller.isCurrentPairPinned
+                      ? strings.unpinUnitPair
+                      : strings.pinUnitPair,
                   onPressed: () => controller.toggleCurrentPairPinned(),
                   icon: Icon(
                     controller.isCurrentPairPinned
@@ -185,10 +193,10 @@ final class _ConverterCard extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.lg),
             _LabeledDropdown<UnitCategory>(
-              label: 'Category',
+              label: strings.categoryLabel,
               value: controller.category,
               items: UnitCategory.values,
-              itemLabel: (category) => category.label,
+              itemLabel: (category) => category.localizedLabel(strings),
               onChanged: (category) {
                 if (category != null) {
                   controller.setCategory(category);
@@ -204,9 +212,9 @@ final class _ConverterCard extends StatelessWidget {
               ),
               textInputAction: TextInputAction.done,
               decoration: InputDecoration(
-                labelText: 'Value',
+                labelText: strings.valueLabel,
                 errorText: controller.error,
-                helperText: 'Scientific notation such as 1.2e6 is supported.',
+                helperText: strings.scientificNotationHelper,
               ),
               onChanged: controller.setInput,
               onSubmitted: (_) => controller.recordCurrentConversion(),
@@ -216,7 +224,7 @@ final class _ConverterCard extends StatelessWidget {
               builder: (context, constraints) {
                 final horizontal = constraints.maxWidth >= 560;
                 final source = _LabeledDropdown<String>(
-                  label: 'From',
+                  label: strings.fromLabel,
                   value: controller.fromUnitId,
                   items: units.map((unit) => unit.id).toList(growable: false),
                   itemLabel: (id) {
@@ -230,7 +238,7 @@ final class _ConverterCard extends StatelessWidget {
                   },
                 );
                 final target = _LabeledDropdown<String>(
-                  label: 'To',
+                  label: strings.toLabel,
                   value: controller.toUnitId,
                   items: units.map((unit) => unit.id).toList(growable: false),
                   itemLabel: (id) {
@@ -251,7 +259,7 @@ final class _ConverterCard extends StatelessWidget {
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
                         child: IconButton.filledTonal(
-                          tooltip: 'Swap source and target units',
+                          tooltip: strings.swapUnits,
                           onPressed: controller.swapUnits,
                           icon: const Icon(Icons.swap_vert),
                         ),
@@ -266,7 +274,7 @@ final class _ConverterCard extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
                       child: IconButton.filledTonal(
-                        tooltip: 'Swap source and target units',
+                        tooltip: strings.swapUnits,
                         onPressed: controller.swapUnits,
                         icon: const Icon(Icons.swap_horiz),
                       ),
@@ -280,8 +288,11 @@ final class _ConverterCard extends StatelessWidget {
             Semantics(
               liveRegion: controller.result != null,
               label: controller.result == null
-                  ? 'No conversion result'
-                  : 'Conversion result ${controller.formattedOutput} ${controller.toUnit?.symbol ?? ''}',
+                  ? strings.noConversionResult
+                  : strings.conversionResultSemantics(
+                      controller.formattedOutput,
+                      controller.toUnit?.symbol ?? '',
+                    ),
               child: Container(
                 padding: const EdgeInsets.all(AppSpacing.lg),
                 decoration: BoxDecoration(
@@ -296,7 +307,7 @@ final class _ConverterCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
                           Text(
-                            'Result',
+                            strings.resultLabel,
                             style: theme.textTheme.labelLarge?.copyWith(
                               color: theme.colorScheme.onPrimaryContainer,
                             ),
@@ -320,7 +331,7 @@ final class _ConverterCard extends StatelessWidget {
                       ),
                     ),
                     IconButton(
-                      tooltip: 'Copy result',
+                      tooltip: strings.copyResult,
                       onPressed: controller.result == null
                           ? null
                           : () => _copyResult(context),
@@ -336,7 +347,7 @@ final class _ConverterCard extends StatelessWidget {
               child: OutlinedButton.icon(
                 onPressed: controller.result == null ? null : onShowBatch,
                 icon: const Icon(Icons.table_rows_outlined),
-                label: const Text('View batch table'),
+                label: Text(strings.viewBatchTable),
               ),
             ),
           ],
@@ -352,7 +363,7 @@ final class _ConverterCard extends StatelessWidget {
       return;
     }
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Conversion result copied.')),
+      SnackBar(content: Text(AppLocalizations.of(context).conversionResultCopied)),
     );
   }
 }
@@ -365,6 +376,7 @@ final class _ConverterSidePanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final strings = AppLocalizations.of(context);
     return Column(
       children: <Widget>[
         Card(
@@ -377,14 +389,14 @@ final class _ConverterSidePanel extends StatelessWidget {
                   children: <Widget>[
                     Icon(Icons.school_outlined, color: theme.colorScheme.primary),
                     const SizedBox(width: AppSpacing.xs),
-                    Text('Learn', style: theme.textTheme.titleLarge),
+                    Text(strings.learnTitle, style: theme.textTheme.titleLarge),
                   ],
                 ),
                 const SizedBox(height: AppSpacing.md),
-                Text(controller.category.explanation),
+                Text(controller.category.localizedExplanation(strings)),
                 const SizedBox(height: AppSpacing.sm),
                 Text(
-                  controller.category.example,
+                  controller.category.localizedExample(strings),
                   style: theme.textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -400,7 +412,7 @@ final class _ConverterSidePanel extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text('Current pair', style: theme.textTheme.titleLarge),
+                Text(strings.currentPairTitle, style: theme.textTheme.titleLarge),
                 const SizedBox(height: AppSpacing.sm),
                 Text(
                   '${controller.fromUnit?.name ?? '—'} → ${controller.toUnit?.name ?? '—'}',
@@ -413,7 +425,9 @@ final class _ConverterSidePanel extends StatelessWidget {
                         ? Icons.push_pin
                         : Icons.push_pin_outlined,
                   ),
-                  label: Text(controller.isCurrentPairPinned ? 'Unpin pair' : 'Pin pair'),
+                  label: Text(
+                    controller.isCurrentPairPinned ? strings.unpinPair : strings.pinPair,
+                  ),
                 ),
               ],
             ),
