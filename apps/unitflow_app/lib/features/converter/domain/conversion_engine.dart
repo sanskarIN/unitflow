@@ -42,6 +42,9 @@ final class ExactConversionEngine implements ConversionEngine {
     if (decimalPlaces < 0 || decimalPlaces > 28) {
       throw ConversionFailure('Decimal places must be between 0 and 28.');
     }
+    if (!value.isRustDecimalCompatible) {
+      throw ConversionFailure('Value is outside the supported decimal range.');
+    }
 
     final from = catalog.byId(fromUnitId);
     final to = catalog.byId(toUnitId);
