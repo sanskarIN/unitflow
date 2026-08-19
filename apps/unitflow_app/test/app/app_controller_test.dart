@@ -70,6 +70,37 @@ void main() {
     expect(controller.state.recents, hasLength(50));
   });
 
+  test('recordRecent canonicalizes exact decimal input before persistence', () async {
+    await controller.recordRecent(
+      input: ' 001.2500 ',
+      fromUnitId: 'meter',
+      toUnitId: 'kilometer',
+    );
+
+    expect(controller.state.recents.single.input, '1.25');
+    expect((await repository.load()).recents.single.input, '1.25');
+  });
+
+  test('recordRecent rejects malformed and out-of-range decimal input', () {
+    expect(
+      () => controller.recordRecent(
+        input: '1,25',
+        fromUnitId: 'meter',
+        toUnitId: 'kilometer',
+      ),
+      throwsArgumentError,
+    );
+    expect(
+      () => controller.recordRecent(
+        input: '79228162514264337593543950336',
+        fromUnitId: 'meter',
+        toUnitId: 'kilometer',
+      ),
+      throwsArgumentError,
+    );
+    expect(controller.state.recents, isEmpty);
+  });
+
   test('conversion settings persist through the repository', () async {
     await controller.setRoundingMode(DecimalRoundingMode.ceiling);
     await controller.setDecimalPlaces(4);
