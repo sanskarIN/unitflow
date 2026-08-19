@@ -102,7 +102,7 @@ jobs:
       - name: Build Linux release
         run: flutter build linux --release
       - name: Package Linux release
-        run: tar -C build/linux/x64/release/bundle -czf ../../../../unitflow-linux-${{ github.ref_name }}.tar.gz .
+        run: tar -C build/linux/x64/release/bundle -czf ../../unitflow-linux-${{ github.ref_name }}.tar.gz .
       - name: Upload Linux artifact
         uses: actions/upload-artifact@v4
         with:
@@ -163,10 +163,10 @@ jobs:
       - name: Validate iOS no-codesign build
         run: flutter build ios --release --no-codesign
       - name: Package macOS release
-        run: ditto -c -k --sequesterRsrc --keepParent build/macos/Build/Products/Release/UnitFlow.app ../../unitflow-macos-${{ github.ref_name }}.zip
+        run: tar -C build/macos/Build/Products/Release -czf ../../unitflow-macos-${{ github.ref_name }}.tar.gz .
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
         with:
           name: unitflow-macos-${{ github.ref_name }}
-          path: unitflow-macos-${{ github.ref_name }}.zip
+          path: unitflow-macos-${{ github.ref_name }}.tar.gz
           if-no-files-found: error
