@@ -184,7 +184,7 @@ final class _ExternalTile extends StatelessWidget {
 
   Future<void> _open(BuildContext context) async {
     final strings = AppLocalizations.of(context);
-    String? message;
+    final String message;
     try {
       if (await launchUrl(uri)) {
         return;
