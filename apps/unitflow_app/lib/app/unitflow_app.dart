@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 
 import '../core/persistence/user_state.dart';
 import '../features/onboarding/presentation/onboarding_screen.dart';
+import '../l10n/app_localizations.dart';
 import 'app_controller.dart';
 import 'app_shell.dart';
+import 'branding/unitflow_mark.dart';
 import 'theme/app_theme.dart';
 
 final class UnitFlowApp extends StatefulWidget {
@@ -30,16 +31,15 @@ final class _UnitFlowAppState extends State<UnitFlowApp> {
     animation: widget.appController,
     builder: (context, _) => MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'UnitFlow',
+      onGenerateTitle: (context) => AppLocalizations.of(context).appName,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: _themeMode(widget.appController.state.theme),
-      localizationsDelegates: const <LocalizationsDelegate<Object>>[
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const <Locale>[Locale('en')],
+      themeAnimationDuration: widget.appController.state.reduceMotion
+          ? Duration.zero
+          : const Duration(milliseconds: 200),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: _home(),
     ),
   );
@@ -65,28 +65,30 @@ final class _StartupScreen extends StatelessWidget {
   const _StartupScreen();
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    body: Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Icon(
-            Icons.swap_calls,
-            size: 64,
-            color: Theme.of(context).colorScheme.primary,
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          Text('UnitFlow', style: Theme.of(context).textTheme.headlineMedium),
-          const SizedBox(height: AppSpacing.md),
-          const SizedBox(
-            width: 28,
-            height: 28,
-            child: CircularProgressIndicator(strokeWidth: 3),
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          const Text('Made by the Sanskar'),
-        ],
+  Widget build(BuildContext context) {
+    final strings = AppLocalizations.of(context);
+    return Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            UnitFlowMark(size: 76, semanticLabel: strings.appName),
+            const SizedBox(height: AppSpacing.lg),
+            Text(
+              strings.appName,
+              style: Theme.of(context).textTheme.headlineMedium,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            const SizedBox(
+              width: 28,
+              height: 28,
+              child: CircularProgressIndicator(strokeWidth: 3),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            Text(strings.madeBySanskar),
+          ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 }

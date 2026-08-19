@@ -1,0 +1,346 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  RELEASE_LABEL: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('run-{0}', github.run_number) }}
+
+jobs:
+  release-metadata:
+    name: Release metadata
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Validate source version consistency
+        run: python3 tool/check_versions.py
+      - name: Validate tag matches workspace version
+        if: startsWith(github.ref, 'refs/tags/')
+        run: python3 tool/check_release_tag.py "$GITHUB_REF_NAME"
+
+  rust-core:
+    name: Rust core
+    needs: release-metadata
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: Verify Rust workspace
+        run: |
+          cargo fmt --all -- --check
+          cargo clippy --workspace --all-targets --all-features -- -D warnings
+          cargo test --workspace --all-features --release
+          cargo build --workspace --all-features --release
+
+  flutter-web:
+    name: Flutter web
+    needs: release-metadata
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/unitflow_app
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Bootstrap web shell
+        working-directory: .
+        run: bash tool/bootstrap_platforms.sh web
+      - name: Generate localizations
+        run: flutter gen-l10n
+      - name: Analyze and test
+        run: |
+          flutter analyze --fatal-infos --fatal-warnings
+          flutter test
+      - name: Build web release
+        run: flutter build web --release
+      - name: Package web release
+        shell: bash
+        run: tar -C build/web -czf "$GITHUB_WORKSPACE/unitflow-web-${RELEASE_LABEL}.tar.gz" .
+      - name: Upload web artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: unitflow-web-${{ env.RELEASE_LABEL }}
+          path: unitflow-web-${{ env.RELEASE_LABEL }}.tar.gz
+          if-no-files-found: error
+
+  flutter-android:
+    name: Flutter Android
+    needs: release-metadata
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/unitflow_app
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Install bridge generator
+        working-directory: .
+        run: cargo install flutter_rust_bridge_codegen --version 2.12.0 --locked
+      - name: Bootstrap Android shell
+        working-directory: .
+        run: bash tool/bootstrap_platforms.sh android
+      - name: Integrate Android Rust bridge
+        working-directory: .
+        run: bash tool/integrate_native_bridge.sh android
+      - name: Generate localizations
+        run: flutter gen-l10n
+      - name: Analyze and test
+        run: |
+          flutter analyze --fatal-infos --fatal-warnings
+          flutter test
+      - name: Build Android release APK
+        run: flutter build apk --release
+      - name: Build Android release app bundle
+        run: flutter build appbundle --release
+      - name: Package Android validation artifacts
+        shell: bash
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/unitflow-android-${RELEASE_LABEL}"
+          cp build/app/outputs/flutter-apk/app-release.apk "$GITHUB_WORKSPACE/unitflow-android-${RELEASE_LABEL}/"
+          cp build/app/outputs/bundle/release/app-release.aab "$GITHUB_WORKSPACE/unitflow-android-${RELEASE_LABEL}/"
+      - name: Upload Android artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: unitflow-android-${{ env.RELEASE_LABEL }}
+          path: unitflow-android-${{ env.RELEASE_LABEL }}/*
+          if-no-files-found: error
+
+  flutter-linux:
+    name: Flutter Linux
+    needs: release-metadata
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/unitflow_app
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Install Linux prerequisites
+        run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Install bridge generator
+        working-directory: .
+        run: cargo install flutter_rust_bridge_codegen --version 2.12.0 --locked
+      - name: Bootstrap Linux shell
+        working-directory: .
+        run: bash tool/bootstrap_platforms.sh linux
+      - name: Integrate Linux Rust bridge
+        working-directory: .
+        run: bash tool/integrate_native_bridge.sh linux
+      - name: Generate localizations
+        run: flutter gen-l10n
+      - name: Analyze and test
+        run: |
+          flutter analyze --fatal-infos --fatal-warnings
+          flutter test
+      - name: Build Linux release
+        run: flutter build linux --release
+      - name: Package Linux release
+        shell: bash
+        run: tar -C build/linux/x64/release/bundle -czf "$GITHUB_WORKSPACE/unitflow-linux-${RELEASE_LABEL}.tar.gz" .
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: unitflow-linux-${{ env.RELEASE_LABEL }}
+          path: unitflow-linux-${{ env.RELEASE_LABEL }}.tar.gz
+          if-no-files-found: error
+
+  flutter-windows:
+    name: Flutter Windows
+    needs: release-metadata
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: apps/unitflow_app
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Install bridge generator
+        working-directory: .
+        run: cargo install flutter_rust_bridge_codegen --version 2.12.0 --locked
+      - name: Bootstrap Windows shell
+        working-directory: .
+        shell: bash
+        run: bash tool/bootstrap_platforms.sh windows
+      - name: Integrate Windows Rust bridge
+        working-directory: .
+        shell: bash
+        run: bash tool/integrate_native_bridge.sh windows
+      - name: Generate localizations
+        run: flutter gen-l10n
+      - name: Analyze and test
+        run: |
+          flutter analyze --fatal-infos --fatal-warnings
+          flutter test
+      - name: Build Windows release
+        run: flutter build windows --release
+      - name: Package Windows release
+        shell: pwsh
+        run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath "$env:GITHUB_WORKSPACE/unitflow-windows-$env:RELEASE_LABEL.zip"
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: unitflow-windows-${{ env.RELEASE_LABEL }}
+          path: unitflow-windows-${{ env.RELEASE_LABEL }}.zip
+          if-no-files-found: error
+
+  flutter-macos-ios:
+    name: Flutter macOS and iOS validation
+    needs: release-metadata
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: apps/unitflow_app
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Install bridge generator
+        working-directory: .
+        run: cargo install flutter_rust_bridge_codegen --version 2.12.0 --locked
+      - name: Bootstrap Apple shells
+        working-directory: .
+        run: bash tool/bootstrap_platforms.sh macos,ios
+      - name: Integrate Apple Rust bridge
+        working-directory: .
+        run: bash tool/integrate_native_bridge.sh macos,ios
+      - name: Generate localizations
+        run: flutter gen-l10n
+      - name: Analyze and test
+        run: |
+          flutter analyze --fatal-infos --fatal-warnings
+          flutter test
+      - name: Build macOS release
+        run: flutter build macos --release
+      - name: Validate iOS no-codesign build
+        run: flutter build ios --release --no-codesign
+      - name: Package macOS release
+        shell: bash
+        run: |
+          macos_app="$(find build/macos/Build/Products/Release -maxdepth 1 -type d -name '*.app' -print -quit)"
+          test -n "$macos_app"
+          ditto -c -k --sequesterRsrc --keepParent "$macos_app" "$GITHUB_WORKSPACE/unitflow-macos-${RELEASE_LABEL}.zip"
+      - name: Package iOS no-codesign validation bundle
+        shell: bash
+        run: |
+          ios_app="$(find build/ios/iphoneos -maxdepth 1 -type d -name '*.app' -print -quit)"
+          test -n "$ios_app"
+          ditto -c -k --sequesterRsrc --keepParent "$ios_app" "$GITHUB_WORKSPACE/unitflow-ios-nosign-${RELEASE_LABEL}.zip"
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: unitflow-macos-${{ env.RELEASE_LABEL }}
+          path: unitflow-macos-${{ env.RELEASE_LABEL }}.zip
+          if-no-files-found: error
+      - name: Upload iOS validation artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: unitflow-ios-nosign-${{ env.RELEASE_LABEL }}
+          path: unitflow-ios-nosign-${{ env.RELEASE_LABEL }}.zip
+          if-no-files-found: error
+
+  checksums:
+    name: Release checksums
+    needs:
+      - rust-core
+      - flutter-web
+      - flutter-android
+      - flutter-linux
+      - flutter-windows
+      - flutter-macos-ios
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download release artifacts
+        uses: actions/download-artifact@v5
+        with:
+          path: release-artifacts
+          merge-multiple: true
+      - name: Generate SHA-256 manifest
+        shell: bash
+        run: |
+          cd release-artifacts
+          find . -maxdepth 1 -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS
+          test -s SHA256SUMS
+          cat SHA256SUMS
+      - name: Upload checksum manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: unitflow-checksums-${{ env.RELEASE_LABEL }}
+          path: release-artifacts/SHA256SUMS
+          if-no-files-found: error
+
+  github-release:
+    name: Publish GitHub release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: checksums
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Download release artifacts
+        uses: actions/download-artifact@v5
+        with:
+          path: release-artifacts
+          merge-multiple: true
+      - name: Generate SHA-256 manifest
+        shell: bash
+        run: |
+          cd release-artifacts
+          find . -maxdepth 1 -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS
+          test -s SHA256SUMS
+      - name: Publish immutable tagged release
+        shell: bash
+        run: |
+          prerelease=""
+          case "$GITHUB_REF_NAME" in
+            *-alpha*|*-beta*|*-rc*|*-preview*) prerelease="--prerelease" ;;
+          esac
+          gh release create "$GITHUB_REF_NAME" release-artifacts/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --verify-tag \
+            --generate-notes \
+            $prerelease

@@ -59,9 +59,12 @@ final class ExactDecimal implements Comparable<ExactDecimal> {
     return _normalized(coefficient, scale);
   }
 
-  const ExactDecimal._(this.coefficient, this.scale);
+  ExactDecimal._(this.coefficient, this.scale);
 
-  static const zero = ExactDecimal._(BigInt.zero, 0);
+  static final zero = ExactDecimal._(BigInt.zero, 0);
+  static final _rustDecimalMaxCoefficient = BigInt.parse(
+    '79228162514264337593543950335',
+  );
 
   final BigInt coefficient;
   final int scale;
@@ -69,6 +72,11 @@ final class ExactDecimal implements Comparable<ExactDecimal> {
   bool get isZero => coefficient == BigInt.zero;
 
   int get sign => coefficient.sign;
+
+  /// Whether this normalized value can be represented by the Rust `rust_decimal::Decimal`
+  /// domain used by UnitFlow's authoritative core without changing its value.
+  bool get isRustDecimalCompatible =>
+      scale <= 28 && coefficient.abs() <= _rustDecimalMaxCoefficient;
 
   ExactDecimal get abs => coefficient.isNegative ? -this : this;
 

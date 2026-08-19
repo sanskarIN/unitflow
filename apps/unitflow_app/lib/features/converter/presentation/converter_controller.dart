@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../../../app/app_controller.dart';
 import '../../../core/format/decimal_format.dart';
 import '../../../core/math/exact_decimal.dart';
+import '../../../core/persistence/user_state.dart';
 import '../domain/conversion_engine.dart';
 import '../domain/unit_models.dart';
 
@@ -13,6 +14,8 @@ final class ConverterController extends ChangeNotifier {
     _selectDefaults(UnitCategory.length);
     recompute();
   }
+
+  static const _maxPersistedRecentInputLength = 1024;
 
   final AppController _appController;
   final DecimalInputParser _parser = const DecimalInputParser();
@@ -126,6 +129,7 @@ final class ConverterController extends ChangeNotifier {
         fromUnitId: _fromUnitId,
         toUnitId: _toUnitId,
         decimalPlaces: _appController.state.decimalPlaces,
+        rounding: _appController.state.roundingMode,
       );
       _error = null;
     } on FormatException {
@@ -153,6 +157,7 @@ final class ConverterController extends ChangeNotifier {
           .where((unit) => unit.id != _fromUnitId)
           .map((unit) => unit.id),
       decimalPlaces: _appController.state.decimalPlaces,
+      rounding: _appController.state.roundingMode,
     );
   }
 
@@ -167,11 +172,16 @@ final class ConverterController extends ChangeNotifier {
       _appController.togglePinnedPair(currentPair);
 
   Future<void> recordCurrentConversion() {
-    if (_result == null) {
+    final currentResult = _result;
+    if (currentResult == null) {
+      return Future<void>.value();
+    }
+    final canonicalInput = currentResult.input.toCanonicalString();
+    if (canonicalInput.length > _maxPersistedRecentInputLength) {
       return Future<void>.value();
     }
     return _appController.recordRecent(
-      input: _input,
+      input: canonicalInput,
       fromUnitId: _fromUnitId,
       toUnitId: _toUnitId,
     );
@@ -180,12 +190,45 @@ final class ConverterController extends ChangeNotifier {
   void applyPinnedPair(PinnedPair pair) {
     final from = _appController.engine.catalog.byId(pair.fromUnitId);
     final to = _appController.engine.catalog.byId(pair.toUnitId);
-    if (from == null || to == null || from.category != pair.category || to.category != pair.category) {
+    if (from == null ||
+        to == null ||
+        from.category != pair.category ||
+        to.category != pair.category) {
       return;
     }
     _category = pair.category;
     _fromUnitId = pair.fromUnitId;
     _toUnitId = pair.toUnitId;
+    recompute();
+  }
+
+  void applyRecentConversion(RecentConversion recent) {
+    final from = _appController.engine.catalog.byId(recent.fromUnitId);
+    final to = _appController.engine.catalog.byId(recent.toUnitId);
+    if (from == null || to == null || from.category != to.category) {
+      return;
+    }
+
+    ExactDecimal canonicalInput;
+    try {
+      canonicalInput = ExactDecimal.parse(recent.input);
+    } on FormatException {
+      _category = from.category;
+      _fromUnitId = from.id;
+      _toUnitId = to.id;
+      recompute();
+      return;
+    }
+
+    _category = from.category;
+    _fromUnitId = from.id;
+    _toUnitId = to.id;
+    _input = _formatter.format(
+      canonicalInput,
+      localeName: _localeName,
+      notation: DecimalNotation.plain,
+      useGrouping: false,
+    );
     recompute();
   }
 

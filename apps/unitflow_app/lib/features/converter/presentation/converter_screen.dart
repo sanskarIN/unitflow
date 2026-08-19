@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../app/theme/app_theme.dart';
+import '../../../l10n/app_localizations.dart';
+import '../application/batch_export.dart';
 import '../domain/unit_models.dart';
 import 'converter_controller.dart';
 
@@ -15,9 +17,25 @@ final class ConverterScreen extends StatefulWidget {
 }
 
 final class _ConverterScreenState extends State<ConverterScreen> {
-  late final TextEditingController _inputController = TextEditingController(
-    text: widget.controller.input,
-  );
+  late final TextEditingController _inputController;
+
+  @override
+  void initState() {
+    super.initState();
+    _inputController = TextEditingController(text: widget.controller.input);
+    widget.controller.addListener(_syncInputFromController);
+  }
+
+  @override
+  void didUpdateWidget(covariant ConverterScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller == widget.controller) {
+      return;
+    }
+    oldWidget.controller.removeListener(_syncInputFromController);
+    widget.controller.addListener(_syncInputFromController);
+    _syncInputFromController();
+  }
 
   @override
   void didChangeDependencies() {
@@ -25,8 +43,20 @@ final class _ConverterScreenState extends State<ConverterScreen> {
     widget.controller.setLocale(Localizations.localeOf(context).toLanguageTag());
   }
 
+  void _syncInputFromController() {
+    final next = widget.controller.input;
+    if (_inputController.text == next) {
+      return;
+    }
+    _inputController.value = TextEditingValue(
+      text: next,
+      selection: TextSelection.collapsed(offset: next.length),
+    );
+  }
+
   @override
   void dispose() {
+    widget.controller.removeListener(_syncInputFromController);
     _inputController.dispose();
     super.dispose();
   }
@@ -88,48 +118,89 @@ final class _ConverterScreenState extends State<ConverterScreen> {
       context: context,
       showDragHandle: true,
       isScrollControlled: true,
-      builder: (context) => SafeArea(
-        child: FractionallySizedBox(
-          heightFactor: 0.78,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.md,
-              0,
-              AppSpacing.md,
-              AppSpacing.md,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
-                Text('Batch conversion', style: Theme.of(context).textTheme.headlineSmall),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  'From ${widget.controller.fromUnit?.name ?? 'selected unit'}',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                const SizedBox(height: AppSpacing.md),
-                Expanded(
-                  child: ListView.separated(
-                    itemCount: results.length,
-                    separatorBuilder: (_, _) => const Divider(height: 1),
-                    itemBuilder: (context, index) {
-                      final result = results[index];
-                      return ListTile(
-                        title: Text(result.to.name),
-                        subtitle: Text(result.to.symbol),
-                        trailing: SelectableText(
-                          widget.controller.formatBatchValue(result.output),
-                          textAlign: TextAlign.end,
+      builder: (context) {
+        final strings = AppLocalizations.of(context);
+        return SafeArea(
+          child: FractionallySizedBox(
+            heightFactor: 0.78,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.md,
+                0,
+                AppSpacing.md,
+                AppSpacing.md,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Text(
+                              strings.batchConversion,
+                              style: Theme.of(context).textTheme.headlineSmall,
+                            ),
+                            const SizedBox(height: AppSpacing.xs),
+                            Text(
+                              '${strings.from}: ${widget.controller.fromUnit?.name ?? '—'}',
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ],
                         ),
-                      );
-                    },
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      OutlinedButton.icon(
+                        onPressed: () => _copyBatchCsv(context, results),
+                        icon: const Icon(Icons.file_copy_outlined),
+                        label: Text(strings.copyCsv),
+                      ),
+                    ],
                   ),
-                ),
-              ],
+                  const SizedBox(height: AppSpacing.md),
+                  Expanded(
+                    child: ListView.separated(
+                      itemCount: results.length,
+                      separatorBuilder: (_, _) => const Divider(height: 1),
+                      itemBuilder: (context, index) {
+                        final result = results[index];
+                        return ListTile(
+                          title: Text(result.to.name),
+                          subtitle: Text(result.to.symbol),
+                          trailing: SelectableText(
+                            widget.controller.formatBatchValue(result.output),
+                            textAlign: TextAlign.end,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
+    );
+  }
+
+  Future<void> _copyBatchCsv(
+    BuildContext context,
+    List<ConversionResult> results,
+  ) async {
+    final strings = AppLocalizations.of(context);
+    final csv = batchResultsToCsv(
+      results,
+      valueFormatter: (result) => result.output.toCanonicalString(),
+    );
+    await Clipboard.setData(ClipboardData(text: csv));
+    if (!context.mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(strings.csvCopied)),
     );
   }
 }
@@ -148,6 +219,7 @@ final class _ConverterCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final strings = AppLocalizations.of(context);
     final units = controller.categoryUnits;
     return Card(
       child: Padding(
@@ -161,10 +233,13 @@ final class _ConverterCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      Text('Convert units', style: theme.textTheme.headlineMedium),
+                      Text(
+                        strings.convertUnits,
+                        style: theme.textTheme.headlineMedium,
+                      ),
                       const SizedBox(height: AppSpacing.xxs),
                       Text(
-                        'Precise, local, and distraction-free.',
+                        strings.converterTagline,
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
@@ -173,7 +248,9 @@ final class _ConverterCard extends StatelessWidget {
                   ),
                 ),
                 IconButton.filledTonal(
-                  tooltip: controller.isCurrentPairPinned ? 'Unpin unit pair' : 'Pin unit pair',
+                  tooltip: controller.isCurrentPairPinned
+                      ? strings.unpinUnitPair
+                      : strings.pinUnitPair,
                   onPressed: () => controller.toggleCurrentPairPinned(),
                   icon: Icon(
                     controller.isCurrentPairPinned
@@ -185,7 +262,7 @@ final class _ConverterCard extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.lg),
             _LabeledDropdown<UnitCategory>(
-              label: 'Category',
+              label: strings.category,
               value: controller.category,
               items: UnitCategory.values,
               itemLabel: (category) => category.label,
@@ -204,9 +281,9 @@ final class _ConverterCard extends StatelessWidget {
               ),
               textInputAction: TextInputAction.done,
               decoration: InputDecoration(
-                labelText: 'Value',
+                labelText: strings.value,
                 errorText: controller.error,
-                helperText: 'Scientific notation such as 1.2e6 is supported.',
+                helperText: strings.scientificInputHint,
               ),
               onChanged: controller.setInput,
               onSubmitted: (_) => controller.recordCurrentConversion(),
@@ -216,11 +293,13 @@ final class _ConverterCard extends StatelessWidget {
               builder: (context, constraints) {
                 final horizontal = constraints.maxWidth >= 560;
                 final source = _LabeledDropdown<String>(
-                  label: 'From',
+                  label: strings.from,
                   value: controller.fromUnitId,
                   items: units.map((unit) => unit.id).toList(growable: false),
                   itemLabel: (id) {
-                    final unit = units.firstWhere((candidate) => candidate.id == id);
+                    final unit = units.firstWhere(
+                      (candidate) => candidate.id == id,
+                    );
                     return '${unit.name} (${unit.symbol})';
                   },
                   onChanged: (id) {
@@ -230,11 +309,13 @@ final class _ConverterCard extends StatelessWidget {
                   },
                 );
                 final target = _LabeledDropdown<String>(
-                  label: 'To',
+                  label: strings.to,
                   value: controller.toUnitId,
                   items: units.map((unit) => unit.id).toList(growable: false),
                   itemLabel: (id) {
-                    final unit = units.firstWhere((candidate) => candidate.id == id);
+                    final unit = units.firstWhere(
+                      (candidate) => candidate.id == id,
+                    );
                     return '${unit.name} (${unit.symbol})';
                   },
                   onChanged: (id) {
@@ -249,9 +330,11 @@ final class _ConverterCard extends StatelessWidget {
                     children: <Widget>[
                       source,
                       Padding(
-                        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppSpacing.xs,
+                        ),
                         child: IconButton.filledTonal(
-                          tooltip: 'Swap source and target units',
+                          tooltip: strings.swapUnits,
                           onPressed: controller.swapUnits,
                           icon: const Icon(Icons.swap_vert),
                         ),
@@ -264,9 +347,11 @@ final class _ConverterCard extends StatelessWidget {
                   children: <Widget>[
                     Expanded(child: source),
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.sm,
+                      ),
                       child: IconButton.filledTonal(
-                        tooltip: 'Swap source and target units',
+                        tooltip: strings.swapUnits,
                         onPressed: controller.swapUnits,
                         icon: const Icon(Icons.swap_horiz),
                       ),
@@ -280,8 +365,8 @@ final class _ConverterCard extends StatelessWidget {
             Semantics(
               liveRegion: controller.result != null,
               label: controller.result == null
-                  ? 'No conversion result'
-                  : 'Conversion result ${controller.formattedOutput} ${controller.toUnit?.symbol ?? ''}',
+                  ? strings.noConversionResult
+                  : '${strings.result}: ${controller.formattedOutput} ${controller.toUnit?.symbol ?? ''}',
               child: Container(
                 padding: const EdgeInsets.all(AppSpacing.lg),
                 decoration: BoxDecoration(
@@ -296,7 +381,7 @@ final class _ConverterCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
                           Text(
-                            'Result',
+                            strings.result,
                             style: theme.textTheme.labelLarge?.copyWith(
                               color: theme.colorScheme.onPrimaryContainer,
                             ),
@@ -320,7 +405,7 @@ final class _ConverterCard extends StatelessWidget {
                       ),
                     ),
                     IconButton(
-                      tooltip: 'Copy result',
+                      tooltip: strings.copyResult,
                       onPressed: controller.result == null
                           ? null
                           : () => _copyResult(context),
@@ -336,7 +421,7 @@ final class _ConverterCard extends StatelessWidget {
               child: OutlinedButton.icon(
                 onPressed: controller.result == null ? null : onShowBatch,
                 icon: const Icon(Icons.table_rows_outlined),
-                label: const Text('View batch table'),
+                label: Text(strings.viewBatchTable),
               ),
             ),
           ],
@@ -346,13 +431,14 @@ final class _ConverterCard extends StatelessWidget {
   }
 
   Future<void> _copyResult(BuildContext context) async {
+    final strings = AppLocalizations.of(context);
     await Clipboard.setData(ClipboardData(text: controller.formattedOutput));
     await controller.recordCurrentConversion();
     if (!context.mounted) {
       return;
     }
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Conversion result copied.')),
+      SnackBar(content: Text(strings.resultCopied)),
     );
   }
 }
@@ -365,6 +451,7 @@ final class _ConverterSidePanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final strings = AppLocalizations.of(context);
     return Column(
       children: <Widget>[
         Card(
@@ -375,9 +462,12 @@ final class _ConverterSidePanel extends StatelessWidget {
               children: <Widget>[
                 Row(
                   children: <Widget>[
-                    Icon(Icons.school_outlined, color: theme.colorScheme.primary),
+                    Icon(
+                      Icons.school_outlined,
+                      color: theme.colorScheme.primary,
+                    ),
                     const SizedBox(width: AppSpacing.xs),
-                    Text('Learn', style: theme.textTheme.titleLarge),
+                    Text(strings.learn, style: theme.textTheme.titleLarge),
                   ],
                 ),
                 const SizedBox(height: AppSpacing.md),
@@ -400,7 +490,7 @@ final class _ConverterSidePanel extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text('Current pair', style: theme.textTheme.titleLarge),
+                Text(strings.currentPair, style: theme.textTheme.titleLarge),
                 const SizedBox(height: AppSpacing.sm),
                 Text(
                   '${controller.fromUnit?.name ?? '—'} → ${controller.toUnit?.name ?? '—'}',
@@ -413,7 +503,11 @@ final class _ConverterSidePanel extends StatelessWidget {
                         ? Icons.push_pin
                         : Icons.push_pin_outlined,
                   ),
-                  label: Text(controller.isCurrentPairPinned ? 'Unpin pair' : 'Pin pair'),
+                  label: Text(
+                    controller.isCurrentPairPinned
+                        ? strings.unpinPair
+                        : strings.pinPair,
+                  ),
                 ),
               ],
             ),
@@ -450,7 +544,10 @@ final class _LabeledDropdown<T> extends StatelessWidget {
             .map(
               (item) => DropdownMenuItem<T>(
                 value: item,
-                child: Text(itemLabel(item), overflow: TextOverflow.ellipsis),
+                child: Text(
+                  itemLabel(item),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             )
             .toList(growable: false),

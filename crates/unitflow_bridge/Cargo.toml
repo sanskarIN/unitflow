@@ -1,0 +1,21 @@
+[package]
+name = "unitflow_bridge"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+description = "Flutter bridge API for the UnitFlow Rust conversion core"
+
+[lib]
+crate-type = ["cdylib", "staticlib", "rlib"]
+
+[dependencies]
+flutter_rust_bridge.workspace = true
+rust_decimal.workspace = true
+unitflow_core = { path = "../unitflow_core" }
+
+[dev-dependencies]
+serde.workspace = true
+serde_json = "1.0"

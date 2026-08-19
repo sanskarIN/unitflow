@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../app/app_controller.dart';
 import '../../../app/theme/app_theme.dart';
+import '../../../core/errors/user_safe_error.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../converter/domain/unit_models.dart';
 import 'custom_unit_dialog.dart';
 
@@ -34,14 +36,19 @@ final class _LibraryScreenState extends State<LibraryScreen> {
   Widget build(BuildContext context) => AnimatedBuilder(
     animation: widget.appController,
     builder: (context, _) {
+      final strings = AppLocalizations.of(context);
       final results = widget.appController.engine.catalog.search(
         _query,
         category: _category,
         limit: 200,
       );
       results.sort((left, right) {
-        final leftFavorite = widget.appController.state.favoriteUnitIds.contains(left.id);
-        final rightFavorite = widget.appController.state.favoriteUnitIds.contains(right.id);
+        final leftFavorite = widget.appController.state.favoriteUnitIds.contains(
+          left.id,
+        );
+        final rightFavorite = widget.appController.state.favoriteUnitIds.contains(
+          right.id,
+        );
         if (leftFavorite != rightFavorite) {
           return leftFavorite ? -1 : 1;
         }
@@ -74,13 +81,13 @@ final class _LibraryScreenState extends State<LibraryScreen> {
                       TextField(
                         controller: _searchController,
                         decoration: InputDecoration(
-                          labelText: 'Search units',
-                          hintText: 'Name, symbol, or alias',
+                          labelText: strings.searchUnits,
+                          hintText: strings.searchUnitsHint,
                           prefixIcon: const Icon(Icons.search),
                           suffixIcon: _query.isEmpty
                               ? null
                               : IconButton(
-                                  tooltip: 'Clear search',
+                                  tooltip: strings.clearSearch,
                                   onPressed: () {
                                     _searchController.clear();
                                     setState(() => _query = '');
@@ -97,7 +104,7 @@ final class _LibraryScreenState extends State<LibraryScreen> {
                       ),
                       const SizedBox(height: AppSpacing.md),
                       Text(
-                        '${results.length} ${results.length == 1 ? 'unit' : 'units'}',
+                        '${results.length} • ${strings.unitLibrary}',
                         style: Theme.of(context).textTheme.labelLarge,
                       ),
                     ],
@@ -130,7 +137,9 @@ final class _LibraryScreenState extends State<LibraryScreen> {
                       isFavorite: widget.appController.state.favoriteUnitIds.contains(
                         results[index].id,
                       ),
-                      onFavorite: () => widget.appController.toggleFavorite(results[index].id),
+                      onFavorite: () => widget.appController.toggleFavorite(
+                        results[index].id,
+                      ),
                       onDeleteCustom: results[index].isBuiltIn
                           ? null
                           : () => _deleteCustomUnit(results[index]),
@@ -155,11 +164,54 @@ final class _LibraryScreenState extends State<LibraryScreen> {
     try {
       await widget.appController.addCustomUnit(data);
     } on Object catch (error) {
+      final strings = AppLocalizations.of(context);
+      final message = userSafeFailure(
+        error,
+        event: 'custom_unit_create_failed',
+        fallback: strings.customUnitCreateFailed,
+      );
       if (!mounted) {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not create unit: $error')),
+        SnackBar(content: Text(message)),
+      );
+    }
+  }
+
+  Future<void> _deleteCustomUnit(UnitDefinition unit) async {
+    final snapshot = await widget.appController.removeCustomUnit(unit.id);
+    if (snapshot == null || !mounted) {
+      return;
+    }
+    final strings = AppLocalizations.of(context);
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(strings.customUnitRemoved),
+        action: SnackBarAction(
+          label: strings.undo,
+          onPressed: () => _restoreCustomUnit(snapshot),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _restoreCustomUnit(RemovedCustomUnitSnapshot snapshot) async {
+    final strings = AppLocalizations.of(context);
+    try {
+      await widget.appController.restoreCustomUnit(snapshot);
+    } on Object catch (error) {
+      final message = userSafeFailure(
+        error,
+        event: 'custom_unit_restore_failed',
+        fallback: strings.customUnitRestoreFailed,
+      );
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
       );
       return;
     }
@@ -167,30 +219,7 @@ final class _LibraryScreenState extends State<LibraryScreen> {
       return;
     }
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${data.name} added.')),
-    );
-  }
-
-  Future<void> _deleteCustomUnit(UnitDefinition unit) async {
-    final data = widget.appController.state.customUnits
-        .where((candidate) => candidate.id == unit.id)
-        .firstOrNull;
-    if (data == null) {
-      return;
-    }
-    await widget.appController.removeCustomUnit(unit.id);
-    if (!mounted) {
-      return;
-    }
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${unit.name} removed.'),
-        action: SnackBarAction(
-          label: 'Undo',
-          onPressed: () => widget.appController.addCustomUnit(data),
-        ),
-      ),
+      SnackBar(content: Text(strings.customUnitRestored)),
     );
   }
 }
@@ -201,30 +230,36 @@ final class _Header extends StatelessWidget {
   final VoidCallback onAddCustom;
 
   @override
-  Widget build(BuildContext context) => Row(
-    crossAxisAlignment: CrossAxisAlignment.end,
-    children: <Widget>[
-      Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text('Unit library', style: Theme.of(context).textTheme.headlineMedium),
-            const SizedBox(height: AppSpacing.xxs),
-            Text(
-              'Search built-in units, favorites, and your own validated custom units.',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-          ],
+  Widget build(BuildContext context) {
+    final strings = AppLocalizations.of(context);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: <Widget>[
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                strings.unitLibrary,
+                style: Theme.of(context).textTheme.headlineMedium,
+              ),
+              const SizedBox(height: AppSpacing.xxs),
+              Text(
+                strings.unitLibrarySubtitle,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ],
+          ),
         ),
-      ),
-      const SizedBox(width: AppSpacing.md),
-      FilledButton.icon(
-        onPressed: onAddCustom,
-        icon: const Icon(Icons.add),
-        label: const Text('Custom unit'),
-      ),
-    ],
-  );
+        const SizedBox(width: AppSpacing.md),
+        FilledButton.icon(
+          onPressed: onAddCustom,
+          icon: const Icon(Icons.add),
+          label: Text(strings.customUnit),
+        ),
+      ],
+    );
+  }
 }
 
 final class _PinnedPairs extends StatelessWidget {
@@ -239,13 +274,17 @@ final class _PinnedPairs extends StatelessWidget {
     if (pairs.isEmpty) {
       return const SizedBox.shrink();
     }
+    final strings = AppLocalizations.of(context);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text('Pinned pairs', style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              strings.pinnedPairs,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: AppSpacing.xs),
             Wrap(
               spacing: AppSpacing.xs,
@@ -277,31 +316,34 @@ final class _CategoryFilter extends StatelessWidget {
   final ValueChanged<UnitCategory?> onChanged;
 
   @override
-  Widget build(BuildContext context) => SingleChildScrollView(
-    scrollDirection: Axis.horizontal,
-    child: Row(
-      children: <Widget>[
-        Padding(
-          padding: const EdgeInsets.only(right: AppSpacing.xs),
-          child: FilterChip(
-            label: const Text('All'),
-            selected: value == null,
-            onSelected: (_) => onChanged(null),
-          ),
-        ),
-        ...UnitCategory.values.map(
-          (category) => Padding(
+  Widget build(BuildContext context) {
+    final strings = AppLocalizations.of(context);
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: <Widget>[
+          Padding(
             padding: const EdgeInsets.only(right: AppSpacing.xs),
             child: FilterChip(
-              label: Text(category.label),
-              selected: value == category,
-              onSelected: (_) => onChanged(category),
+              label: Text(strings.all),
+              selected: value == null,
+              onSelected: (_) => onChanged(null),
             ),
           ),
-        ),
-      ],
-    ),
-  );
+          ...UnitCategory.values.map(
+            (category) => Padding(
+              padding: const EdgeInsets.only(right: AppSpacing.xs),
+              child: FilterChip(
+                label: Text(category.label),
+                selected: value == category,
+                onSelected: (_) => onChanged(category),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 final class _UnitTile extends StatelessWidget {
@@ -318,61 +360,69 @@ final class _UnitTile extends StatelessWidget {
   final VoidCallback? onDeleteCustom;
 
   @override
-  Widget build(BuildContext context) => Card(
-    child: ListTile(
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.xs,
-      ),
-      leading: CircleAvatar(child: Text(unit.symbol, textAlign: TextAlign.center)),
-      title: Text(unit.name),
-      subtitle: Text('${unit.category.label} • ${unit.id}${unit.isBuiltIn ? '' : ' • Custom'}'),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          IconButton(
-            tooltip: isFavorite ? 'Remove from favorites' : 'Add to favorites',
-            onPressed: onFavorite,
-            icon: Icon(isFavorite ? Icons.star : Icons.star_border),
-          ),
-          if (onDeleteCustom != null)
+  Widget build(BuildContext context) {
+    final strings = AppLocalizations.of(context);
+    return Card(
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.xs,
+        ),
+        leading: CircleAvatar(
+          child: Text(unit.symbol, textAlign: TextAlign.center),
+        ),
+        title: Text(unit.name),
+        subtitle: Text(
+          '${unit.category.label} • ${unit.id}${unit.isBuiltIn ? '' : ' • ${strings.customUnit}'}',
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
             IconButton(
-              tooltip: 'Remove custom unit',
-              onPressed: onDeleteCustom,
-              icon: const Icon(Icons.delete_outline),
+              tooltip: isFavorite
+                  ? strings.removeFavorite
+                  : strings.addFavorite,
+              onPressed: onFavorite,
+              icon: Icon(isFavorite ? Icons.star : Icons.star_border),
             ),
-        ],
+            if (onDeleteCustom != null)
+              IconButton(
+                tooltip: strings.removeCustomUnit,
+                onPressed: onDeleteCustom,
+                icon: const Icon(Icons.delete_outline),
+              ),
+          ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 final class _EmptyLibrary extends StatelessWidget {
   const _EmptyLibrary();
 
   @override
-  Widget build(BuildContext context) => Center(
-    child: Padding(
-      padding: const EdgeInsets.all(AppSpacing.xxl),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Icon(
-            Icons.search_off,
-            size: 48,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
-          const SizedBox(height: AppSpacing.md),
-          Text('No units match this search.', style: Theme.of(context).textTheme.titleMedium),
-        ],
+  Widget build(BuildContext context) {
+    final strings = AppLocalizations.of(context);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.xxl),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Icon(
+              Icons.search_off,
+              size: 48,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              strings.noUnitsMatch,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+          ],
+        ),
       ),
-    ),
-  );
-}
-
-extension<T> on Iterable<T> {
-  T? get firstOrNull {
-    final iterator = this.iterator;
-    return iterator.moveNext() ? iterator.current : null;
+    );
   }
 }

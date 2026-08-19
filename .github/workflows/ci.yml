@@ -15,12 +15,41 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  repository-safety:
+    name: Repository safety
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Validate shell script syntax
+        run: bash -n tool/*.sh
+
+      - name: Validate Python utility syntax
+        run: python3 -m py_compile tool/*.py
+
+      - name: Test repository utilities
+        working-directory: tool
+        run: python3 -m unittest discover -p 'test_*.py'
+
+      - name: Verify version consistency
+        run: python3 tool/check_versions.py
+
+      - name: Scan tracked files for credential signatures
+        run: python3 tool/check_secrets.py
+
+      - name: Validate JSON and ARB syntax
+        run: python3 tool/check_data_files.py
+
+      - name: Verify internal Markdown links
+        run: python3 tool/check_docs_links.py
+
   rust:
     name: Rust quality
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -47,7 +76,7 @@ jobs:
         working-directory: apps/unitflow_app
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install Flutter
         uses: subosito/flutter-action@v2
@@ -58,6 +87,9 @@ jobs:
       - name: Resolve dependencies
         run: flutter pub get
 
+      - name: Generate localizations
+        run: flutter gen-l10n
+
       - name: Verify formatting
         run: dart format --output=none --set-exit-if-changed lib test
 
@@ -66,3 +98,48 @@ jobs:
 
       - name: Test
         run: flutter test
+
+  bridge:
+    name: Rust Flutter bridge
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Resolve Flutter dependencies
+        working-directory: apps/unitflow_app
+        run: flutter pub get
+
+      - name: Install bridge generator
+        run: cargo install flutter_rust_bridge_codegen --version 2.12.0 --locked
+
+      - name: Bootstrap Flutter platform shells
+        run: bash tool/bootstrap_platforms.sh
+
+      - name: Integrate native bridge and generate bindings
+        run: bash tool/integrate_native_bridge.sh
+
+      - name: Verify generated Rust
+        run: cargo check --workspace --all-features
+
+      - name: Verify generated Dart
+        working-directory: apps/unitflow_app
+        run: flutter analyze --fatal-infos --fatal-warnings
+
+      - name: Verify generated integration is committed
+        shell: bash
+        run: |
+          if [[ -n "$(git status --porcelain --untracked-files=all)" ]]; then
+            echo "Generated bridge/platform integration differs from committed source." >&2
+            git status --short >&2
+            exit 1
+          fi

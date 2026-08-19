@@ -11,9 +11,26 @@ UnitFlow targets WCAG-oriented accessible behavior across mobile, desktop, and w
 - Text scaling does not hide primary actions or conversion output.
 - Touch targets are comfortably sized.
 - Light/dark themes maintain usable contrast.
-- Motion respects reduced-motion preferences where the framework/platform exposes them.
+- Motion respects both the persisted UnitFlow reduced-motion preference and platform accessibility requests where available.
 - Validation messages identify the field/problem and do not rely only on icons.
 - Dynamic conversion output is announced conservatively; avoid excessive screen-reader chatter on every keystroke.
+
+## Reduced motion
+
+Settings exposes **Reduce motion** as an explicit accessibility preference. The preference is persisted in local/backup state and defaults to `false` when absent from an older schema-v2 backup.
+
+Current behavior includes:
+
+- theme transitions use zero duration when reduced motion is enabled;
+- onboarding page transitions jump directly instead of animating;
+- onboarding progress-indicator shape changes use zero-duration transitions;
+- onboarding also honors the platform/framework `disableAnimations` media setting even when the UnitFlow preference is off.
+
+New animated UI must consult the same preference or platform accessibility setting before adding non-essential motion.
+
+## System accessibility
+
+UnitFlow intentionally leaves text scaling, platform high-contrast behavior, focus traversal, screen-reader services, and other operating-system accessibility features enabled. Do not clamp text scale merely to preserve a visual layout; fix the layout instead.
 
 ## Converter screen review
 
@@ -38,7 +55,7 @@ Do not hard-code layouts that assume short English labels. UI strings must be lo
 
 ## Automated tests
 
-Widget tests should validate critical semantics and absence of obvious layout exceptions at representative dimensions. Automated checks complement rather than replace manual screen-reader/keyboard review.
+Widget tests should validate critical semantics, reduced-motion behavior where practical, and absence of obvious layout exceptions at representative dimensions. Automated checks complement rather than replace manual screen-reader/keyboard review.
 
 ## Release evidence
 

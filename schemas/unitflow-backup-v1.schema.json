@@ -1,0 +1,171 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/sanskarIN/unitflow/blob/main/schemas/unitflow-backup-v1.schema.json",
+  "title": "UnitFlow backup v1",
+  "description": "Portable local UnitFlow preferences, favorites, pinned pairs, recent conversions, and custom units.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "theme",
+    "notation",
+    "decimalPlaces",
+    "useGrouping",
+    "onboardingComplete",
+    "favoriteUnitIds",
+    "pinnedPairs",
+    "recents",
+    "customUnits"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "theme": {
+      "type": "string",
+      "enum": ["system", "light", "dark"]
+    },
+    "notation": {
+      "type": "string",
+      "enum": ["plain", "scientific", "engineering"]
+    },
+    "decimalPlaces": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 28
+    },
+    "useGrouping": { "type": "boolean" },
+    "onboardingComplete": { "type": "boolean" },
+    "favoriteUnitIds": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 64,
+        "pattern": "^[a-z0-9_-]+$"
+      }
+    },
+    "pinnedPairs": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "string",
+        "minLength": 5,
+        "maxLength": 256,
+        "pattern": "^[a-z_]+\\|[a-z0-9_-]+\\|[a-z0-9_-]+$"
+      }
+    },
+    "recents": {
+      "type": "array",
+      "maxItems": 100,
+      "items": { "$ref": "#/$defs/recentConversion" }
+    },
+    "customUnits": {
+      "type": "array",
+      "maxItems": 200,
+      "items": { "$ref": "#/$defs/customUnit" }
+    }
+  },
+  "$defs": {
+    "recentConversion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["input", "fromUnitId", "toUnitId", "createdAt"],
+      "properties": {
+        "input": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        },
+        "fromUnitId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-z0-9_-]+$"
+        },
+        "toUnitId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-z0-9_-]+$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "customUnit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "category",
+        "name",
+        "symbol",
+        "scale",
+        "offset",
+        "aliases",
+        "description"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-z0-9_-]+$"
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "length",
+            "area",
+            "volume",
+            "mass",
+            "speed",
+            "pressure",
+            "energy",
+            "power",
+            "angle",
+            "data_size",
+            "frequency",
+            "time",
+            "temperature"
+          ]
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "symbol": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32
+        },
+        "scale": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        },
+        "offset": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        },
+        "aliases": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          }
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 512
+        }
+      }
+    }
+  }
+}

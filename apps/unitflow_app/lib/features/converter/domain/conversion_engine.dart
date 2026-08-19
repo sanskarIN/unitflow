@@ -42,6 +42,7 @@ final class ExactConversionEngine implements ConversionEngine {
     if (decimalPlaces < 0 || decimalPlaces > 28) {
       throw ConversionFailure('Decimal places must be between 0 and 28.');
     }
+    _requireRustCompatible(value);
 
     final from = catalog.byId(fromUnitId);
     final to = catalog.byId(toUnitId);
@@ -58,8 +59,13 @@ final class ExactConversionEngine implements ConversionEngine {
       throw ConversionFailure('Target unit has an invalid zero scale.');
     }
 
-    final base = (value * from.scale) + from.offset;
-    final output = (base - to.offset)
+    final scaled = value * from.scale;
+    _requireRustCompatible(scaled);
+    final base = scaled + from.offset;
+    _requireRustCompatible(base);
+    final shifted = base - to.offset;
+    _requireRustCompatible(shifted);
+    final output = shifted
         .divide(to.scale, precision: 28, rounding: rounding)
         .round(decimalPlaces, mode: rounding);
 
@@ -84,6 +90,12 @@ final class ExactConversionEngine implements ConversionEngine {
         ),
       )
       .toList(growable: false);
+
+  void _requireRustCompatible(ExactDecimal value) {
+    if (!value.isRustDecimalCompatible) {
+      throw ConversionFailure('Value is outside the supported decimal range.');
+    }
+  }
 }
 
 final class ConversionFailure implements Exception {

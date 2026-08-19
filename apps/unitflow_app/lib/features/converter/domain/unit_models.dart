@@ -96,17 +96,17 @@ extension UnitCategoryInfo on UnitCategory {
 }
 
 final class UnitDefinition {
-  const UnitDefinition({
+  UnitDefinition({
     required this.id,
     required this.category,
     required this.name,
     required this.symbol,
     required this.scale,
-    this.offset = ExactDecimal.zero,
+    ExactDecimal? offset,
     this.aliases = const <String>[],
     this.description = '',
     this.isBuiltIn = true,
-  });
+  }) : offset = offset ?? ExactDecimal.zero;
 
   final String id;
   final UnitCategory category;
@@ -126,6 +126,7 @@ final class UnitDefinition {
     return id.toLowerCase().contains(normalized) ||
         name.toLowerCase().contains(normalized) ||
         symbol.toLowerCase().contains(normalized) ||
+        description.toLowerCase().contains(normalized) ||
         aliases.any((alias) => alias.toLowerCase().contains(normalized));
   }
 }
@@ -151,6 +152,8 @@ final class PinnedPair {
     required this.toUnitId,
   });
 
+  static final RegExp _unitIdPattern = RegExp(r'^[a-z0-9_-]{1,64}$');
+
   final UnitCategory category;
   final String fromUnitId;
   final String toUnitId;
@@ -158,6 +161,9 @@ final class PinnedPair {
   String get storageValue => '${category.id}|$fromUnitId|$toUnitId';
 
   static PinnedPair? tryParse(String value) {
+    if (value.length > 256) {
+      return null;
+    }
     final parts = value.split('|');
     if (parts.length != 3) {
       return null;
@@ -169,7 +175,9 @@ final class PinnedPair {
         break;
       }
     }
-    if (category == null || parts[1].isEmpty || parts[2].isEmpty) {
+    if (category == null ||
+        !_unitIdPattern.hasMatch(parts[1]) ||
+        !_unitIdPattern.hasMatch(parts[2])) {
       return null;
     }
     return PinnedPair(

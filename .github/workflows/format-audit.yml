@@ -1,0 +1,83 @@
+name: Format audit branch
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: format-audit-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  format:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && startsWith(github.head_ref, 'audit/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout pull request branch
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Install Rust formatter
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install bridge generator
+        run: cargo install flutter_rust_bridge_codegen --version 2.12.0 --locked
+
+      - name: Bootstrap Flutter platform shells
+        run: bash tool/bootstrap_platforms.sh
+
+      - name: Integrate native Rust bridge scaffolding
+        run: bash tool/integrate_native_bridge.sh
+
+      - name: Generate Rust lockfile
+        run: cargo generate-lockfile
+
+      - name: Resolve Flutter dependencies
+        working-directory: apps/unitflow_app
+        run: flutter pub get
+
+      - name: Generate localizations
+        working-directory: apps/unitflow_app
+        run: flutter gen-l10n
+
+      - name: Generate Rust Dart bridge
+        run: bash tool/generate_bridge.sh
+
+      - name: Format Rust
+        run: cargo fmt --all
+
+      - name: Format Dart
+        working-directory: apps/unitflow_app
+        run: dart format lib test
+
+      - name: Commit normalized generated sources when needed
+        shell: bash
+        run: |
+          if [[ -z "$(git status --porcelain --untracked-files=all)" ]] && test -f Cargo.lock && test -f apps/unitflow_app/pubspec.lock; then
+            echo "Platform shells, native bridge scaffolding, generated sources, formatting, and lockfiles are already clean."
+            exit 0
+          fi
+          git config user.name "Sanskar"
+          git config user.email "sanskarin@outlook.in"
+          git add Cargo.lock apps/unitflow_app crates
+          if git diff --cached --quiet; then
+            echo "No normalization changes were stageable; refusing to hide untracked drift." >&2
+            git status --short >&2
+            exit 1
+          fi
+          git commit -m "build: normalize platform shells bridge and generated sources"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
