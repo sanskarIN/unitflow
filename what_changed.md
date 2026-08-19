@@ -306,7 +306,10 @@ CI now includes dependency-free repository checks:
 
 - `tool/check_secrets.py` — common committed private-key/token signature scan over tracked text-like files;
 - `tool/check_data_files.py` — UTF-8 JSON parsing for tracked JSON/ARB data and duplicate-object-key rejection;
-- `tool/check_docs_links.py` — internal Markdown target validation.
+- `tool/check_docs_links.py` — internal Markdown target validation;
+- `tool/test_check_data_files.py` — regression tests proving unique objects are accepted and duplicate root/nested keys are rejected.
+
+Repository utility tests are part of CI, `tool/check.sh`, and `tool/verify_release_candidate.sh` so local, pull-request, and strict release verification exercise the same safety helper behavior.
 
 These supplement, not replace, CodeQL, dependency review, compiler/linter/test checks, and GitHub's own repository security features.
 
@@ -329,7 +332,7 @@ No release performance number is claimed until output is recorded with machine/t
 bash tool/check.sh
 ```
 
-This covers repository safety/data/docs plus Rust and Flutter gates. It regenerates the bridge only when the generator is installed and warns when that extra check is skipped.
+This covers repository utility regression tests, safety/data/docs checks, and Rust and Flutter gates. It regenerates the bridge only when the generator is installed and warns when that extra check is skipped.
 
 ### Bridge generation
 
@@ -344,7 +347,7 @@ bash tool/generate_bridge.sh
 bash tool/verify_release_candidate.sh
 ```
 
-The strict verifier requires the pinned bridge generator and runs repository checks, Rust formatting/lint/tests/release build, Flutter localization/format/analyze/tests, bridge regeneration, post-generation analysis/tests, web release build, clean generated-source check, and core profiling harness.
+The strict verifier requires the pinned bridge generator and runs repository utility regression tests, repository checks, Rust formatting/lint/tests/release build, Flutter localization/format/analyze/tests, bridge regeneration, post-generation analysis/tests, web release build, clean generated-source check, and core profiling harness.
 
 Native platform builds/manual review remain separate platform gates.
 
@@ -353,7 +356,7 @@ Native platform builds/manual review remain separate platform gates.
 Configured workflows include:
 
 - CI:
-  - repository safety;
+  - repository safety and repository utility regression tests;
   - Rust quality;
   - Flutter quality;
   - Rust/Flutter bridge generation/check;
@@ -426,6 +429,7 @@ schemas/unitflow-backup-v2.schema.json
 tool/check_secrets.py
 tool/check_data_files.py
 tool/check_docs_links.py
+tool/test_check_data_files.py
 tool/profile_core.sh
 tool/verify_release_candidate.sh
 crates/unitflow_core/examples/profile.rs
@@ -452,6 +456,13 @@ The latest hardening sequence before this handoff commit is:
 - `ce7fc23c85e41e10ff96466efbcb75bac0c08dec` — `docs: record strict backup hardening`
 - `e50194988948c308c931a6562adf1747fc7bd6b5` — `test: keep in-memory import limits production-equivalent`
 - `f3300fa5f882641032df0677446c16dda5e3c58f` — `test: enforce custom unit collection limit`
+- `887cfcd43c8225fcac69422d8f05bf2f81389e5e` — `test: cover duplicate structured data keys`
+- `d1765309591d5e612151e89a58655badef0838dd` — `ci: run repository utility regression tests`
+- `3d80d009c5e0751f96f5b0627ee52ddaa4cf3940` — `docs: document repository utility tests`
+- `5db112ac6e659c6466ca4e79549604af310ea1fd` — `build: include repository utility regression tests`
+- `9dd233969e8d59f11b9a36a59a8ba0118689006c` — `build: run utility tests in release verification`
+- `a8f511dc58d0c2d04d767c300921443bf8750956` — `docs: include repository utility regression command`
+- `ff794c6a4c2baf8def3a46071ec849b5f541ddeb` — `docs: record completed backup hardening gates`
 
 These commits deliberately remain granular rather than combining unrelated fixes.
 
