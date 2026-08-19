@@ -30,9 +30,14 @@ All notable changes to UnitFlow are documented here. The format is based on Keep
 - Backup schema advanced from version 1 to version 2 to persist the selected decimal rounding mode.
 - Valid version 1 backups migrate deterministically to nearest-even rounding and export as version 2.
 - Early version 2 backups remain compatible when the later optional `reduceMotion` preference is absent; it defaults to `false`.
+- Backup decoding now rejects unknown properties and oversized collections instead of silently accepting or truncating data outside the documented schema contract.
+- Production and in-memory repositories now share one strict backup decoder, including the same maximum import-size rule.
+- Custom-unit values are normalized before persistence: text fields and aliases are trimmed, aliases are case-insensitively deduplicated, and exact decimal scale/offset values are canonicalized.
+- Locally created custom units obey the same 200-unit collection limit as portable backups.
 - Primary library/custom-unit/settings interface strings increasingly use generated localization resources instead of embedded labels.
-- Catalog matching now includes unit descriptions in the deterministic Dart catalog search path.
+- Catalog matching now includes unit descriptions in the deterministic Dart catalog path and description matching is covered at the Rust unit-definition layer.
 - Developer verification now checks repository safety/data/docs before Rust and Flutter quality gates.
+- Repository JSON/ARB validation now rejects duplicate object keys in addition to malformed or non-UTF-8 data.
 - Audit-branch normalization bootstraps platform shells, regenerates native bridge scaffolding/localizations/bindings, and uses `sanskarin@outlook.in` for its automated normalization commit identity.
 - Loaded/imported convenience state is normalized against the rebuilt catalog so stale favorites, pins, and recent-history references cannot survive catalog/custom-unit changes.
 - Local persistence writes are serialized and handled as user-visible non-fatal warnings if the storage backend fails.
@@ -41,6 +46,8 @@ All notable changes to UnitFlow are documented here. The format is based on Keep
 
 - Conversion rounding is applied consistently to primary and batch conversion paths using the persisted user preference.
 - Backup/custom-unit failures no longer echo raw internal exception text into the user interface.
+- Persisted pinned-pair unit IDs now enforce the stable-ID grammar and bounded serialized length before entering application state.
+- Backup imports now reject duplicate favorite IDs, duplicate pinned pairs, duplicate custom-unit IDs, unsupported object fields, unsafe recent unit IDs, and collection counts beyond the documented schema limits.
 - History can be cleared without making the action immediately irreversible because the UI provides an undo snapshot.
 - Removing a custom unit now removes dependent favorite, pinned-pair, and recent-history references instead of leaving inaccessible local state.
 - Undoing custom-unit removal restores the definition together with its captured favorite, pin, and history relationships when the stable ID is still available.
@@ -52,6 +59,7 @@ All notable changes to UnitFlow are documented here. The format is based on Keep
 - Added responsible disclosure guidance and safe configuration rules.
 - Added bounded backup import validation and redacting structured diagnostic logging.
 - Added tracked-file safety scanning as a dependency-free CI check.
+- JSON/ARB repository validation detects duplicate keys so ambiguous structured data cannot silently pass through a last-value-wins parser.
 - Added safe failure presentation that records only exception type metadata rather than potentially sensitive exception text.
 - Referential-normalization diagnostics record aggregate removal counts only, not conversion values or user backup content.
 
