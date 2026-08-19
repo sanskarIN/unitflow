@@ -37,6 +37,7 @@ final class RecentConversion {
     }
     final timestamp = DateTime.tryParse(created);
     if (timestamp == null ||
+        input.trim().isEmpty ||
         from.isEmpty ||
         from.length > 64 ||
         to.isEmpty ||
