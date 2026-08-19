@@ -22,6 +22,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Validate shell script syntax
+        run: bash -n tool/*.sh
+
+      - name: Validate Python utility syntax
+        run: python3 -m py_compile tool/*.py
+
       - name: Scan tracked files for credential signatures
         run: python3 tool/check_secrets.py
 
