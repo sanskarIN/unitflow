@@ -4,14 +4,52 @@ Set-StrictMode -Version Latest
 $RootDir = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $FlutterDir = Join-Path $RootDir 'apps/unitflow_app'
 
-foreach ($Command in @('cargo', 'flutter', 'dart')) {
+foreach ($Command in @('git', 'cargo', 'flutter', 'dart')) {
     if (-not (Get-Command $Command -ErrorAction SilentlyContinue)) {
         throw "$Command is required and was not found on PATH."
     }
 }
 
+$PythonExecutable = $null
+$PythonPrefix = @()
+if (Get-Command 'python3' -ErrorAction SilentlyContinue) {
+    $PythonExecutable = 'python3'
+}
+elseif (Get-Command 'python' -ErrorAction SilentlyContinue) {
+    $PythonExecutable = 'python'
+}
+elseif (Get-Command 'py' -ErrorAction SilentlyContinue) {
+    $PythonExecutable = 'py'
+    $PythonPrefix = @('-3')
+}
+else {
+    throw 'Python 3 is required and was not found on PATH.'
+}
+
+function Invoke-PythonCheck {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$RelativePath,
+        [Parameter(Mandatory = $true)]
+        [string]$FailureMessage
+    )
+
+    $ScriptPath = Join-Path $RootDir $RelativePath
+    & $PythonExecutable @PythonPrefix $ScriptPath
+    if ($LASTEXITCODE -ne 0) { throw $FailureMessage }
+}
+
 Push-Location $RootDir
 try {
+    Write-Host '==> Markdown links'
+    Invoke-PythonCheck 'scripts/check_markdown_links.py' 'Markdown link validation failed'
+
+    Write-Host '==> Release consistency'
+    Invoke-PythonCheck 'scripts/check_release_consistency.py' 'Release consistency validation failed'
+
+    Write-Host '==> Repository hygiene'
+    Invoke-PythonCheck 'scripts/check_repository_hygiene.py' 'Repository hygiene validation failed'
+
     Write-Host '==> Rust formatting'
     cargo fmt --all -- --check
     if ($LASTEXITCODE -ne 0) { throw 'cargo fmt failed' }
