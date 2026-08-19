@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate UnitFlow release and Flutter Rust Bridge version consistency."""
+"""Validate UnitFlow release, Flutter bundle, and bridge version consistency."""
 
 from __future__ import annotations
 
@@ -25,8 +25,8 @@ PINNED_FILES = (
 
 PUBSPEC_VERSION_RE = re.compile(r"(?m)^version:\s*([^\s#]+)\s*$")
 PUBSPEC_FRB_RE = re.compile(r"(?m)^\s{2}flutter_rust_bridge:\s*([^\s#]+)\s*$")
+FLUTTER_VERSION_RE = re.compile(r"^(\d+)\.(\d+)\.(\d+)\+(\d+)$")
 CODEGEN_PIN_RE = re.compile(r"flutter_rust_bridge_codegen\s+--version\s+([^\s`]+)")
-DOCUMENTED_PIN_RE = re.compile(r"flutter_rust_bridge_codegen\s+--version\s+([^\s`]+)")
 
 
 def load_workspace_versions() -> tuple[str, str]:
@@ -50,8 +50,18 @@ def load_pubspec_versions() -> tuple[str, str]:
     return version_match.group(1), frb_match.group(1)
 
 
-def flutter_semver(pubspec_version: str) -> str:
-    return pubspec_version.split("+", 1)[0]
+def release_core_version(release_version: str) -> str:
+    return release_version.split("-", 1)[0].split("+", 1)[0]
+
+
+def flutter_build_name(pubspec_version: str) -> str:
+    match = FLUTTER_VERSION_RE.fullmatch(pubspec_version)
+    if match is None:
+        raise ValueError(
+            "Flutter version must use an Apple-compatible numeric build name and build number, "
+            "for example 0.1.0+1"
+        )
+    return ".".join(match.groups()[:3])
 
 
 def check_codegen_pins(expected: str) -> list[str]:
@@ -61,11 +71,7 @@ def check_codegen_pins(expected: str) -> list[str]:
             failures.append(f"missing pinned-version file: {path.relative_to(ROOT)}")
             continue
         text = path.read_text(encoding="utf-8")
-        matches = CODEGEN_PIN_RE.findall(text)
-        if not matches:
-            # Documentation may mention the generator version without a literal install command.
-            matches = DOCUMENTED_PIN_RE.findall(text)
-        for actual in matches:
+        for actual in CODEGEN_PIN_RE.findall(text):
             if actual != expected:
                 failures.append(
                     f"{path.relative_to(ROOT)} pins flutter_rust_bridge_codegen {actual}; expected {expected}"
@@ -78,14 +84,16 @@ def main() -> int:
     try:
         workspace_version, workspace_frb = load_workspace_versions()
         flutter_version, flutter_frb = load_pubspec_versions()
+        flutter_name = flutter_build_name(flutter_version)
     except (OSError, UnicodeDecodeError, tomllib.TOMLDecodeError, ValueError) as error:
         print(f"Version consistency check failed to parse configuration: {error}", file=sys.stderr)
         return 2
 
-    if flutter_semver(flutter_version) != workspace_version:
+    workspace_core = release_core_version(workspace_version)
+    if flutter_name != workspace_core:
         failures.append(
-            "Flutter application version "
-            f"{flutter_semver(flutter_version)} does not match Rust workspace version {workspace_version}"
+            f"Flutter build name {flutter_name} does not match release core version {workspace_core} "
+            f"from Rust workspace version {workspace_version}"
         )
     if flutter_frb != workspace_frb:
         failures.append(
@@ -101,7 +109,7 @@ def main() -> int:
 
     print(
         "Version consistency passed: "
-        f"UnitFlow {workspace_version}, flutter_rust_bridge {workspace_frb}."
+        f"release {workspace_version}, Flutter {flutter_version}, flutter_rust_bridge {workspace_frb}."
     )
     return 0
 
