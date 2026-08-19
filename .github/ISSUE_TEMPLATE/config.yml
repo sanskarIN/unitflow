@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Private security report
+    url: mailto:sanskarin@outlook.in?subject=UnitFlow%20Security
+    about: Report suspected vulnerabilities privately instead of opening a public issue.
+  - name: General support
+    url: mailto:supportramsandesh@gmail.com?subject=UnitFlow%20Support
+    about: Use private support when an issue would require sharing non-public details.
