@@ -22,7 +22,8 @@ All notable changes to UnitFlow are documented here. The format is based on Keep
 - CI, CodeQL, dependency-review, and verified source-release workflows.
 - Generated-scaffold compatibility builds for Android, Web, Linux, Windows, macOS, and iOS; these remain preliminary evidence rather than reviewed native release verification.
 - Dependabot update discovery for Cargo, Flutter/Dart, and GitHub Actions dependencies.
-- Dependency-free Python validators for repository-local Markdown targets, release/version/schema/protocol consistency, tracked-file hygiene, and exact release-tag/version matching.
+- Dependency-free Python validators for repository-local Markdown targets, release/version/schema/protocol consistency, tracked-file hygiene, exact release-tag/version matching, and exhaustive tracked-file documentation inventory parity.
+- `docs/repository-inventory.md`, documenting every tracked first-party file and enforced against `git ls-files` in local verification, CI, and release packaging.
 - Standard-library regression tests for the repository validators.
 - Structured bug/feature issue templates, pull-request quality checklist, CODEOWNERS, funding metadata, and security/support issue routing.
 - Cross-platform verification scripts for Bash and PowerShell.
@@ -41,6 +42,7 @@ All notable changes to UnitFlow are documented here. The format is based on Keep
 - Normal Bash/PowerShell verification, CI, and release packaging now execute repository-integrity validators before language/toolchain checks.
 - Flutter CI/release verification runs localization generation explicitly.
 - Release documentation and roadmap now distinguish generated scaffold compatibility from reviewed native project/build evidence.
+- Security/threat documentation now covers persistence ordering, import atomicity, repository hygiene, release-tag validation, and native-platform trust boundaries.
 
 ### Fixed
 
@@ -58,7 +60,7 @@ All notable changes to UnitFlow are documented here. The format is based on Keep
 
 - Added responsible disclosure guidance and secret-handling rules.
 - Added CodeQL analysis, pull-request dependency review, import size/schema validation, safe debug logging, and a project threat model.
-- Repository hygiene now rejects nested tracked `.env` variants, common signing credentials, generated localization output, and build artifacts in addition to checking critical repository files.
+- Repository hygiene now rejects nested tracked `.env` variants, common signing credentials, generated localization output, and build artifacts in addition to checking the complete critical project/documentation set.
 - Tagged release packaging now rejects a `v*` tag unless it exactly equals `v` plus the Cargo workspace package version.
 - Public issue intake instructs reporters to remove secrets and sensitive personal data.
 
