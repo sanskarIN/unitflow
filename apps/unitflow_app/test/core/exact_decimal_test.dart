@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:unitflow/core/format/decimal_format.dart';
 import 'package:unitflow/core/math/exact_decimal.dart';
 
 void main() {
@@ -31,26 +32,43 @@ void main() {
 
     test('divides to requested precision', () {
       expect(
-        ExactDecimal.parse('1')
-            .divide(ExactDecimal.parse('3'), precision: 6)
-            .toString(),
+        ExactDecimal.parse('1').divide(ExactDecimal.parse('3'), precision: 6).toString(),
         '0.333333',
       );
     });
 
     test('nearest-even differs from half-away on ties', () {
       expect(
-        ExactDecimal.parse('2.5')
-            .round(0, mode: DecimalRoundingMode.nearestEven)
-            .toString(),
+        ExactDecimal.parse('2.5').round(0, mode: DecimalRoundingMode.nearestEven).toString(),
         '2',
       );
       expect(
-        ExactDecimal.parse('2.5')
-            .round(0, mode: DecimalRoundingMode.halfAwayFromZero)
-            .toString(),
+        ExactDecimal.parse('2.5').round(0, mode: DecimalRoundingMode.halfAwayFromZero).toString(),
         '3',
       );
+    });
+  });
+
+  group('Locale-aware decimal formatting', () {
+    const formatter = DecimalDisplayFormatter();
+    const parser = DecimalInputParser();
+
+    test('uses Western grouping for en_US', () {
+      expect(
+        formatter.format(ExactDecimal.parse('1234567.89'), localeName: 'en_US'),
+        '1,234,567.89',
+      );
+    });
+
+    test('uses Indian grouping for en_IN', () {
+      expect(
+        formatter.format(ExactDecimal.parse('1234567.89'), localeName: 'en_IN'),
+        '12,34,567.89',
+      );
+    });
+
+    test('parses localized decimal and grouping separators exactly', () {
+      expect(parser.parse('1.234,5', localeName: 'de_DE').toCanonicalString(), '1234.5');
     });
   });
 }
