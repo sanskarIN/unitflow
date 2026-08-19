@@ -8,6 +8,7 @@ import '../../../core/format/decimal_format.dart';
 import '../../../core/logging/app_log.dart';
 import '../../../core/math/exact_decimal.dart';
 import '../../../core/persistence/user_state.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 final class SettingsScreen extends StatelessWidget {
   const SettingsScreen({
@@ -22,201 +23,196 @@ final class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) => AnimatedBuilder(
     animation: appController,
-    builder: (context, _) => ListView(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      children: <Widget>[
-        Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 860),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
-                const SizedBox(height: AppSpacing.md),
-                Text('Settings', style: Theme.of(context).textTheme.headlineMedium),
-                const SizedBox(height: AppSpacing.lg),
-                _SectionCard(
-                  title: 'Appearance',
-                  icon: Icons.palette_outlined,
-                  children: <Widget>[
-                    _DropdownSetting<ThemePreference>(
-                      label: 'Theme',
-                      value: appController.state.theme,
-                      values: ThemePreference.values,
-                      labelFor: (value) => switch (value) {
-                        ThemePreference.system => 'System',
-                        ThemePreference.light => 'Light',
-                        ThemePreference.dark => 'Dark',
-                      },
-                      onChanged: (value) {
-                        if (value != null) {
-                          appController.setTheme(value);
-                        }
-                      },
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.md),
-                _SectionCard(
-                  title: 'Conversion and formatting',
-                  icon: Icons.tune,
-                  children: <Widget>[
-                    _DropdownSetting<DecimalNotation>(
-                      label: 'Notation',
-                      value: appController.state.notation,
-                      values: DecimalNotation.values,
-                      labelFor: (value) => switch (value) {
-                        DecimalNotation.plain => 'Plain',
-                        DecimalNotation.scientific => 'Scientific',
-                        DecimalNotation.engineering => 'Engineering',
-                      },
-                      onChanged: (value) {
-                        if (value != null) {
-                          appController.setNotation(value);
-                        }
-                      },
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    _DropdownSetting<DecimalRoundingMode>(
-                      label: 'Rounding mode',
-                      value: appController.state.roundingMode,
-                      values: DecimalRoundingMode.values,
-                      labelFor: (value) => switch (value) {
-                        DecimalRoundingMode.nearestEven => 'Nearest, ties to even',
-                        DecimalRoundingMode.halfAwayFromZero => 'Nearest, ties away from zero',
-                        DecimalRoundingMode.towardZero => 'Toward zero',
-                        DecimalRoundingMode.awayFromZero => 'Away from zero',
-                        DecimalRoundingMode.floor => 'Floor',
-                        DecimalRoundingMode.ceiling => 'Ceiling',
-                      },
-                      onChanged: (value) {
-                        if (value != null) {
-                          appController.setRoundingMode(value);
-                        }
-                      },
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    _DropdownSetting<int>(
-                      label: 'Decimal places',
-                      value: appController.state.decimalPlaces,
-                      values: List<int>.generate(29, (index) => index),
-                      labelFor: (value) => value.toString(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          appController.setDecimalPlaces(value);
-                        }
-                      },
-                    ),
-                    SwitchListTile.adaptive(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('Digit grouping'),
-                      subtitle: const Text('Use locale-aware grouping separators in displayed results.'),
-                      value: appController.state.useGrouping,
-                      onChanged: appController.setUseGrouping,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.md),
-                _SectionCard(
-                  title: 'Privacy and local data',
-                  icon: Icons.privacy_tip_outlined,
-                  children: <Widget>[
-                    const Text(
-                      'Static conversions require no account. Your preferences, favorites, history, pinned pairs, and custom units are stored locally by default.',
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    Wrap(
-                      spacing: AppSpacing.xs,
-                      runSpacing: AppSpacing.xs,
-                      children: <Widget>[
-                        OutlinedButton.icon(
-                          onPressed: () => _copyBackup(context),
-                          icon: const Icon(Icons.copy_all_outlined),
-                          label: const Text('Copy backup JSON'),
-                        ),
-                        OutlinedButton.icon(
-                          onPressed: () => _importFromClipboard(context),
-                          icon: const Icon(Icons.content_paste_go_outlined),
-                          label: const Text('Import from clipboard'),
-                        ),
-                        TextButton.icon(
-                          onPressed: () => _confirmReset(context),
-                          icon: const Icon(Icons.delete_sweep_outlined),
-                          label: const Text('Clear local data'),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.md),
-                _SectionCard(
-                  title: 'Accessibility and keyboard',
-                  icon: Icons.accessibility_new_outlined,
-                  children: const <Widget>[
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: Icon(Icons.keyboard_outlined),
-                      title: Text('Desktop shortcuts'),
-                      subtitle: Text(
-                        'Ctrl/Cmd+1 Convert · +2 Batch · +3 Library · +4 History · Ctrl/Cmd+, Settings',
+    builder: (context, _) {
+      final strings = AppLocalizations.of(context);
+      return ListView(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        children: <Widget>[
+          Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 860),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  const SizedBox(height: AppSpacing.md),
+                  Text(strings.settingsTitle, style: Theme.of(context).textTheme.headlineMedium),
+                  const SizedBox(height: AppSpacing.lg),
+                  _SectionCard(
+                    title: strings.appearanceSection,
+                    icon: Icons.palette_outlined,
+                    children: <Widget>[
+                      _DropdownSetting<ThemePreference>(
+                        label: strings.themeLabel,
+                        value: appController.state.theme,
+                        values: ThemePreference.values,
+                        labelFor: (value) => switch (value) {
+                          ThemePreference.system => strings.themeSystem,
+                          ThemePreference.light => strings.themeLight,
+                          ThemePreference.dark => strings.themeDark,
+                        },
+                        onChanged: (value) {
+                          if (value != null) {
+                            appController.setTheme(value);
+                          }
+                        },
                       ),
-                    ),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: Icon(Icons.text_fields_outlined),
-                      title: Text('Scalable text and semantics'),
-                      subtitle: Text(
-                        'UnitFlow uses Flutter semantics, selectable results, and adaptive layouts designed to follow platform text scaling.',
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  _SectionCard(
+                    title: strings.conversionFormattingSection,
+                    icon: Icons.tune,
+                    children: <Widget>[
+                      _DropdownSetting<DecimalNotation>(
+                        label: strings.notationLabel,
+                        value: appController.state.notation,
+                        values: DecimalNotation.values,
+                        labelFor: (value) => switch (value) {
+                          DecimalNotation.plain => strings.notationPlain,
+                          DecimalNotation.scientific => strings.notationScientific,
+                          DecimalNotation.engineering => strings.notationEngineering,
+                        },
+                        onChanged: (value) {
+                          if (value != null) {
+                            appController.setNotation(value);
+                          }
+                        },
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.md),
-                _SectionCard(
-                  title: 'Updates',
-                  icon: Icons.system_update_alt_outlined,
-                  children: <Widget>[
-                    const Text(
-                      'Core conversions do not require network access. Release notes and downloadable builds are published through the project repository.',
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: const Icon(Icons.new_releases_outlined),
-                      title: const Text('Open GitHub Releases'),
-                      subtitle: const Text('Check published versions when you choose.'),
-                      trailing: const Icon(Icons.open_in_new),
-                      onTap: () => _openReleases(context),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.md),
-                _SectionCard(
-                  title: 'About',
-                  icon: Icons.info_outline,
-                  children: <Widget>[
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('UnitFlow'),
-                      subtitle: const Text('License, privacy, support, GitHub, funding, and credits'),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: onOpenAbout,
-                    ),
-                    const Divider(),
-                    const ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: Icon(Icons.verified_user_outlined),
-                      title: Text('Made by the Sanskar'),
-                      subtitle: Text('Open source under the MIT License'),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.xxl),
-              ],
+                      const SizedBox(height: AppSpacing.sm),
+                      _DropdownSetting<DecimalRoundingMode>(
+                        label: strings.roundingModeLabel,
+                        value: appController.state.roundingMode,
+                        values: DecimalRoundingMode.values,
+                        labelFor: (value) => switch (value) {
+                          DecimalRoundingMode.nearestEven => strings.roundNearestEven,
+                          DecimalRoundingMode.halfAwayFromZero => strings.roundHalfAway,
+                          DecimalRoundingMode.towardZero => strings.roundTowardZero,
+                          DecimalRoundingMode.awayFromZero => strings.roundAwayZero,
+                          DecimalRoundingMode.floor => strings.roundFloor,
+                          DecimalRoundingMode.ceiling => strings.roundCeiling,
+                        },
+                        onChanged: (value) {
+                          if (value != null) {
+                            appController.setRoundingMode(value);
+                          }
+                        },
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      _DropdownSetting<int>(
+                        label: strings.decimalPlacesLabel,
+                        value: appController.state.decimalPlaces,
+                        values: List<int>.generate(29, (index) => index),
+                        labelFor: (value) => value.toString(),
+                        onChanged: (value) {
+                          if (value != null) {
+                            appController.setDecimalPlaces(value);
+                          }
+                        },
+                      ),
+                      SwitchListTile.adaptive(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(strings.digitGroupingTitle),
+                        subtitle: Text(strings.digitGroupingSubtitle),
+                        value: appController.state.useGrouping,
+                        onChanged: appController.setUseGrouping,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  _SectionCard(
+                    title: strings.privacyLocalDataSection,
+                    icon: Icons.privacy_tip_outlined,
+                    children: <Widget>[
+                      Text(strings.privacyLocalDataDescription),
+                      const SizedBox(height: AppSpacing.md),
+                      Wrap(
+                        spacing: AppSpacing.xs,
+                        runSpacing: AppSpacing.xs,
+                        children: <Widget>[
+                          OutlinedButton.icon(
+                            onPressed: () => _copyBackup(context),
+                            icon: const Icon(Icons.copy_all_outlined),
+                            label: Text(strings.copyBackupJson),
+                          ),
+                          OutlinedButton.icon(
+                            onPressed: () => _importFromClipboard(context),
+                            icon: const Icon(Icons.content_paste_go_outlined),
+                            label: Text(strings.importFromClipboard),
+                          ),
+                          TextButton.icon(
+                            onPressed: () => _confirmReset(context),
+                            icon: const Icon(Icons.delete_sweep_outlined),
+                            label: Text(strings.clearLocalData),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  _SectionCard(
+                    title: strings.accessibilityKeyboardSection,
+                    icon: Icons.accessibility_new_outlined,
+                    children: <Widget>[
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: const Icon(Icons.keyboard_outlined),
+                        title: Text(strings.desktopShortcutsTitle),
+                        subtitle: Text(strings.desktopShortcutsDescription),
+                      ),
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: const Icon(Icons.text_fields_outlined),
+                        title: Text(strings.scalableTextTitle),
+                        subtitle: Text(strings.scalableTextDescription),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  _SectionCard(
+                    title: strings.updatesSection,
+                    icon: Icons.system_update_alt_outlined,
+                    children: <Widget>[
+                      Text(strings.updatesDescription),
+                      const SizedBox(height: AppSpacing.sm),
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: const Icon(Icons.new_releases_outlined),
+                        title: Text(strings.openGithubReleases),
+                        subtitle: Text(strings.checkPublishedVersions),
+                        trailing: const Icon(Icons.open_in_new),
+                        onTap: () => _openReleases(context),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  _SectionCard(
+                    title: strings.aboutSection,
+                    icon: Icons.info_outline,
+                    children: <Widget>[
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(strings.appName),
+                        subtitle: Text(strings.aboutSubtitle),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: onOpenAbout,
+                      ),
+                      const Divider(),
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: const Icon(Icons.verified_user_outlined),
+                        title: Text(strings.madeBySanskar),
+                        subtitle: Text(strings.mitLicenseSubtitle),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.xxl),
+                ],
+              ),
             ),
           ),
-        ),
-      ],
-    ),
+        ],
+      );
+    },
   );
 
   Future<void> _copyBackup(BuildContext context) async {
@@ -225,7 +221,7 @@ final class SettingsScreen extends StatelessWidget {
       return;
     }
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Backup JSON copied to the clipboard.')),
+      SnackBar(content: Text(AppLocalizations.of(context).backupCopied)),
     );
   }
 
@@ -235,9 +231,10 @@ final class SettingsScreen extends StatelessWidget {
     if (!context.mounted) {
       return;
     }
+    final strings = AppLocalizations.of(context);
     if (content == null || content.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('The clipboard does not contain backup JSON.')),
+        SnackBar(content: Text(strings.clipboardMissingBackup)),
       );
       return;
     }
@@ -253,9 +250,7 @@ final class SettingsScreen extends StatelessWidget {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Import rejected. Check that this is a valid supported UnitFlow backup.'),
-        ),
+        SnackBar(content: Text(AppLocalizations.of(context).backupImportRejected)),
       );
       return;
     }
@@ -263,7 +258,7 @@ final class SettingsScreen extends StatelessWidget {
       return;
     }
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('UnitFlow backup imported.')),
+      SnackBar(content: Text(AppLocalizations.of(context).backupImported)),
     );
   }
 
@@ -274,27 +269,26 @@ final class SettingsScreen extends StatelessWidget {
     );
     if (!opened && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not open the releases page.')),
+        SnackBar(content: Text(AppLocalizations.of(context).cannotOpenReleases)),
       );
     }
   }
 
   Future<void> _confirmReset(BuildContext context) async {
+    final strings = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Clear local UnitFlow data?'),
-        content: const Text(
-          'This removes preferences, favorites, recents, pinned pairs, and custom units from this device. Export a backup first if you want to restore them later.',
-        ),
+        title: Text(strings.clearDataDialogTitle),
+        content: Text(strings.clearDataDialogBody),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: Text(strings.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Clear data'),
+            child: Text(strings.clearDataAction),
           ),
         ],
       ),
@@ -307,7 +301,7 @@ final class SettingsScreen extends StatelessWidget {
       return;
     }
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Local UnitFlow data cleared.')),
+      SnackBar(content: Text(AppLocalizations.of(context).localDataCleared)),
     );
   }
 }
