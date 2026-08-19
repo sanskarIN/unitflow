@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:unitflow/core/math/exact_decimal.dart';
 import 'package:unitflow/features/converter/domain/batch_export.dart';
@@ -72,5 +74,34 @@ void main() {
     ]);
 
     expect(output, contains('"Test, ""quoted"" unit"'));
+  });
+
+  test('JSON export uses strings for exact decimal values', () {
+    final output = formatter.encode(
+      <ConversionResult>[
+        ConversionResult(
+          input: ExactDecimal.parse('1000.00'),
+          output: ExactDecimal.parse('1.0'),
+          from: meter,
+          to: kilometer,
+        ),
+      ],
+      format: BatchExportFormat.json,
+    );
+    final decoded = jsonDecode(output) as List<Object?>;
+    final row = decoded.single as Map<String, Object?>;
+
+    expect(row['input'], '1000');
+    expect(row['output'], '1');
+    expect(row['from_unit_id'], 'meter');
+    expect(row['to_unit_id'], 'kilometer');
+  });
+
+  test('JSON export of an empty batch is a valid empty array', () {
+    final output = formatter.encode(
+      const <ConversionResult>[],
+      format: BatchExportFormat.json,
+    );
+    expect(output, '[]');
   });
 }
