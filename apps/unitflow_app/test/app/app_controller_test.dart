@@ -108,6 +108,42 @@ void main() {
     expect(controller.engine.catalog.byId('double_meter'), isNull);
   });
 
+  test('removing custom unit cleans favorites pins and history references', () async {
+    const custom = CustomUnitData(
+      id: 'double_meter',
+      category: UnitCategory.length,
+      name: 'Double Meter',
+      symbol: 'dmx',
+      scale: '2',
+      offset: '0',
+    );
+    const pair = PinnedPair(
+      category: UnitCategory.length,
+      fromUnitId: 'meter',
+      toUnitId: 'double_meter',
+    );
+
+    await controller.addCustomUnit(custom);
+    await controller.toggleFavorite(custom.id);
+    await controller.togglePinnedPair(pair);
+    await controller.recordRecent(
+      input: '5',
+      fromUnitId: 'meter',
+      toUnitId: custom.id,
+    );
+
+    expect(controller.state.favoriteUnitIds, contains(custom.id));
+    expect(controller.state.pinnedPairs, hasLength(1));
+    expect(controller.state.recents, hasLength(1));
+
+    await controller.removeCustomUnit(custom.id);
+
+    expect(controller.state.favoriteUnitIds, isNot(contains(custom.id)));
+    expect(controller.state.pinnedPairs, isEmpty);
+    expect(controller.state.recents, isEmpty);
+    expect(controller.engine.catalog.byId(custom.id), isNull);
+  });
+
   test('custom unit cannot replace a built-in stable id', () async {
     const custom = CustomUnitData(
       id: 'meter',
