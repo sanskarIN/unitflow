@@ -41,16 +41,16 @@ function Invoke-PythonCheck {
 Push-Location $RootDir
 try {
     Write-Host '==> Repository validator tests'
-    Invoke-PythonCheck @('-m', 'unittest', 'discover', '-s', 'scripts/tests', '-p', 'test_*.py') 'Repository validator tests failed'
+    Invoke-PythonCheck -Arguments @('-m', 'unittest', 'discover', '-s', 'scripts/tests', '-p', 'test_*.py') -FailureMessage 'Repository validator tests failed'
 
     Write-Host '==> Markdown links'
-    Invoke-PythonCheck @('scripts/check_markdown_links.py') 'Markdown link validation failed'
+    Invoke-PythonCheck -Arguments @('scripts/check_markdown_links.py') -FailureMessage 'Markdown link validation failed'
 
     Write-Host '==> Release consistency'
-    Invoke-PythonCheck @('scripts/check_release_consistency.py') 'Release consistency validation failed'
+    Invoke-PythonCheck -Arguments @('scripts/check_release_consistency.py') -FailureMessage 'Release consistency validation failed'
 
     Write-Host '==> Repository hygiene'
-    Invoke-PythonCheck @('scripts/check_repository_hygiene.py') 'Repository hygiene validation failed'
+    Invoke-PythonCheck -Arguments @('scripts/check_repository_hygiene.py') -FailureMessage 'Repository hygiene validation failed'
 
     Write-Host '==> Rust formatting'
     cargo fmt --all -- --check
