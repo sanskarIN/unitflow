@@ -1,3 +1,5 @@
+import '../math/exact_decimal.dart';
+
 /// Stable Flutter-side contract for a future native Rust bridge.
 ///
 /// Decimal values cross this boundary as text so generated bindings never need
@@ -26,13 +28,23 @@ final class NativeBridgeConversionRequest {
   final int? decimalPlaces;
   final NativeBridgeRoundMode roundMode;
 
-  Map<String, Object?> toMap() => <String, Object?>{
-    'value': value,
-    'fromUnitId': fromUnitId,
-    'toUnitId': toUnitId,
-    'decimalPlaces': decimalPlaces,
-    'roundMode': roundMode.name,
-  };
+  Map<String, Object?> toMap() {
+    _requireCanonicalDecimal(value, field: 'value');
+    _requireUnitId(fromUnitId, field: 'fromUnitId');
+    _requireUnitId(toUnitId, field: 'toUnitId');
+    final places = decimalPlaces;
+    if (places != null && (places < 0 || places > 28)) {
+      throw const FormatException('Invalid native bridge decimal precision.');
+    }
+
+    return <String, Object?>{
+      'value': value,
+      'fromUnitId': fromUnitId,
+      'toUnitId': toUnitId,
+      'decimalPlaces': decimalPlaces,
+      'roundMode': roundMode.name,
+    };
+  }
 }
 
 final class NativeBridgeConversionResponse {
@@ -56,15 +68,15 @@ final class NativeBridgeConversionResponse {
     if (input is! String ||
         output is! String ||
         fromUnitId is! String ||
-        toUnitId is! String ||
-        input.length > 1024 ||
-        output.length > 1024 ||
-        fromUnitId.isEmpty ||
-        fromUnitId.length > 64 ||
-        toUnitId.isEmpty ||
-        toUnitId.length > 64) {
+        toUnitId is! String) {
       throw const FormatException('Invalid native bridge conversion response.');
     }
+
+    _requireCanonicalDecimal(input, field: 'input');
+    _requireCanonicalDecimal(output, field: 'output');
+    _requireUnitId(fromUnitId, field: 'fromUnitId');
+    _requireUnitId(toUnitId, field: 'toUnitId');
+
     return NativeBridgeConversionResponse(
       input: input,
       output: output,
@@ -94,4 +106,24 @@ abstract interface class NativeConversionBridge {
   Future<NativeBridgeConversionResponse> convert(
     NativeBridgeConversionRequest request,
   );
+}
+
+void _requireCanonicalDecimal(String value, {required String field}) {
+  if (value.isEmpty || value.length > 1024) {
+    throw FormatException('Invalid native bridge decimal field: $field.');
+  }
+  try {
+    final parsed = ExactDecimal.parse(value);
+    if (parsed.toCanonicalString() != value) {
+      throw FormatException('Non-canonical native bridge decimal field: $field.');
+    }
+  } on FormatException {
+    throw FormatException('Invalid native bridge decimal field: $field.');
+  }
+}
+
+void _requireUnitId(String value, {required String field}) {
+  if (!RegExp(r'^[a-z0-9_-]{1,64}$').hasMatch(value)) {
+    throw FormatException('Invalid native bridge unit identifier: $field.');
+  }
 }
