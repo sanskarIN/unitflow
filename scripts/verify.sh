@@ -4,11 +4,20 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 FLUTTER_DIR="$ROOT_DIR/apps/unitflow_app"
 
-command -v cargo >/dev/null 2>&1 || { echo "cargo is required" >&2; exit 127; }
-command -v flutter >/dev/null 2>&1 || { echo "flutter is required" >&2; exit 127; }
-command -v dart >/dev/null 2>&1 || { echo "dart is required" >&2; exit 127; }
+for command in git python3 cargo flutter dart; do
+  command -v "$command" >/dev/null 2>&1 || { echo "$command is required" >&2; exit 127; }
+done
 
 cd "$ROOT_DIR"
+echo "==> Markdown links"
+python3 scripts/check_markdown_links.py
+
+echo "==> Release consistency"
+python3 scripts/check_release_consistency.py
+
+echo "==> Repository hygiene"
+python3 scripts/check_repository_hygiene.py
+
 echo "==> Rust formatting"
 cargo fmt --all -- --check
 
