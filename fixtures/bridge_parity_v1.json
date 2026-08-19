@@ -47,6 +47,42 @@
       "expected": "1024"
     },
     {
+      "name": "nearest even positive tie",
+      "value": "2.5",
+      "fromUnitId": "meter",
+      "toUnitId": "meter",
+      "decimalPlaces": 0,
+      "roundMode": "nearestEven",
+      "expected": "2"
+    },
+    {
+      "name": "half away positive tie",
+      "value": "2.5",
+      "fromUnitId": "meter",
+      "toUnitId": "meter",
+      "decimalPlaces": 0,
+      "roundMode": "halfAwayFromZero",
+      "expected": "3"
+    },
+    {
+      "name": "toward zero negative value",
+      "value": "-2.9",
+      "fromUnitId": "meter",
+      "toUnitId": "meter",
+      "decimalPlaces": 0,
+      "roundMode": "towardZero",
+      "expected": "-2"
+    },
+    {
+      "name": "away from zero negative value",
+      "value": "-2.1",
+      "fromUnitId": "meter",
+      "toUnitId": "meter",
+      "decimalPlaces": 0,
+      "roundMode": "awayFromZero",
+      "expected": "-3"
+    },
+    {
       "name": "floor positive sub-centimeter kilometer result",
       "value": "1",
       "fromUnitId": "meter",
@@ -63,6 +99,24 @@
       "decimalPlaces": 2,
       "roundMode": "ceiling",
       "expected": "0.01"
+    },
+    {
+      "name": "floor negative value",
+      "value": "-2.1",
+      "fromUnitId": "meter",
+      "toUnitId": "meter",
+      "decimalPlaces": 0,
+      "roundMode": "floor",
+      "expected": "-3"
+    },
+    {
+      "name": "ceiling negative value",
+      "value": "-2.1",
+      "fromUnitId": "meter",
+      "toUnitId": "meter",
+      "decimalPlaces": 0,
+      "roundMode": "ceiling",
+      "expected": "-2"
     }
   ]
 }
