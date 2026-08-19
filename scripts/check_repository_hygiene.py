@@ -51,6 +51,7 @@ REQUIRED_FILES = (
     "scripts/check_release_consistency.py",
     "scripts/check_release_tag.py",
     "scripts/check_repository_hygiene.py",
+    "scripts/tests/test_repository_validators.py",
     "scripts/verify.sh",
     "scripts/verify.ps1",
 )
