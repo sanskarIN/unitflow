@@ -1,0 +1,7 @@
+# Default code owner for the UnitFlow repository.
+* @sanskarIN
+
+# Conversion-domain changes should receive explicit owner review.
+/crates/unitflow_core/ @sanskarIN
+/apps/unitflow_app/lib/features/converter/ @sanskarIN
+/.github/workflows/ @sanskarIN
