@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -47,7 +47,7 @@ jobs:
         working-directory: apps/unitflow_app
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install Flutter
         uses: subosito/flutter-action@v2
@@ -58,6 +58,9 @@ jobs:
       - name: Resolve dependencies
         run: flutter pub get
 
+      - name: Generate localizations
+        run: flutter gen-l10n
+
       - name: Verify formatting
         run: dart format --output=none --set-exit-if-changed lib test
 
@@ -66,3 +69,36 @@ jobs:
 
       - name: Test
         run: flutter test
+
+  bridge:
+    name: Rust Flutter bridge
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Resolve Flutter dependencies
+        working-directory: apps/unitflow_app
+        run: flutter pub get
+
+      - name: Install bridge generator
+        run: cargo install flutter_rust_bridge_codegen --version 2.12.0 --locked
+
+      - name: Generate bridge
+        run: bash tool/generate_bridge.sh
+
+      - name: Verify generated Rust
+        run: cargo check --workspace --all-features
+
+      - name: Verify generated Dart
+        working-directory: apps/unitflow_app
+        run: flutter analyze --fatal-infos --fatal-warnings
