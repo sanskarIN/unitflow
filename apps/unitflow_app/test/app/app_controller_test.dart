@@ -182,7 +182,7 @@ void main() {
 
     await controller.initialize();
 
-    expect(controller.state.favoriteUnitIds, <String>{'meter'});
+    expect(controller.state.favoriteUnitIds, unorderedEquals(<String>['meter']));
     expect(controller.state.pinnedPairs, hasLength(1));
     expect(controller.state.pinnedPairs.single.toUnitId, 'kilometer');
     expect(controller.state.recents, hasLength(1));
