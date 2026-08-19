@@ -43,6 +43,24 @@ void main() {
       throwsFormatException,
     );
   });
+
+  test('recent import rejects blank input text', () {
+    final repository = MemoryUserStateRepository();
+    final backup = _emptyBackup()
+      ..['recents'] = <Object?>[
+        <String, Object?>{
+          'input': '   ',
+          'fromUnitId': 'meter',
+          'toUnitId': 'kilometer',
+          'createdAt': DateTime.utc(2026, 8, 19).toIso8601String(),
+        },
+      ];
+
+    expect(
+      () => repository.importJson(jsonEncode(backup)),
+      throwsFormatException,
+    );
+  });
 }
 
 Map<String, Object?> _emptyBackup() => <String, Object?>{
