@@ -29,26 +29,28 @@ else {
 function Invoke-PythonCheck {
     param(
         [Parameter(Mandatory = $true)]
-        [string]$RelativePath,
+        [string[]]$Arguments,
         [Parameter(Mandatory = $true)]
         [string]$FailureMessage
     )
 
-    $ScriptPath = Join-Path $RootDir $RelativePath
-    & $PythonExecutable @PythonPrefix $ScriptPath
+    & $PythonExecutable @PythonPrefix @Arguments
     if ($LASTEXITCODE -ne 0) { throw $FailureMessage }
 }
 
 Push-Location $RootDir
 try {
+    Write-Host '==> Repository validator tests'
+    Invoke-PythonCheck @('-m', 'unittest', 'discover', '-s', 'scripts/tests', '-p', 'test_*.py') 'Repository validator tests failed'
+
     Write-Host '==> Markdown links'
-    Invoke-PythonCheck 'scripts/check_markdown_links.py' 'Markdown link validation failed'
+    Invoke-PythonCheck @('scripts/check_markdown_links.py') 'Markdown link validation failed'
 
     Write-Host '==> Release consistency'
-    Invoke-PythonCheck 'scripts/check_release_consistency.py' 'Release consistency validation failed'
+    Invoke-PythonCheck @('scripts/check_release_consistency.py') 'Release consistency validation failed'
 
     Write-Host '==> Repository hygiene'
-    Invoke-PythonCheck 'scripts/check_repository_hygiene.py' 'Repository hygiene validation failed'
+    Invoke-PythonCheck @('scripts/check_repository_hygiene.py') 'Repository hygiene validation failed'
 
     Write-Host '==> Rust formatting'
     cargo fmt --all -- --check
