@@ -32,6 +32,9 @@ jobs:
         working-directory: tool
         run: python3 -m unittest discover -p 'test_*.py'
 
+      - name: Verify version consistency
+        run: python3 tool/check_versions.py
+
       - name: Scan tracked files for credential signatures
         run: python3 tool/check_secrets.py
 
