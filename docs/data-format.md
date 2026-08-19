@@ -41,7 +41,9 @@ Each item contains:
 }
 ```
 
-The original input is retained as text so decimal intent is not lost through binary floating-point conversion. Recent conversion unit identifiers are bounded to 64 characters each, and the stored input string is bounded to 1,024 characters.
+The original input is retained as text so decimal intent and locale formatting are not lost through binary floating-point conversion or normalization. Recent conversion unit identifiers are non-empty and bounded to 64 characters each. The stored input must contain non-whitespace text and is bounded to 1,024 characters.
+
+Catalog-level import validation additionally requires each recent source/target unit to exist and belong to the same category before the imported state can replace active state.
 
 ## Custom unit
 
@@ -70,7 +72,9 @@ base = input × scale + offset
 
 ## Import limits
 
-The Shared Preferences repository rejects empty imports and files larger than 1,000,000 characters. JSON must decode to an object. A malformed, unsupported, or unsafe document is rejected before replacing active state.
+Every `UserStateRepository` import implementation uses the same shared decoder. It rejects empty imports and payloads larger than 1,000,000 characters before decoding. JSON must decode to an object with string keys. A malformed, unsupported, or unsafe document is rejected before replacing active state.
+
+This shared boundary intentionally applies to both the Shared Preferences production repository and the in-memory test repository so tests cannot pass by using a weaker import path.
 
 Versioned user-state validation also bounds collection sizes before iterating or constructing active state:
 
@@ -85,7 +89,9 @@ These are defensive import ceilings rather than UI promises. Normal product work
 
 ## Backup behavior
 
-Export produces human-readable JSON. Import first validates the complete document and rebuilds the conversion engine with all custom units. Only after those checks pass is the in-memory state replaced and persisted.
+Export produces human-readable JSON. Import first validates the complete document and rebuilds the conversion engine with all custom units and saved references. Only after those checks pass is the in-memory state replaced and persistence enqueued.
+
+Reset is also serialized with pending persistence operations. A reset waits behind earlier queued saves, clears the repository, then persists a clean baseline with onboarding complete. This prevents an older pending save from repopulating pre-reset data after the user has requested local deletion.
 
 The Shared Preferences storage key remains `unitflow.user_state.v1` even though the document schema is version `2`. The key identifies the application-state slot, while `schemaVersion` identifies the payload format. Keeping the slot stable allows the migration logic to read existing version-1 documents instead of orphaning them under a new key.
 
