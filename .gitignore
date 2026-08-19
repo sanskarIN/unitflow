@@ -1,0 +1,48 @@
+# Rust
+/target/
+**/*.rs.bk
+
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+coverage/
+
+# Generated Rust-Flutter bridge files
+**/frb_generated.dart
+**/frb_generated.io.dart
+**/frb_generated.web.dart
+
+# IDEs
+.idea/
+.vscode/*.log
+*.iml
+
+# Platform generated files
+apps/unitflow_app/android/.gradle/
+apps/unitflow_app/android/local.properties
+apps/unitflow_app/ios/Flutter/ephemeral/
+apps/unitflow_app/macos/Flutter/ephemeral/
+apps/unitflow_app/linux/flutter/ephemeral/
+apps/unitflow_app/windows/flutter/ephemeral/
+
+# Secrets and local environment
+.env
+.env.*
+!.env.example
+*.jks
+*.keystore
+*.p12
+*.mobileprovision
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs/temp
+*.log
+*.tmp
