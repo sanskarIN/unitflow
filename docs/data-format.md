@@ -4,13 +4,14 @@ UnitFlow stores user preferences and optional convenience data locally. The pers
 
 ## Current schema
 
-Current schema version: `1`.
+Current schema version: `2`.
 
 Top-level keys:
 
-- `schemaVersion`: integer schema discriminator. Must equal `1`.
+- `schemaVersion`: integer schema discriminator. Current exports write `2`.
 - `theme`: `system`, `light`, or `dark`.
 - `notation`: persisted decimal-notation enum name.
+- `roundingMode`: persisted exact-decimal rounding enum name.
 - `decimalPlaces`: integer from `0` through `28`.
 - `useGrouping`: boolean.
 - `onboardingComplete`: boolean.
@@ -20,6 +21,12 @@ Top-level keys:
 - `customUnits`: array of validated custom-unit objects.
 
 Unknown or malformed required fields cause the import to fail rather than being partially accepted.
+
+## Schema migration
+
+Schema version `1` remains accepted. A version-1 document did not contain `roundingMode`; migration supplies `nearestEven`, preserving the behavior used before the setting became user-configurable. Once saved or exported again, the state is written as version `2`.
+
+Future schema versions must either provide an explicit migration from a supported older version or reject the document without replacing active state.
 
 ## Recent conversion
 
