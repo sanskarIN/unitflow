@@ -19,6 +19,38 @@ void main() {
     expect(encoded['roundMode'], 'nearestEven');
   });
 
+  test('bridge request rejects non-canonical decimals', () {
+    const request = NativeBridgeConversionRequest(
+      value: '01.0',
+      fromUnitId: 'meter',
+      toUnitId: 'kilometer',
+      decimalPlaces: 12,
+      roundMode: NativeBridgeRoundMode.nearestEven,
+    );
+
+    expect(request.toMap, throwsFormatException);
+  });
+
+  test('bridge request rejects invalid unit IDs and precision', () {
+    const invalidUnit = NativeBridgeConversionRequest(
+      value: '1',
+      fromUnitId: '../meter',
+      toUnitId: 'kilometer',
+      decimalPlaces: 12,
+      roundMode: NativeBridgeRoundMode.nearestEven,
+    );
+    const invalidPrecision = NativeBridgeConversionRequest(
+      value: '1',
+      fromUnitId: 'meter',
+      toUnitId: 'kilometer',
+      decimalPlaces: 29,
+      roundMode: NativeBridgeRoundMode.nearestEven,
+    );
+
+    expect(invalidUnit.toMap, throwsFormatException);
+    expect(invalidPrecision.toMap, throwsFormatException);
+  });
+
   test('bridge response validates stable unit identifiers', () {
     final response = NativeBridgeConversionResponse.fromMap(
       const <String, Object?>{
@@ -41,6 +73,20 @@ void main() {
         const <String, Object?>{
           'input': 1000,
           'output': '1',
+          'fromUnitId': 'meter',
+          'toUnitId': 'kilometer',
+        },
+      ),
+      throwsFormatException,
+    );
+  });
+
+  test('bridge response rejects non-canonical decimal output', () {
+    expect(
+      () => NativeBridgeConversionResponse.fromMap(
+        const <String, Object?>{
+          'input': '1000',
+          'output': '01.0',
           'fromUnitId': 'meter',
           'toUnitId': 'kilometer',
         },
