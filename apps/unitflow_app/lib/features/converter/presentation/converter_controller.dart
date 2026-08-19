@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../../../app/app_controller.dart';
 import '../../../core/format/decimal_format.dart';
 import '../../../core/math/exact_decimal.dart';
+import '../../../core/persistence/user_state.dart';
 import '../domain/conversion_engine.dart';
 import '../domain/unit_models.dart';
 
@@ -169,11 +170,12 @@ final class ConverterController extends ChangeNotifier {
       _appController.togglePinnedPair(currentPair);
 
   Future<void> recordCurrentConversion() {
-    if (_result == null) {
+    final currentResult = _result;
+    if (currentResult == null) {
       return Future<void>.value();
     }
     return _appController.recordRecent(
-      input: _input,
+      input: currentResult.input.toCanonicalString(),
       fromUnitId: _fromUnitId,
       toUnitId: _toUnitId,
     );
@@ -191,6 +193,19 @@ final class ConverterController extends ChangeNotifier {
     _category = pair.category;
     _fromUnitId = pair.fromUnitId;
     _toUnitId = pair.toUnitId;
+    recompute();
+  }
+
+  void applyRecentConversion(RecentConversion recent) {
+    final from = _appController.engine.catalog.byId(recent.fromUnitId);
+    final to = _appController.engine.catalog.byId(recent.toUnitId);
+    if (from == null || to == null || from.category != to.category) {
+      return;
+    }
+    _category = from.category;
+    _fromUnitId = from.id;
+    _toUnitId = to.id;
+    _input = recent.input;
     recompute();
   }
 
