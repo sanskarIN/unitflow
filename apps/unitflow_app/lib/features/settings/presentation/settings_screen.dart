@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../../../app/app_controller.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../core/format/decimal_format.dart';
+import '../../../core/io/backup_file_service.dart';
 import '../../../core/persistence/user_state.dart';
 import '../../../l10n/app_localizations.dart';
 
@@ -13,6 +14,8 @@ final class SettingsScreen extends StatelessWidget {
     required this.onOpenAbout,
     super.key,
   });
+
+  static const _backupFiles = BackupFileService();
 
   final AppController appController;
   final VoidCallback onOpenAbout;
@@ -111,6 +114,16 @@ final class SettingsScreen extends StatelessWidget {
                         runSpacing: AppSpacing.xs,
                         children: <Widget>[
                           OutlinedButton.icon(
+                            onPressed: () => _saveBackupFile(context),
+                            icon: const Icon(Icons.save_alt_outlined),
+                            label: Text(strings.saveBackupFile),
+                          ),
+                          OutlinedButton.icon(
+                            onPressed: () => _importBackupFile(context),
+                            icon: const Icon(Icons.file_open_outlined),
+                            label: Text(strings.importBackupFile),
+                          ),
+                          OutlinedButton.icon(
                             onPressed: () => _copyBackup(context),
                             icon: const Icon(Icons.copy_all_outlined),
                             label: Text(strings.copyBackupJson),
@@ -160,6 +173,54 @@ final class SettingsScreen extends StatelessWidget {
     );
   }
 
+  Future<void> _saveBackupFile(BuildContext context) async {
+    final strings = AppLocalizations.of(context);
+    try {
+      final saved = await _backupFiles.exportBackup(appController.exportState());
+      if (!context.mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            saved ? strings.backupFileSaved : strings.backupFileUnavailable,
+          ),
+        ),
+      );
+    } on Object catch (error) {
+      if (!context.mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Backup export failed: $error')),
+      );
+    }
+  }
+
+  Future<void> _importBackupFile(BuildContext context) async {
+    final strings = AppLocalizations.of(context);
+    try {
+      final content = await _backupFiles.importBackup();
+      if (content == null) {
+        return;
+      }
+      await appController.importState(content);
+      if (!context.mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(strings.backupImported)),
+      );
+    } on Object catch (error) {
+      if (!context.mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${strings.importRejected}: $error')),
+      );
+    }
+  }
+
   Future<void> _copyBackup(BuildContext context) async {
     final strings = AppLocalizations.of(context);
     await Clipboard.setData(ClipboardData(text: appController.exportState()));
@@ -192,7 +253,7 @@ final class SettingsScreen extends StatelessWidget {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Import rejected: $error')),
+        SnackBar(content: Text('${strings.importRejected}: $error')),
       );
       return;
     }
