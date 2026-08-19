@@ -1,6 +1,6 @@
 # UnitFlow Setup Guide
 
-UnitFlow uses Rust for the authoritative native conversion domain and Flutter/Dart for the cross-platform application. Core conversion development does not require an account, API key, database, or online service.
+UnitFlow uses Rust for the authoritative native conversion domain and Flutter/Dart for the cross-platform application. Python 3 powers dependency-free repository integrity validators. Core conversion development does not require an account, API key, database, or online service.
 
 ## 1. Git
 
@@ -26,7 +26,28 @@ git config user.name "Sanskar"
 git config user.email "sanskarin@outlook.in"
 ```
 
-## 2. Rust
+## 2. Python 3
+
+Python 3 is used only for repository validation scripts and their standard-library tests. No third-party Python package installation is required.
+
+Verify one of these commands is available:
+
+```bash
+python3 --version
+```
+
+On Windows, `python --version` or `py -3 --version` may be the installed launcher form. The PowerShell verification script detects all three common forms.
+
+Run the repository-only checks without Rust or Flutter:
+
+```bash
+python3 -m unittest discover -s scripts/tests -p 'test_*.py'
+python3 scripts/check_markdown_links.py
+python3 scripts/check_release_consistency.py
+python3 scripts/check_repository_hygiene.py
+```
+
+## 3. Rust
 
 Install Rust using `rustup`, the Rust project's toolchain manager. UnitFlow tracks stable Rust unless the repository later pins a narrower toolchain.
 
@@ -58,7 +79,7 @@ cargo clippy --workspace --all-targets --all-features -- -D warnings
 cargo test --workspace --all-features
 ```
 
-## 3. Flutter and Dart
+## 4. Flutter and Dart
 
 Install the current supported Flutter stable SDK from Flutter's official installation guide. Flutter bundles a compatible Dart SDK; do not independently replace that bundled Dart version for this project.
 
@@ -96,7 +117,7 @@ flutter test
 
 Generated localization Dart files live under `lib/l10n/generated/` and are intentionally ignored by Git. Edit ARB files instead of generated sources.
 
-## 4. One-command repository verification
+## 5. One-command repository verification
 
 From the repository root on macOS/Linux or a compatible shell:
 
@@ -110,9 +131,17 @@ On Windows PowerShell:
 ./scripts/verify.ps1
 ```
 
-Both scripts run Rust formatting/lint/tests and Flutter dependency resolution, localization generation, formatting, analysis, and tests.
+Both scripts run, in order:
 
-## 5. Platform toolchains
+1. standard-library tests for the Python repository validators;
+2. Markdown-link, release-consistency, and repository-hygiene validation;
+3. Rust formatting, Clippy, and tests;
+4. Flutter dependency resolution and localization generation;
+5. Dart formatting, Flutter analysis, and Flutter tests.
+
+A complete run therefore requires Git, Python 3, Rust/Cargo, Flutter, and Dart on `PATH`. Native platform release builds are separate checks because they require platform-specific toolchains and reviewed native projects.
+
+## 6. Platform toolchains
 
 Install only the native toolchains for platforms you intend to build.
 
@@ -140,7 +169,7 @@ Use a browser/toolchain supported by the installed Flutter stable SDK. Confirm W
 flutter devices
 ```
 
-## 6. Native Flutter project scaffolding
+## 7. Native Flutter project scaffolding
 
 The alpha repository currently keeps portable Flutter feature code separate from generated native scaffolding. Before claiming a platform release build, generate and review the native projects with the release Flutter SDK from `apps/unitflow_app`:
 
@@ -153,21 +182,25 @@ flutter create \
 
 On PowerShell, place the command on one line or use PowerShell continuation syntax instead of the Bash backslashes shown above.
 
-Do not blindly commit regenerated files. Review package identifiers, minimum OS versions, permissions, entitlements, signing configuration, network capabilities, and any changes to existing source/configuration. See `docs/native-platforms.md`.
+Do not blindly commit regenerated files. Review package identifiers, minimum OS versions, permissions, entitlements, signing configuration, network capabilities, and any changes to existing source/configuration. See `docs/native-platforms.md` and `docs/platform-smoke.md`.
 
-## 7. IDE recommendations
+## 8. IDE recommendations
 
 VS Code works well with the Rust Analyzer and Dart/Flutter extensions. Android Studio is useful for Android SDK/emulator management, and Xcode/Visual Studio are required for their respective native builds.
 
 IDE plugins are conveniences; repository verification uses command-line tools so contributors and CI share the same quality gates.
 
-## 8. Environment configuration
+## 9. Environment configuration
 
-Core UnitFlow features need no `.env` secrets. `.env.example` documents this boundary. Real `.env` files and common signing credentials are ignored by Git.
+Core UnitFlow features need no `.env` secrets. `.env.example` documents this boundary. Real `.env` files and common signing credentials are ignored by Git and rejected by repository hygiene validation if accidentally tracked.
 
 If a future optional online feature is introduced, its configuration must be documented explicitly and must not turn static offline conversion into an account/network dependency.
 
-## 9. Troubleshooting
+## 10. Troubleshooting
+
+### Python is not found
+
+Install a supported Python 3 distribution, reopen the terminal, and verify `python3`, `python`, or the Windows `py -3` launcher. The repository validators require only the Python standard library.
 
 ### `cargo` or `rustc` is not found
 
@@ -196,6 +229,6 @@ Fix the specific Android/Visual Studio/Xcode/Linux dependency reported by `flutt
 
 Prefer upgrading through each tool's official installer/toolchain manager rather than mixing unrelated package managers. After upgrading, rerun `rustup`/`flutter doctor`, then the repository verification scripts.
 
-## 10. Validation before submitting changes
+## 11. Validation before submitting changes
 
 At minimum run the relevant checks for the files you changed. Before release or a broad pull request, run the complete verification script and the required native platform build/smoke checks documented in `docs/release-checklist.md`.
