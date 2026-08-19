@@ -143,9 +143,11 @@ final class AppController extends ChangeNotifier {
     if (from == null || to == null || from.category != to.category) {
       throw ArgumentError('Recent conversion references invalid units.');
     }
+
+    final canonicalInput = _canonicalRecentInput(input);
     final next = _state.recents.toList();
     if (next.isNotEmpty &&
-        next.first.input == input &&
+        next.first.input == canonicalInput &&
         next.first.fromUnitId == fromUnitId &&
         next.first.toUnitId == toUnitId) {
       return Future<void>.value();
@@ -153,7 +155,7 @@ final class AppController extends ChangeNotifier {
     next.insert(
       0,
       RecentConversion(
-        input: input,
+        input: canonicalInput,
         fromUnitId: fromUnitId,
         toUnitId: toUnitId,
         createdAt: DateTime.now(),
@@ -377,6 +379,27 @@ final class AppController extends ChangeNotifier {
       pinnedPairs: pins,
       recents: recents,
     );
+  }
+
+  String _canonicalRecentInput(String input) {
+    final trimmed = input.trim();
+    if (trimmed.isEmpty || trimmed.length > RecentConversion.maxInputLength) {
+      throw ArgumentError.value(input, 'input', 'invalid recent conversion input');
+    }
+    final ExactDecimal parsed;
+    try {
+      parsed = ExactDecimal.parse(trimmed);
+    } on FormatException {
+      throw ArgumentError.value(input, 'input', 'invalid recent conversion input');
+    }
+    if (!parsed.isRustDecimalCompatible) {
+      throw ArgumentError.value(input, 'input', 'recent conversion input is out of range');
+    }
+    final canonical = parsed.toCanonicalString();
+    if (canonical.length > RecentConversion.maxInputLength) {
+      throw ArgumentError.value(input, 'input', 'recent conversion input is too long');
+    }
+    return canonical;
   }
 
   Future<void> _update(UserState state, {ConversionEngine? engine}) {
