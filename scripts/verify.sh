@@ -9,6 +9,9 @@ for command in git python3 cargo flutter dart; do
 done
 
 cd "$ROOT_DIR"
+echo "==> Repository validator tests"
+python3 -m unittest discover -s scripts/tests -p 'test_*.py'
+
 echo "==> Markdown links"
 python3 scripts/check_markdown_links.py
 
