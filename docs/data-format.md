@@ -11,6 +11,7 @@ The current local state contains:
 - explicit decimal rounding mode;
 - decimal-place preference;
 - grouping preference;
+- reduced-motion accessibility preference;
 - onboarding completion state;
 - favorite unit identifiers;
 - pinned unit pairs;
@@ -45,6 +46,10 @@ Schema version 2 stores a `roundingMode` field. Accepted values are:
 
 The selected mode is applied by the conversion engine whenever a result must be rounded to the configured decimal-place precision.
 
+## Accessibility preference
+
+Schema version 2 may contain `reduceMotion`. It is a boolean and defaults to `false` when absent. Keeping this field optional allows early schema-v2 backups created before the preference was introduced to remain importable without another schema-version bump.
+
 ## Custom-unit formula
 
 Custom units use an affine relationship instead of evaluating arbitrary executable expressions:
@@ -77,7 +82,11 @@ UnitFlow supports explicit JSON backup export. File export uses a user-selected 
 
 ### Version 1 → version 2
 
-Version 1 did not contain a rounding preference. When a valid version 1 backup is imported, UnitFlow deterministically migrates it to `nearestEven`, which was the conversion engine's historical default. A subsequent export emits schema version 2.
+Version 1 did not contain a rounding preference. When a valid version 1 backup is imported, UnitFlow deterministically migrates it to `nearestEven`, which was the conversion engine's historical default. Version 1 also predates the persisted reduced-motion preference, so that preference migrates to `false`. A subsequent export emits schema version 2.
+
+### Early version 2 compatibility
+
+Version 2 backups that contain `roundingMode` but predate `reduceMotion` remain valid. Missing `reduceMotion` is interpreted as `false`.
 
 For future schema versions:
 
