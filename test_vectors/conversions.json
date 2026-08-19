@@ -18,6 +18,123 @@
     "expected": "1000"
   },
   {
+    "name": "nanometers to meters",
+    "input": "123456789",
+    "from": "nanometer",
+    "to": "meter",
+    "decimalPlaces": 12,
+    "roundingMode": "nearestEven",
+    "expected": "0.123456789"
+  },
+  {
+    "name": "hectares to square meters",
+    "input": "2.5",
+    "from": "hectare",
+    "to": "square_meter",
+    "decimalPlaces": 12,
+    "roundingMode": "nearestEven",
+    "expected": "25000"
+  },
+  {
+    "name": "US gallons to liters",
+    "input": "1",
+    "from": "gallon_us",
+    "to": "liter",
+    "decimalPlaces": 12,
+    "roundingMode": "nearestEven",
+    "expected": "3.785411784"
+  },
+  {
+    "name": "pounds to kilograms",
+    "input": "1",
+    "from": "pound",
+    "to": "kilogram",
+    "decimalPlaces": 12,
+    "roundingMode": "nearestEven",
+    "expected": "0.45359237"
+  },
+  {
+    "name": "miles per hour to meters per second",
+    "input": "1",
+    "from": "mile_per_hour",
+    "to": "meter_per_second",
+    "decimalPlaces": 12,
+    "roundingMode": "nearestEven",
+    "expected": "0.44704"
+  },
+  {
+    "name": "bar to pascals",
+    "input": "1.2",
+    "from": "bar",
+    "to": "pascal",
+    "decimalPlaces": 12,
+    "roundingMode": "nearestEven",
+    "expected": "120000"
+  },
+  {
+    "name": "kilowatt hours to joules",
+    "input": "1.5",
+    "from": "kilowatt_hour",
+    "to": "joule",
+    "decimalPlaces": 12,
+    "roundingMode": "nearestEven",
+    "expected": "5400000"
+  },
+  {
+    "name": "kilowatts to watts",
+    "input": "2.75",
+    "from": "kilowatt",
+    "to": "watt",
+    "decimalPlaces": 12,
+    "roundingMode": "nearestEven",
+    "expected": "2750"
+  },
+  {
+    "name": "turns to radians",
+    "input": "1",
+    "from": "turn",
+    "to": "radian",
+    "decimalPlaces": 12,
+    "roundingMode": "nearestEven",
+    "expected": "6.28318530718"
+  },
+  {
+    "name": "kibibytes to bytes",
+    "input": "1.5",
+    "from": "kibibyte",
+    "to": "byte",
+    "decimalPlaces": 12,
+    "roundingMode": "nearestEven",
+    "expected": "1536"
+  },
+  {
+    "name": "bits to bytes",
+    "input": "8",
+    "from": "bit",
+    "to": "byte",
+    "decimalPlaces": 12,
+    "roundingMode": "nearestEven",
+    "expected": "1"
+  },
+  {
+    "name": "kilohertz to hertz",
+    "input": "2.5",
+    "from": "kilohertz",
+    "to": "hertz",
+    "decimalPlaces": 12,
+    "roundingMode": "nearestEven",
+    "expected": "2500"
+  },
+  {
+    "name": "hours to seconds",
+    "input": "1",
+    "from": "hour",
+    "to": "second",
+    "decimalPlaces": 12,
+    "roundingMode": "nearestEven",
+    "expected": "3600"
+  },
+  {
     "name": "freezing Celsius to Fahrenheit",
     "input": "0",
     "from": "celsius",
@@ -25,6 +142,15 @@
     "decimalPlaces": 8,
     "roundingMode": "nearestEven",
     "expected": "32"
+  },
+  {
+    "name": "boiling Celsius to Fahrenheit",
+    "input": "100",
+    "from": "celsius",
+    "to": "fahrenheit",
+    "decimalPlaces": 8,
+    "roundingMode": "nearestEven",
+    "expected": "212"
   },
   {
     "name": "freezing Fahrenheit to Celsius",
@@ -45,12 +171,57 @@
     "expected": "2.54"
   },
   {
-    "name": "hours to seconds",
-    "input": "1",
-    "from": "hour",
-    "to": "second",
-    "decimalPlaces": 12,
+    "name": "nearest even midpoint rounds to even digit",
+    "input": "2.345",
+    "from": "meter",
+    "to": "meter",
+    "decimalPlaces": 2,
     "roundingMode": "nearestEven",
-    "expected": "3600"
+    "expected": "2.34"
+  },
+  {
+    "name": "half away midpoint rounds outward",
+    "input": "2.345",
+    "from": "meter",
+    "to": "meter",
+    "decimalPlaces": 2,
+    "roundingMode": "halfAwayFromZero",
+    "expected": "2.35"
+  },
+  {
+    "name": "toward zero truncates negative value",
+    "input": "-2.349",
+    "from": "meter",
+    "to": "meter",
+    "decimalPlaces": 2,
+    "roundingMode": "towardZero",
+    "expected": "-2.34"
+  },
+  {
+    "name": "away from zero expands negative value",
+    "input": "-2.341",
+    "from": "meter",
+    "to": "meter",
+    "decimalPlaces": 2,
+    "roundingMode": "awayFromZero",
+    "expected": "-2.35"
+  },
+  {
+    "name": "floor rounds negative value downward",
+    "input": "-2.341",
+    "from": "meter",
+    "to": "meter",
+    "decimalPlaces": 2,
+    "roundingMode": "floor",
+    "expected": "-2.35"
+  },
+  {
+    "name": "ceiling rounds negative value upward",
+    "input": "-2.341",
+    "from": "meter",
+    "to": "meter",
+    "decimalPlaces": 2,
+    "roundingMode": "ceiling",
+    "expected": "-2.34"
   }
 ]
