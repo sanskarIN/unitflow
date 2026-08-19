@@ -61,7 +61,8 @@ final class ExactDecimal implements Comparable<ExactDecimal> {
 
   const ExactDecimal._(this.coefficient, this.scale);
 
-  static const zero = ExactDecimal._(BigInt.zero, 0);
+  /// Canonical zero. BigInt values are runtime objects, so this cannot be a Dart `const`.
+  static final ExactDecimal zero = ExactDecimal._(BigInt.zero, 0);
 
   final BigInt coefficient;
   final int scale;
