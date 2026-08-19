@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../../../app/app_controller.dart';
 import '../../../core/format/decimal_format.dart';
 import '../../../core/math/exact_decimal.dart';
+import '../domain/batch_export.dart';
 import '../domain/conversion_engine.dart';
 import '../domain/unit_models.dart';
 
@@ -17,6 +18,7 @@ final class ConverterController extends ChangeNotifier {
   final AppController _appController;
   final DecimalInputParser _parser = const DecimalInputParser();
   final DecimalDisplayFormatter _formatter = const DecimalDisplayFormatter();
+  final BatchExportFormatter _batchExporter = const BatchExportFormatter();
 
   UnitCategory _category = UnitCategory.length;
   String _fromUnitId = 'meter';
@@ -155,6 +157,9 @@ final class ConverterController extends ChangeNotifier {
       decimalPlaces: _appController.state.decimalPlaces,
     );
   }
+
+  String exportBatch({BatchExportFormat format = BatchExportFormat.csv}) =>
+      _batchExporter.encode(batchResults(), format: format);
 
   String formatBatchValue(ExactDecimal value) => _formatter.format(
     value,
