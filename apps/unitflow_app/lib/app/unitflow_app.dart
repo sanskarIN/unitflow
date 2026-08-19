@@ -34,6 +34,9 @@ final class _UnitFlowAppState extends State<UnitFlowApp> {
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: _themeMode(widget.appController.state.theme),
+      themeAnimationDuration: widget.appController.state.reduceMotion
+          ? Duration.zero
+          : const Duration(milliseconds: 200),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       home: _home(),
@@ -74,7 +77,10 @@ final class _StartupScreen extends StatelessWidget {
               color: Theme.of(context).colorScheme.primary,
             ),
             const SizedBox(height: AppSpacing.lg),
-            Text(strings.appName, style: Theme.of(context).textTheme.headlineMedium),
+            Text(
+              strings.appName,
+              style: Theme.of(context).textTheme.headlineMedium,
+            ),
             const SizedBox(height: AppSpacing.md),
             const SizedBox(
               width: 28,
