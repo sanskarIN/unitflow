@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../app/app_controller.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../core/persistence/user_state.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 final class HistoryScreen extends StatelessWidget {
   const HistoryScreen({
@@ -18,6 +19,7 @@ final class HistoryScreen extends StatelessWidget {
   Widget build(BuildContext context) => AnimatedBuilder(
     animation: appController,
     builder: (context, _) {
+      final strings = AppLocalizations.of(context);
       final recents = appController.state.recents;
       return CustomScrollView(
         slivers: <Widget>[
@@ -39,10 +41,10 @@ final class HistoryScreen extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
-                            Text('History', style: Theme.of(context).textTheme.headlineMedium),
+                            Text(strings.historyTitle, style: Theme.of(context).textTheme.headlineMedium),
                             const SizedBox(height: AppSpacing.xxs),
                             Text(
-                              'Your most recent conversions stay on this device and can be reopened instantly.',
+                              strings.historyDescription,
                               style: Theme.of(context).textTheme.bodyMedium,
                             ),
                           ],
@@ -53,7 +55,7 @@ final class HistoryScreen extends StatelessWidget {
                         OutlinedButton.icon(
                           onPressed: () => _confirmClear(context),
                           icon: const Icon(Icons.delete_sweep_outlined),
-                          label: const Text('Clear'),
+                          label: Text(strings.clearAction),
                         ),
                       ],
                     ],
@@ -96,21 +98,20 @@ final class HistoryScreen extends StatelessWidget {
   );
 
   Future<void> _confirmClear(BuildContext context) async {
+    final strings = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Clear conversion history?'),
-        content: const Text(
-          'This removes saved recent conversions from this device. Favorites, pinned pairs, custom units, and settings are kept.',
-        ),
+        title: Text(strings.clearHistoryDialogTitle),
+        content: Text(strings.clearHistoryDialogBody),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: Text(strings.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Clear history'),
+            child: Text(strings.clearHistoryAction),
           ),
         ],
       ),
@@ -143,11 +144,11 @@ final class _RecentTile extends StatelessWidget {
     return Card(
       child: ListTile(
         leading: CircleAvatar(
-          child: Text(from.symbol.characters.take(2).toString()),
+          child: Text(String.fromCharCodes(from.symbol.runes.take(2))),
         ),
         title: Text('${recent.input} ${from.symbol} → ${to.symbol}'),
         subtitle: Text(
-          '${from.name} to ${to.name} · ${_formatTime(recent.createdAt.toLocal())}',
+          '${from.name} → ${to.name} · ${_formatTime(recent.createdAt.toLocal())}',
         ),
         trailing: const Icon(Icons.arrow_forward_outlined),
         onTap: onOpen,
@@ -169,29 +170,32 @@ final class _EmptyHistory extends StatelessWidget {
   const _EmptyHistory();
 
   @override
-  Widget build(BuildContext context) => Center(
-    child: ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 460),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.xl),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Icon(
-              Icons.history_outlined,
-              size: 56,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Text('No recent conversions', style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: AppSpacing.xs),
-            const Text(
-              'Conversions are added here when you copy a result, open a batch table, or submit a conversion.',
-              textAlign: TextAlign.center,
-            ),
-          ],
+  Widget build(BuildContext context) {
+    final strings = AppLocalizations.of(context);
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 460),
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.xl),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Icon(
+                Icons.history_outlined,
+                size: 56,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Text(strings.noRecentConversions, style: Theme.of(context).textTheme.titleLarge),
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                strings.noRecentConversionsDescription,
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }
