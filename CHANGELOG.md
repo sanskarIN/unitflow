@@ -15,10 +15,10 @@ All notable changes to UnitFlow are documented here. The format is based on Keep
 - English localization source and generated-localization workflow.
 - User-initiated official Releases link without background update tracking.
 - Reusable UnitFlow in-app brand mark and editable `assets/branding/unitflow-mark.svg` source.
-- Undoable history clearing and custom-unit removal workflows.
-- Rust–Flutter bridge crate, API DTOs, and bridge-generation automation.
+- Undoable history clearing and full custom-unit restoration including related favorite, pin, and recent-history state.
+- Rust–Flutter bridge crate, API DTOs, bridge-generation automation, and reproducible Cargokit native integration scaffolding for Android, iOS, Linux, macOS, and Windows.
 - CI, CodeQL, dependency review, Dependabot, and cross-platform release workflow foundations.
-- Repository safety checks for common credential signatures, JSON/ARB syntax, and internal Markdown links.
+- Repository safety checks for tracked-file patterns, JSON/ARB syntax, internal Markdown links, and developer utility syntax.
 - User-safe error-presentation helper backed by redacting structured diagnostics.
 - Core lookup/search/conversion profiling harness and strict release-candidate verification script.
 - Widget/controller regression coverage plus a primary offline conversion journey test.
@@ -33,20 +33,27 @@ All notable changes to UnitFlow are documented here. The format is based on Keep
 - Primary library/custom-unit/settings interface strings increasingly use generated localization resources instead of embedded labels.
 - Catalog matching now includes unit descriptions in the deterministic Dart catalog search path.
 - Developer verification now checks repository safety/data/docs before Rust and Flutter quality gates.
-- Audit-branch normalization regenerates localizations/bridge bindings and uses `sanskarin@outlook.in` for its automated normalization commit identity.
+- Audit-branch normalization bootstraps platform shells, regenerates native bridge scaffolding/localizations/bindings, and uses `sanskarin@outlook.in` for its automated normalization commit identity.
+- Loaded/imported convenience state is normalized against the rebuilt catalog so stale favorites, pins, and recent-history references cannot survive catalog/custom-unit changes.
+- Local persistence writes are serialized and handled as user-visible non-fatal warnings if the storage backend fails.
 
 ### Fixed
 
 - Conversion rounding is applied consistently to primary and batch conversion paths using the persisted user preference.
 - Backup/custom-unit failures no longer echo raw internal exception text into the user interface.
 - History can be cleared without making the action immediately irreversible because the UI provides an undo snapshot.
+- Removing a custom unit now removes dependent favorite, pinned-pair, and recent-history references instead of leaving inaccessible local state.
+- Undoing custom-unit removal restores the definition together with its captured favorite, pin, and history relationships when the stable ID is still available.
+- Invalid/stale unit references are pruned after load/import while valid custom-unit definitions remain strict validation failures rather than being silently discarded.
+- Local save/clear failures no longer escape unawaited UI callbacks; session state is preserved and users receive a recovery-oriented warning.
 
 ### Security
 
-- Added responsible disclosure guidance and secret-handling rules.
+- Added responsible disclosure guidance and safe configuration rules.
 - Added bounded backup import validation and redacting structured diagnostic logging.
-- Added tracked-file scanning for common private-key/token signatures without requiring another third-party CI action.
-- Added safe failure presentation that logs only exception type metadata rather than potentially sensitive exception text.
+- Added tracked-file safety scanning as a dependency-free CI check.
+- Added safe failure presentation that records only exception type metadata rather than potentially sensitive exception text.
+- Referential-normalization diagnostics record aggregate removal counts only, not conversion values or user backup content.
 
 ## [0.1.0-alpha.1] - Planned
 
