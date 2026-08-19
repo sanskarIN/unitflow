@@ -172,6 +172,7 @@ final class UserState {
     this.roundingMode = DecimalRoundingMode.nearestEven,
     this.decimalPlaces = 12,
     this.useGrouping = true,
+    this.reduceMotion = false,
     this.onboardingComplete = false,
     Set<String>? favoriteUnitIds,
     List<PinnedPair>? pinnedPairs,
@@ -189,6 +190,7 @@ final class UserState {
   final DecimalRoundingMode roundingMode;
   final int decimalPlaces;
   final bool useGrouping;
+  final bool reduceMotion;
   final bool onboardingComplete;
   final Set<String> favoriteUnitIds;
   final List<PinnedPair> pinnedPairs;
@@ -201,6 +203,7 @@ final class UserState {
     DecimalRoundingMode? roundingMode,
     int? decimalPlaces,
     bool? useGrouping,
+    bool? reduceMotion,
     bool? onboardingComplete,
     Set<String>? favoriteUnitIds,
     List<PinnedPair>? pinnedPairs,
@@ -212,6 +215,7 @@ final class UserState {
     roundingMode: roundingMode ?? this.roundingMode,
     decimalPlaces: decimalPlaces ?? this.decimalPlaces,
     useGrouping: useGrouping ?? this.useGrouping,
+    reduceMotion: reduceMotion ?? this.reduceMotion,
     onboardingComplete: onboardingComplete ?? this.onboardingComplete,
     favoriteUnitIds: favoriteUnitIds ?? this.favoriteUnitIds,
     pinnedPairs: pinnedPairs ?? this.pinnedPairs,
@@ -226,6 +230,7 @@ final class UserState {
     'roundingMode': roundingMode.name,
     'decimalPlaces': decimalPlaces,
     'useGrouping': useGrouping,
+    'reduceMotion': reduceMotion,
     'onboardingComplete': onboardingComplete,
     'favoriteUnitIds': favoriteUnitIds.toList(growable: false),
     'pinnedPairs': pinnedPairs.map((pair) => pair.storageValue).toList(growable: false),
@@ -241,11 +246,13 @@ final class UserState {
 
     final decimalPlaces = json['decimalPlaces'];
     final useGrouping = json['useGrouping'];
+    final reduceMotionValue = json['reduceMotion'];
     final onboardingComplete = json['onboardingComplete'];
     if (decimalPlaces is! int ||
         decimalPlaces < 0 ||
         decimalPlaces > 28 ||
         useGrouping is! bool ||
+        (reduceMotionValue != null && reduceMotionValue is! bool) ||
         onboardingComplete is! bool) {
       throw const FormatException('Invalid UnitFlow preferences.');
     }
@@ -318,6 +325,7 @@ final class UserState {
       roundingMode: roundingMode,
       decimalPlaces: decimalPlaces,
       useGrouping: useGrouping,
+      reduceMotion: reduceMotionValue as bool? ?? false,
       onboardingComplete: onboardingComplete,
       favoriteUnitIds: favorites,
       pinnedPairs: pins,
