@@ -1,0 +1,30 @@
+[package]
+name = "unitflow-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+rust_decimal = "1"
+unitflow_core = { path = "../crates/unitflow_core" }
+
+[[bin]]
+name = "catalog_search"
+path = "fuzz_targets/catalog_search.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "decimal_bridge_inputs"
+path = "fuzz_targets/decimal_bridge_inputs.rs"
+test = false
+doc = false
+bench = false
+
+[workspace]
+members = ["."]
