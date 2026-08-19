@@ -93,7 +93,7 @@ fn rust_engine_satisfies_bridge_parity_vectors() {
         let result = converter.convert(&request).expect(vector.name);
 
         assert_eq!(
-            result.value.normalize().to_string(),
+            result.output.normalize().to_string(),
             vector.expected,
             "{}",
             vector.name
