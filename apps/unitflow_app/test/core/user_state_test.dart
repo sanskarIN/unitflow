@@ -13,6 +13,7 @@ void main() {
       notation: DecimalNotation.engineering,
       roundingMode: DecimalRoundingMode.halfAwayFromZero,
       decimalPlaces: 8,
+      reduceMotion: true,
       onboardingComplete: true,
       favoriteUnitIds: <String>{'meter'},
       pinnedPairs: const <PinnedPair>[
@@ -41,6 +42,7 @@ void main() {
     expect(restored.notation, DecimalNotation.engineering);
     expect(restored.roundingMode, DecimalRoundingMode.halfAwayFromZero);
     expect(restored.decimalPlaces, 8);
+    expect(restored.reduceMotion, isTrue);
     expect(restored.favoriteUnitIds, contains('meter'));
     expect(restored.pinnedPairs.single.toUnitId, 'kilometer');
     expect(restored.customUnits.single.id, 'double_meter');
@@ -64,7 +66,29 @@ void main() {
     final restored = repository.importJson(legacy);
 
     expect(restored.roundingMode, DecimalRoundingMode.nearestEven);
+    expect(restored.reduceMotion, isFalse);
     expect(restored.toJson()['schemaVersion'], UserState.schemaVersion);
+  });
+
+  test('schema version two without reduceMotion defaults to false', () {
+    final repository = MemoryUserStateRepository();
+    const legacyV2 = '{'
+        '"schemaVersion":2,'
+        '"theme":"system",'
+        '"notation":"plain",'
+        '"roundingMode":"nearestEven",'
+        '"decimalPlaces":12,'
+        '"useGrouping":true,'
+        '"onboardingComplete":true,'
+        '"favoriteUnitIds":[],'
+        '"pinnedPairs":[],'
+        '"recents":[],'
+        '"customUnits":[]'
+        '}';
+
+    final restored = repository.importJson(legacyV2);
+
+    expect(restored.reduceMotion, isFalse);
   });
 
   test('invalid schema version is rejected', () {
