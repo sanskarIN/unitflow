@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import subprocess
 import sys
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -55,11 +55,6 @@ REQUIRED_FILES = (
     "scripts/verify.ps1",
 )
 
-FORBIDDEN_EXACT = {
-    ".env",
-    "apps/unitflow_app/.env",
-}
-
 FORBIDDEN_SUFFIXES = (
     ".jks",
     ".keystore",
@@ -104,14 +99,17 @@ def main() -> int:
 
     for path in tracked:
         normalized = f"/{path.replace('\\', '/')}"
-        if path in FORBIDDEN_EXACT:
+        lower_path = path.lower()
+        file_name = PurePosixPath(path.replace("\\", "/")).name.lower()
+
+        if file_name == ".env":
             errors.append(f"forbidden local environment file is tracked: {path}")
-        if path.endswith(FORBIDDEN_SUFFIXES):
+        if file_name.startswith(".env.") and file_name != ".env.example":
+            errors.append(f"unexpected environment file is tracked: {path}")
+        if lower_path.endswith(FORBIDDEN_SUFFIXES):
             errors.append(f"potential signing/credential artifact is tracked: {path}")
         if any(part in normalized for part in FORBIDDEN_PARTS):
             errors.append(f"generated/build artifact is tracked: {path}")
-        if path.startswith(".env.") and path != ".env.example":
-            errors.append(f"unexpected environment file is tracked: {path}")
 
     if errors:
         print("Repository hygiene validation failed:", file=sys.stderr)
