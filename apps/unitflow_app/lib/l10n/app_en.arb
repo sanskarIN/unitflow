@@ -95,5 +95,24 @@
     "placeholders": {
       "count": {"type": "int"}
     }
-  }
+  },
+  "couldNotCreateUnit": "Could not create the custom unit. Check the values and try again.",
+  "unitAdded": "{name} added.",
+  "@unitAdded": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "unitRemoved": "{name} removed.",
+  "@unitRemoved": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "undo": "Undo",
+  "customLabel": "Custom",
+  "removeFromFavorites": "Remove from favorites",
+  "addToFavorites": "Add to favorites",
+  "removeCustomUnit": "Remove custom unit",
+  "noUnitsMatch": "No units match this search."
 }
