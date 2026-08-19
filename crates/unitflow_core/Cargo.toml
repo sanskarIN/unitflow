@@ -1,0 +1,19 @@
+[package]
+name = "unitflow_core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+description = "High-precision offline unit conversion domain engine for UnitFlow"
+keywords = ["units", "conversion", "decimal", "offline"]
+categories = ["science", "mathematics"]
+
+[dependencies]
+rust_decimal.workspace = true
+serde.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+serde_json = "1.0"
