@@ -8,6 +8,20 @@ import '../features/converter/data/unit_catalog.dart';
 import '../features/converter/domain/conversion_engine.dart';
 import '../features/converter/domain/unit_models.dart';
 
+final class RemovedCustomUnitSnapshot {
+  const RemovedCustomUnitSnapshot({
+    required this.unit,
+    required this.wasFavorite,
+    required this.pinnedPairs,
+    required this.recents,
+  });
+
+  final CustomUnitData unit;
+  final bool wasFavorite;
+  final List<PinnedPair> pinnedPairs;
+  final List<RecentConversion> recents;
+}
+
 final class AppController extends ChangeNotifier {
   AppController({required UserStateRepository repository}) : _repository = repository;
 
@@ -174,13 +188,25 @@ final class AppController extends ChangeNotifier {
     return _update(newState, engine: newEngine);
   }
 
-  Future<void> removeCustomUnit(String id) {
-    final existing = _state.customUnits
-        .where((item) => item.id == id)
-        .toList();
+  Future<RemovedCustomUnitSnapshot?> removeCustomUnit(String id) async {
+    final existing = _state.customUnits.where((item) => item.id == id).toList();
     if (existing.isEmpty) {
-      return Future<void>.value();
+      return null;
     }
+    final snapshot = RemovedCustomUnitSnapshot(
+      unit: existing.single,
+      wasFavorite: _state.favoriteUnitIds.contains(id),
+      pinnedPairs: List<PinnedPair>.unmodifiable(
+        _state.pinnedPairs.where(
+          (pair) => pair.fromUnitId == id || pair.toUnitId == id,
+        ),
+      ),
+      recents: List<RecentConversion>.unmodifiable(
+        _state.recents.where(
+          (recent) => recent.fromUnitId == id || recent.toUnitId == id,
+        ),
+      ),
+    );
     final nextCustom = _state.customUnits
         .where((item) => item.id != id)
         .toList();
@@ -199,7 +225,46 @@ final class AppController extends ChangeNotifier {
       pinnedPairs: nextPins,
       recents: nextRecents,
     );
-    return _update(newState, engine: _buildEngine(newState));
+    await _update(newState, engine: _buildEngine(newState));
+    return snapshot;
+  }
+
+  Future<void> restoreCustomUnit(RemovedCustomUnitSnapshot snapshot) {
+    if (_engine.catalog.byId(snapshot.unit.id) != null) {
+      throw ArgumentError.value(
+        snapshot.unit.id,
+        'id',
+        'unit identifier already exists',
+      );
+    }
+
+    final customUnits = <CustomUnitData>[..._state.customUnits, snapshot.unit];
+    final provisional = _state.copyWith(customUnits: customUnits);
+    final restoredEngine = _buildEngine(provisional);
+
+    final favorites = _state.favoriteUnitIds.toSet();
+    if (snapshot.wasFavorite) {
+      favorites.add(snapshot.unit.id);
+    }
+
+    final pins = <PinnedPair>[...snapshot.pinnedPairs, ..._state.pinnedPairs];
+    final uniquePins = <String, PinnedPair>{};
+    for (final pair in pins) {
+      uniquePins.putIfAbsent(pair.storageValue, () => pair);
+    }
+
+    final recents = <RecentConversion>[...snapshot.recents, ..._state.recents]
+      ..sort((left, right) => right.createdAt.compareTo(left.createdAt));
+
+    final restored = provisional.copyWith(
+      favoriteUnitIds: favorites,
+      pinnedPairs: uniquePins.values.take(20).toList(),
+      recents: recents.take(50).toList(),
+    );
+    return _update(
+      _normalizeStateReferences(restored, restoredEngine),
+      engine: restoredEngine,
+    );
   }
 
   String exportState() => _repository.exportJson(_state);
