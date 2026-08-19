@@ -341,13 +341,21 @@ final class SettingsScreen extends StatelessWidget {
   }
 
   Future<void> _openReleases(BuildContext context) async {
-    if (await launchUrl(_releasesUri)) {
-      return;
+    final strings = AppLocalizations.of(context);
+    try {
+      if (await launchUrl(_releasesUri)) {
+        return;
+      }
+    } on Object catch (error) {
+      userSafeFailure(
+        error,
+        event: 'release_page_open_failed',
+        fallback: strings.releaseOpenFailed,
+      );
     }
     if (!context.mounted) {
       return;
     }
-    final strings = AppLocalizations.of(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(strings.releaseOpenFailed)),
     );
@@ -376,7 +384,7 @@ final class SettingsScreen extends StatelessWidget {
       return;
     }
     await appController.resetLocalData();
-    if (!context.mounted) {
+    if (!context.mounted || appController.warning != null) {
       return;
     }
     ScaffoldMessenger.of(context).showSnackBar(
