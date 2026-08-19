@@ -10,6 +10,7 @@ import '../features/settings/presentation/about_screen.dart';
 import '../features/settings/presentation/settings_screen.dart';
 import '../l10n/app_localizations.dart';
 import 'app_controller.dart';
+import 'branding/unitflow_mark.dart';
 import 'theme/app_theme.dart';
 
 final class AppShell extends StatefulWidget {
@@ -48,6 +49,8 @@ final class _AppShellState extends State<AppShell> {
               _select(2),
           const SingleActivator(LogicalKeyboardKey.comma, control: true): () =>
               _select(3),
+          const SingleActivator(LogicalKeyboardKey.keyK, control: true): () =>
+              _select(1),
           const SingleActivator(LogicalKeyboardKey.digit1, meta: true): () =>
               _select(0),
           const SingleActivator(LogicalKeyboardKey.digit2, meta: true): () =>
@@ -56,6 +59,8 @@ final class _AppShellState extends State<AppShell> {
               _select(2),
           const SingleActivator(LogicalKeyboardKey.comma, meta: true): () =>
               _select(3),
+          const SingleActivator(LogicalKeyboardKey.keyK, meta: true): () =>
+              _select(1),
         },
         child: Focus(
           autofocus: true,
@@ -90,10 +95,7 @@ final class _AppShellState extends State<AppShell> {
                   title: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
-                      Icon(
-                        Icons.swap_calls,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
+                      UnitFlowMark(size: 32, semanticLabel: strings.appName),
                       const SizedBox(width: AppSpacing.xs),
                       Text(strings.appName),
                     ],
