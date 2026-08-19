@@ -203,6 +203,7 @@ impl UnitDefinition {
         self.id.to_lowercase().contains(&query)
             || self.name.to_lowercase().contains(&query)
             || self.symbol.to_lowercase().contains(&query)
+            || self.description.to_lowercase().contains(&query)
             || self
                 .aliases
                 .iter()
