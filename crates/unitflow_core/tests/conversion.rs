@@ -112,7 +112,11 @@ fn explicit_round_modes_are_respected() {
 #[test]
 fn batch_conversion_preserves_requested_target_order() {
     let converter = Converter::with_built_in_catalog().expect("catalog");
-    let targets = vec!["centimeter".to_owned(), "kilometer".to_owned(), "inch".to_owned()];
+    let targets = vec![
+        "centimeter".to_owned(),
+        "kilometer".to_owned(),
+        "inch".to_owned(),
+    ];
 
     let results = converter
         .batch_convert(
@@ -144,4 +148,17 @@ fn rejects_precision_above_decimal_capacity() {
         .expect_err("precision should be bounded");
 
     assert_eq!(error, UnitFlowError::InvalidPrecision(29));
+}
+
+#[test]
+fn round_mode_serialization_matches_bridge_protocol() {
+    assert_eq!(
+        serde_json::to_string(&RoundMode::NearestEven).expect("serialize round mode"),
+        r#""nearestEven""#,
+    );
+    assert_eq!(
+        serde_json::from_str::<RoundMode>(r#""halfAwayFromZero""#)
+            .expect("deserialize round mode"),
+        RoundMode::HalfAwayFromZero,
+    );
 }
