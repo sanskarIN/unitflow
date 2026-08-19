@@ -13,12 +13,14 @@ The exact head SHA changes while defects/features are being committed. Therefore
 ## Repository safety checks
 
 ```bash
+python3 -m py_compile tool/*.py
+(cd tool && python3 -m unittest discover -p 'test_*.py')
 python3 tool/check_secrets.py
 python3 tool/check_data_files.py
 python3 tool/check_docs_links.py
 ```
 
-These checks cover common credential signatures, JSON/ARB syntax, and internal Markdown target existence. They supplement CodeQL/dependency review rather than replacing them.
+These checks cover repository utility regressions, common credential signatures, JSON/ARB syntax and duplicate-key rejection, and internal Markdown target existence. They supplement CodeQL/dependency review rather than replacing them.
 
 ## Rust quality checks
 
@@ -49,9 +51,11 @@ bash tool/generate_bridge.sh
 cargo check --workspace --all-features
 cd apps/unitflow_app
 flutter analyze --fatal-infos --fatal-warnings
+cd ../..
+git status --short
 ```
 
-A release candidate must also prove that bridge generation does not leave unexpected tracked diffs.
+Generated Flutter Rust Bridge sources are intentionally tracked. A release candidate must prove that bridge/platform generation leaves **no modified or untracked repository files**. `git diff --exit-code` alone is insufficient because it does not report untracked generated files; CI and release verification therefore use `git status --porcelain --untracked-files=all` for the cleanliness gate.
 
 ## Strict release-candidate command
 
@@ -59,7 +63,7 @@ A release candidate must also prove that bridge generation does not leave unexpe
 bash tool/verify_release_candidate.sh
 ```
 
-This combines repository checks, Rust/Flutter verification, bridge regeneration, release builds available on the current host, generated-source cleanliness, and the core profiling harness. It still cannot substitute for native builds/manual journeys on other operating systems.
+This combines repository checks, Rust/Flutter verification, bridge regeneration, release builds available on the current host, generated-source cleanliness including untracked files, and the core profiling harness. It still cannot substitute for native builds/manual journeys on other operating systems.
 
 ## GitHub-required checks
 
@@ -105,5 +109,5 @@ Record OS, CPU, Rust toolchain, build profile, commit SHA, and output when makin
 - Never treat an older green workflow as evidence for a newer commit.
 - Every confirmed behavior defect should receive regression coverage when practical.
 - Build/toolchain limitations belong in `what_changed.md` with exact scope.
-- Generated sources are derived but must still be deterministic, reviewed through CI, and clean for release.
+- Generated sources are derived but must still be deterministic, reviewed through CI, tracked where required, and leave no modified/untracked drift for release.
 - Security/release/accessibility/platform checks are additive to core compiler/test success.
