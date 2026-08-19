@@ -108,6 +108,22 @@ void main() {
     expect(unit.toUnitDefinition, throwsFormatException);
   });
 
+  test('memory repository rejects oversized backup payloads', () {
+    final repository = MemoryUserStateRepository();
+    final oversized = List<String>.filled(1_000_001, 'x').join();
+
+    expect(
+      () => repository.importJson(oversized),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          'UnitFlow import size is invalid.',
+        ),
+      ),
+    );
+  });
+
   test('backup rejects more recent conversions than the import limit', () {
     final repository = MemoryUserStateRepository();
     final backup = _emptyBackup()
