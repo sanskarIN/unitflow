@@ -49,7 +49,7 @@ class Converter {
     int decimalPlaces = 8,
     bool scientific = false,
   }) {
-    final int safePlaces = decimalPlaces.clamp(0, 15);
+    final int safePlaces = decimalPlaces.clamp(0, 15).toInt();
     if (value.isNaN || value.isInfinite) {
       return value.toString();
     }
@@ -65,7 +65,7 @@ class Converter {
   }
 
   double round(double value, int decimalPlaces) {
-    final int safePlaces = decimalPlaces.clamp(0, 15);
+    final int safePlaces = decimalPlaces.clamp(0, 15).toInt();
     final double scale = math.pow(10, safePlaces).toDouble();
     return (value * scale).roundToDouble() / scale;
   }
@@ -75,27 +75,18 @@ class Converter {
       return value;
     }
 
-    final double kelvin;
-    switch (from) {
-      case 'kelvin':
-        kelvin = value;
-      case 'celsius':
-        kelvin = value + 273.15;
-      case 'fahrenheit':
-        kelvin = (value + 459.67) * 5 / 9;
-      default:
-        throw ConversionException('Unknown temperature unit: $from');
-    }
+    final double kelvin = switch (from) {
+      'kelvin' => value,
+      'celsius' => value + 273.15,
+      'fahrenheit' => (value + 459.67) * 5 / 9,
+      _ => throw ConversionException('Unknown temperature unit: $from'),
+    };
 
-    switch (to) {
-      case 'kelvin':
-        return kelvin;
-      case 'celsius':
-        return kelvin - 273.15;
-      case 'fahrenheit':
-        return kelvin * 9 / 5 - 459.67;
-      default:
-        throw ConversionException('Unknown temperature unit: $to');
-    }
+    return switch (to) {
+      'kelvin' => kelvin,
+      'celsius' => kelvin - 273.15,
+      'fahrenheit' => kelvin * 9 / 5 - 459.67,
+      _ => throw ConversionException('Unknown temperature unit: $to'),
+    };
   }
 }
