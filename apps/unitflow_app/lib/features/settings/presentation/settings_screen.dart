@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/app_controller.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../core/format/decimal_format.dart';
+import '../../../core/logging/app_log.dart';
 import '../../../core/math/exact_decimal.dart';
 import '../../../core/persistence/user_state.dart';
 
@@ -170,6 +172,25 @@ final class SettingsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.md),
                 _SectionCard(
+                  title: 'Updates',
+                  icon: Icons.system_update_alt_outlined,
+                  children: <Widget>[
+                    const Text(
+                      'Core conversions do not require network access. Release notes and downloadable builds are published through the project repository.',
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.new_releases_outlined),
+                      title: const Text('Open GitHub Releases'),
+                      subtitle: const Text('Check published versions when you choose.'),
+                      trailing: const Icon(Icons.open_in_new),
+                      onTap: () => _openReleases(context),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.md),
+                _SectionCard(
                   title: 'About',
                   icon: Icons.info_outline,
                   children: <Widget>[
@@ -224,11 +245,17 @@ final class SettingsScreen extends StatelessWidget {
     try {
       await appController.importState(content);
     } on Object catch (error) {
+      AppLog.warning(
+        'backup_import_rejected',
+        metadata: <String, Object?>{'errorType': error.runtimeType.toString()},
+      );
       if (!context.mounted) {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Import rejected: $error')),
+        const SnackBar(
+          content: Text('Import rejected. Check that this is a valid supported UnitFlow backup.'),
+        ),
       );
       return;
     }
@@ -238,6 +265,18 @@ final class SettingsScreen extends StatelessWidget {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('UnitFlow backup imported.')),
     );
+  }
+
+  Future<void> _openReleases(BuildContext context) async {
+    final opened = await launchUrl(
+      Uri.parse('https://github.com/sanskarIN/unitflow/releases'),
+      mode: LaunchMode.externalApplication,
+    );
+    if (!opened && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open the releases page.')),
+      );
+    }
   }
 
   Future<void> _confirmReset(BuildContext context) async {
