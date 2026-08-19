@@ -8,6 +8,7 @@
 pub mod catalog;
 pub mod converter;
 pub mod custom_unit;
+pub mod education;
 pub mod error;
 pub mod model;
 pub mod notation;
@@ -15,6 +16,7 @@ pub mod notation;
 pub use catalog::UnitCatalog;
 pub use converter::{convert_between, ConversionRequest, ConversionResult, Converter, RoundMode};
 pub use custom_unit::{merged_catalog, CustomUnitDraft};
+pub use education::{category_guide, CategoryGuide};
 pub use error::UnitFlowError;
 pub use model::{Category, UnitDefinition};
 pub use notation::{format_decimal, Notation};
