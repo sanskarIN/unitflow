@@ -194,12 +194,24 @@ final class AppController extends ChangeNotifier {
     return _update(imported, engine: importedEngine);
   }
 
-  Future<void> resetLocalData() async {
-    await _repository.clear();
-    _state = UserState(onboardingComplete: true);
+  Future<void> resetLocalData() {
+    final baseline = UserState(onboardingComplete: true);
+    _state = baseline;
     _engine = ExactConversionEngine();
     _warning = null;
     notifyListeners();
+
+    final operation = _writeChain.then((_) async {
+      await _repository.clear();
+      await _repository.save(baseline);
+    });
+    _writeChain = operation.catchError((Object error) {
+      AppLog.error(
+        'state_reset_failed',
+        metadata: <String, Object?>{'errorType': error.runtimeType.toString()},
+      );
+    });
+    return operation;
   }
 
   void clearWarning() {
