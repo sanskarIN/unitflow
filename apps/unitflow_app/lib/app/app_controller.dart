@@ -217,7 +217,36 @@ final class AppController extends ChangeNotifier {
       }
       units.add(definition);
     }
-    return ExactConversionEngine(catalog: UnitCatalog(units));
+    final engine = ExactConversionEngine(catalog: UnitCatalog(units));
+    _validateSavedReferences(state, engine);
+    return engine;
+  }
+
+  void _validateSavedReferences(UserState state, ConversionEngine engine) {
+    for (final unitId in state.favoriteUnitIds) {
+      if (engine.catalog.byId(unitId) == null) {
+        throw FormatException('Favorite references an unknown unit: $unitId');
+      }
+    }
+
+    for (final pair in state.pinnedPairs) {
+      final from = engine.catalog.byId(pair.fromUnitId);
+      final to = engine.catalog.byId(pair.toUnitId);
+      if (from == null ||
+          to == null ||
+          from.category != pair.category ||
+          to.category != pair.category) {
+        throw const FormatException('Pinned pair references invalid units.');
+      }
+    }
+
+    for (final recent in state.recents) {
+      final from = engine.catalog.byId(recent.fromUnitId);
+      final to = engine.catalog.byId(recent.toUnitId);
+      if (from == null || to == null || from.category != to.category) {
+        throw const FormatException('Recent conversion references invalid units.');
+      }
+    }
   }
 
   Future<void> _update(UserState state, {ConversionEngine? engine}) {
