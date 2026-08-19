@@ -126,6 +126,20 @@ void main() {
       throwsFormatException,
     );
   });
+
+  test('backup rejects more favorites than the import limit', () {
+    final repository = MemoryUserStateRepository();
+    final backup = _emptyBackup()
+      ..['favoriteUnitIds'] = List<Object?>.generate(
+        UserState.maxImportedFavorites + 1,
+        (index) => 'unit_$index',
+      );
+
+    expect(
+      () => repository.importJson(jsonEncode(backup)),
+      throwsFormatException,
+    );
+  });
 }
 
 Map<String, Object?> _emptyBackup() => <String, Object?>{
