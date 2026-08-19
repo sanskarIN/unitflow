@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../app/branding/unitflow_mark.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../l10n/app_localizations.dart';
 
@@ -103,19 +104,7 @@ final class _IdentityCard extends StatelessWidget {
         padding: const EdgeInsets.all(AppSpacing.xl),
         child: Column(
           children: <Widget>[
-            Container(
-              width: 88,
-              height: 88,
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primaryContainer,
-                borderRadius: BorderRadius.circular(AppRadii.large),
-              ),
-              child: Icon(
-                Icons.swap_calls,
-                size: 48,
-                color: theme.colorScheme.onPrimaryContainer,
-              ),
-            ),
+            UnitFlowMark(size: 88, semanticLabel: strings.appName),
             const SizedBox(height: AppSpacing.md),
             Text(strings.appName, style: theme.textTheme.headlineMedium),
             const SizedBox(height: AppSpacing.xs),
