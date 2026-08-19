@@ -10,6 +10,7 @@ import '../features/history/presentation/history_screen.dart';
 import '../features/library/presentation/library_screen.dart';
 import '../features/settings/presentation/about_screen.dart';
 import '../features/settings/presentation/settings_screen.dart';
+import '../l10n/generated/app_localizations.dart';
 import 'app_controller.dart';
 import 'theme/app_theme.dart';
 
@@ -37,139 +38,142 @@ final class _AppShellState extends State<AppShell> {
   @override
   Widget build(BuildContext context) => AnimatedBuilder(
     animation: widget.appController,
-    builder: (context, _) => CallbackShortcuts(
-      bindings: <ShortcutActivator, VoidCallback>{
-        const SingleActivator(LogicalKeyboardKey.digit1, control: true): () => _select(0),
-        const SingleActivator(LogicalKeyboardKey.digit2, control: true): () => _select(1),
-        const SingleActivator(LogicalKeyboardKey.digit3, control: true): () => _select(2),
-        const SingleActivator(LogicalKeyboardKey.digit4, control: true): () => _select(3),
-        const SingleActivator(LogicalKeyboardKey.comma, control: true): () => _select(4),
-        const SingleActivator(LogicalKeyboardKey.digit1, meta: true): () => _select(0),
-        const SingleActivator(LogicalKeyboardKey.digit2, meta: true): () => _select(1),
-        const SingleActivator(LogicalKeyboardKey.digit3, meta: true): () => _select(2),
-        const SingleActivator(LogicalKeyboardKey.digit4, meta: true): () => _select(3),
-        const SingleActivator(LogicalKeyboardKey.comma, meta: true): () => _select(4),
-      },
-      child: Focus(
-        autofocus: true,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final useRail = constraints.maxWidth >= 800;
-            final content = _content();
-            return Scaffold(
-              appBar: AppBar(
-                title: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    Icon(Icons.swap_calls, color: Theme.of(context).colorScheme.primary),
+    builder: (context, _) {
+      final strings = AppLocalizations.of(context);
+      return CallbackShortcuts(
+        bindings: <ShortcutActivator, VoidCallback>{
+          const SingleActivator(LogicalKeyboardKey.digit1, control: true): () => _select(0),
+          const SingleActivator(LogicalKeyboardKey.digit2, control: true): () => _select(1),
+          const SingleActivator(LogicalKeyboardKey.digit3, control: true): () => _select(2),
+          const SingleActivator(LogicalKeyboardKey.digit4, control: true): () => _select(3),
+          const SingleActivator(LogicalKeyboardKey.comma, control: true): () => _select(4),
+          const SingleActivator(LogicalKeyboardKey.digit1, meta: true): () => _select(0),
+          const SingleActivator(LogicalKeyboardKey.digit2, meta: true): () => _select(1),
+          const SingleActivator(LogicalKeyboardKey.digit3, meta: true): () => _select(2),
+          const SingleActivator(LogicalKeyboardKey.digit4, meta: true): () => _select(3),
+          const SingleActivator(LogicalKeyboardKey.comma, meta: true): () => _select(4),
+        },
+        child: Focus(
+          autofocus: true,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final useRail = constraints.maxWidth >= 800;
+              final content = _content();
+              return Scaffold(
+                appBar: AppBar(
+                  title: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Icon(Icons.swap_calls, color: Theme.of(context).colorScheme.primary),
+                      const SizedBox(width: AppSpacing.xs),
+                      Text(strings.appName),
+                    ],
+                  ),
+                  actions: <Widget>[
+                    IconButton(
+                      tooltip: strings.searchUnitLibrary,
+                      onPressed: () => _select(2),
+                      icon: const Icon(Icons.search),
+                    ),
                     const SizedBox(width: AppSpacing.xs),
-                    const Text('UnitFlow'),
                   ],
                 ),
-                actions: <Widget>[
-                  IconButton(
-                    tooltip: 'Search unit library',
-                    onPressed: () => _select(2),
-                    icon: const Icon(Icons.search),
-                  ),
-                  const SizedBox(width: AppSpacing.xs),
-                ],
-              ),
-              body: Column(
-                children: <Widget>[
-                  if (widget.appController.warning != null)
-                    MaterialBanner(
-                      content: Text(widget.appController.warning!),
-                      leading: const Icon(Icons.warning_amber_outlined),
-                      actions: <Widget>[
-                        TextButton(
-                          onPressed: widget.appController.clearWarning,
-                          child: const Text('Dismiss'),
-                        ),
-                      ],
+                body: Column(
+                  children: <Widget>[
+                    if (widget.appController.warning != null)
+                      MaterialBanner(
+                        content: Text(widget.appController.warning!),
+                        leading: const Icon(Icons.warning_amber_outlined),
+                        actions: <Widget>[
+                          TextButton(
+                            onPressed: widget.appController.clearWarning,
+                            child: Text(strings.dismiss),
+                          ),
+                        ],
+                      ),
+                    Expanded(
+                      child: useRail
+                          ? Row(
+                              children: <Widget>[
+                                NavigationRail(
+                                  selectedIndex: _selectedIndex,
+                                  onDestinationSelected: _select,
+                                  labelType: NavigationRailLabelType.all,
+                                  destinations: <NavigationRailDestination>[
+                                    NavigationRailDestination(
+                                      icon: const Icon(Icons.swap_horiz_outlined),
+                                      selectedIcon: const Icon(Icons.swap_horiz),
+                                      label: Text(strings.navConvert),
+                                    ),
+                                    NavigationRailDestination(
+                                      icon: const Icon(Icons.table_rows_outlined),
+                                      selectedIcon: const Icon(Icons.table_rows),
+                                      label: Text(strings.navBatch),
+                                    ),
+                                    NavigationRailDestination(
+                                      icon: const Icon(Icons.library_books_outlined),
+                                      selectedIcon: const Icon(Icons.library_books),
+                                      label: Text(strings.navLibrary),
+                                    ),
+                                    NavigationRailDestination(
+                                      icon: const Icon(Icons.history_outlined),
+                                      selectedIcon: const Icon(Icons.history),
+                                      label: Text(strings.navHistory),
+                                    ),
+                                    NavigationRailDestination(
+                                      icon: const Icon(Icons.settings_outlined),
+                                      selectedIcon: const Icon(Icons.settings),
+                                      label: Text(strings.navSettings),
+                                    ),
+                                  ],
+                                ),
+                                const VerticalDivider(width: 1),
+                                Expanded(child: content),
+                              ],
+                            )
+                          : content,
                     ),
-                  Expanded(
-                    child: useRail
-                        ? Row(
-                            children: <Widget>[
-                              NavigationRail(
-                                selectedIndex: _selectedIndex,
-                                onDestinationSelected: _select,
-                                labelType: NavigationRailLabelType.all,
-                                destinations: const <NavigationRailDestination>[
-                                  NavigationRailDestination(
-                                    icon: Icon(Icons.swap_horiz_outlined),
-                                    selectedIcon: Icon(Icons.swap_horiz),
-                                    label: Text('Convert'),
-                                  ),
-                                  NavigationRailDestination(
-                                    icon: Icon(Icons.table_rows_outlined),
-                                    selectedIcon: Icon(Icons.table_rows),
-                                    label: Text('Batch'),
-                                  ),
-                                  NavigationRailDestination(
-                                    icon: Icon(Icons.library_books_outlined),
-                                    selectedIcon: Icon(Icons.library_books),
-                                    label: Text('Library'),
-                                  ),
-                                  NavigationRailDestination(
-                                    icon: Icon(Icons.history_outlined),
-                                    selectedIcon: Icon(Icons.history),
-                                    label: Text('History'),
-                                  ),
-                                  NavigationRailDestination(
-                                    icon: Icon(Icons.settings_outlined),
-                                    selectedIcon: Icon(Icons.settings),
-                                    label: Text('Settings'),
-                                  ),
-                                ],
-                              ),
-                              const VerticalDivider(width: 1),
-                              Expanded(child: content),
-                            ],
-                          )
-                        : content,
-                  ),
-                ],
-              ),
-              bottomNavigationBar: useRail
-                  ? null
-                  : NavigationBar(
-                      selectedIndex: _selectedIndex,
-                      onDestinationSelected: _select,
-                      destinations: const <NavigationDestination>[
-                        NavigationDestination(
-                          icon: Icon(Icons.swap_horiz_outlined),
-                          selectedIcon: Icon(Icons.swap_horiz),
-                          label: 'Convert',
-                        ),
-                        NavigationDestination(
-                          icon: Icon(Icons.table_rows_outlined),
-                          selectedIcon: Icon(Icons.table_rows),
-                          label: 'Batch',
-                        ),
-                        NavigationDestination(
-                          icon: Icon(Icons.library_books_outlined),
-                          selectedIcon: Icon(Icons.library_books),
-                          label: 'Library',
-                        ),
-                        NavigationDestination(
-                          icon: Icon(Icons.history_outlined),
-                          selectedIcon: Icon(Icons.history),
-                          label: 'History',
-                        ),
-                        NavigationDestination(
-                          icon: Icon(Icons.settings_outlined),
-                          selectedIcon: Icon(Icons.settings),
-                          label: 'Settings',
-                        ),
-                      ],
-                    ),
-            );
-          },
+                  ],
+                ),
+                bottomNavigationBar: useRail
+                    ? null
+                    : NavigationBar(
+                        selectedIndex: _selectedIndex,
+                        onDestinationSelected: _select,
+                        destinations: <NavigationDestination>[
+                          NavigationDestination(
+                            icon: const Icon(Icons.swap_horiz_outlined),
+                            selectedIcon: const Icon(Icons.swap_horiz),
+                            label: strings.navConvert,
+                          ),
+                          NavigationDestination(
+                            icon: const Icon(Icons.table_rows_outlined),
+                            selectedIcon: const Icon(Icons.table_rows),
+                            label: strings.navBatch,
+                          ),
+                          NavigationDestination(
+                            icon: const Icon(Icons.library_books_outlined),
+                            selectedIcon: const Icon(Icons.library_books),
+                            label: strings.navLibrary,
+                          ),
+                          NavigationDestination(
+                            icon: const Icon(Icons.history_outlined),
+                            selectedIcon: const Icon(Icons.history),
+                            label: strings.navHistory,
+                          ),
+                          NavigationDestination(
+                            icon: const Icon(Icons.settings_outlined),
+                            selectedIcon: const Icon(Icons.settings),
+                            label: strings.navSettings,
+                          ),
+                        ],
+                      ),
+              );
+            },
+          ),
         ),
-      ),
-    ),
+      );
+    },
   );
 
   Widget _content() => IndexedStack(
