@@ -70,4 +70,35 @@ void main() {
     expect(persisted.aliases, <String>['double', 'two meters']);
     expect(persisted.description, 'Example unit.');
   });
+
+  test('custom formulas must fit the Rust decimal domain', () {
+    const oversizedScale = CustomUnitData(
+      id: 'oversized_scale',
+      category: UnitCategory.length,
+      name: 'Oversized Scale',
+      symbol: 'os',
+      scale: '79228162514264337593543950336',
+      offset: '0',
+    );
+    const excessiveScalePrecision = CustomUnitData(
+      id: 'tiny_scale',
+      category: UnitCategory.length,
+      name: 'Tiny Scale',
+      symbol: 'ts',
+      scale: '1e-29',
+      offset: '0',
+    );
+    const oversizedOffset = CustomUnitData(
+      id: 'oversized_offset',
+      category: UnitCategory.temperature,
+      name: 'Oversized Offset',
+      symbol: 'oo',
+      scale: '1',
+      offset: '79228162514264337593543950336',
+    );
+
+    expect(oversizedScale.toUnitDefinition, throwsFormatException);
+    expect(excessiveScalePrecision.toUnitDefinition, throwsFormatException);
+    expect(oversizedOffset.toUnitDefinition, throwsFormatException);
+  });
 }
