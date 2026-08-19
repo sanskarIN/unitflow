@@ -8,6 +8,7 @@ import unittest
 from check_versions import (
     check_codegen_pins,
     flutter_build_name,
+    load_about_version,
     load_pubspec_versions,
     load_workspace_versions,
     release_core_version,
@@ -34,6 +35,7 @@ class VersionConsistencyTests(unittest.TestCase):
             flutter_build_name(flutter_version),
             release_core_version(workspace_version),
         )
+        self.assertEqual(load_about_version(), workspace_version)
         self.assertEqual(flutter_frb, workspace_frb)
 
     def test_codegen_install_pins_match_workspace_dependency(self) -> None:
