@@ -178,10 +178,14 @@ final class AppController extends ChangeNotifier {
     final nextPins = _state.pinnedPairs
         .where((pair) => pair.fromUnitId != id && pair.toUnitId != id)
         .toList();
+    final nextRecents = _state.recents
+        .where((recent) => recent.fromUnitId != id && recent.toUnitId != id)
+        .toList();
     final newState = _state.copyWith(
       customUnits: nextCustom,
       favoriteUnitIds: nextFavorites,
       pinnedPairs: nextPins,
+      recents: nextRecents,
     );
     return _update(newState, engine: _buildEngine(newState));
   }
