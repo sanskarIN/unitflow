@@ -12,10 +12,8 @@
 build/
 coverage/
 
-# Generated Rust-Flutter bridge files
-**/frb_generated.dart
-**/frb_generated.io.dart
-**/frb_generated.web.dart
+# Flutter Rust Bridge generated source is intentionally tracked.
+# Audit normalization regenerates it with the pinned code generator so CI can detect drift.
 
 # IDEs
 .idea/
