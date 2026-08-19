@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../core/logging/app_log.dart';
 import '../core/persistence/user_state.dart';
 import '../core/persistence/user_state_repository.dart';
 import '../features/converter/data/unit_catalog.dart';
@@ -27,9 +28,15 @@ final class AppController extends ChangeNotifier {
       final rebuilt = _buildEngine(loaded);
       _state = loaded;
       _engine = rebuilt;
+      AppLog.write(LogLevel.info, 'state_loaded');
     } on Object catch (error) {
-      _warning = 'Saved preferences could not be loaded. Defaults are being used; existing saved data was not overwritten.';
-      debugPrint('UnitFlow state load failed: $error');
+      _warning =
+          'Saved preferences could not be loaded. Defaults are being used; existing saved data was not overwritten.';
+      AppLog.write(
+        LogLevel.error,
+        'state_load_failed',
+        fields: <String, Object?>{'error_type': error.runtimeType.toString()},
+      );
       _state = UserState();
       _engine = ExactConversionEngine();
     } finally {
@@ -76,7 +83,10 @@ final class AppController extends ChangeNotifier {
   Future<void> togglePinnedPair(PinnedPair pair) {
     final from = _engine.catalog.byId(pair.fromUnitId);
     final to = _engine.catalog.byId(pair.toUnitId);
-    if (from == null || to == null || from.category != pair.category || to.category != pair.category) {
+    if (from == null ||
+        to == null ||
+        from.category != pair.category ||
+        to.category != pair.category) {
       throw ArgumentError('Pinned pair references invalid units.');
     }
     final next = _state.pinnedPairs.toList();
@@ -124,10 +134,19 @@ final class AppController extends ChangeNotifier {
     return _update(_state.copyWith(recents: next));
   }
 
+  Future<void> clearHistory() => _update(_state.copyWith(recents: <RecentConversion>[]));
+
+  Future<void> restoreHistory(List<RecentConversion> recents) =>
+      _update(_state.copyWith(recents: recents));
+
   Future<void> addCustomUnit(CustomUnitData customUnit) {
     final definition = customUnit.toUnitDefinition();
     if (_engine.catalog.byId(definition.id) != null) {
-      throw ArgumentError.value(definition.id, 'id', 'unit identifier already exists');
+      throw ArgumentError.value(
+        definition.id,
+        'id',
+        'unit identifier already exists',
+      );
     }
     final next = <CustomUnitData>[..._state.customUnits, customUnit];
     final newState = _state.copyWith(customUnits: next);
@@ -136,12 +155,18 @@ final class AppController extends ChangeNotifier {
   }
 
   Future<void> removeCustomUnit(String id) {
-    final existing = _state.customUnits.where((item) => item.id == id).toList();
+    final existing = _state.customUnits
+        .where((item) => item.id == id)
+        .toList();
     if (existing.isEmpty) {
       return Future<void>.value();
     }
-    final nextCustom = _state.customUnits.where((item) => item.id != id).toList();
-    final nextFavorites = _state.favoriteUnitIds.where((item) => item != id).toSet();
+    final nextCustom = _state.customUnits
+        .where((item) => item.id != id)
+        .toList();
+    final nextFavorites = _state.favoriteUnitIds
+        .where((item) => item != id)
+        .toSet();
     final nextPins = _state.pinnedPairs
         .where((pair) => pair.fromUnitId != id && pair.toUnitId != id)
         .toList();
@@ -167,6 +192,7 @@ final class AppController extends ChangeNotifier {
     _engine = ExactConversionEngine();
     _warning = null;
     notifyListeners();
+    AppLog.write(LogLevel.info, 'local_data_reset');
   }
 
   void clearWarning() {
@@ -197,7 +223,11 @@ final class AppController extends ChangeNotifier {
     final snapshot = state;
     final operation = _writeChain.then((_) => _repository.save(snapshot));
     _writeChain = operation.catchError((Object error) {
-      debugPrint('UnitFlow state save failed: $error');
+      AppLog.write(
+        LogLevel.error,
+        'state_save_failed',
+        fields: <String, Object?>{'error_type': error.runtimeType.toString()},
+      );
     });
     return operation;
   }
