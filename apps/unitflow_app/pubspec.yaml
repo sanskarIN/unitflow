@@ -1,7 +1,7 @@
 name: unitflow
 description: A precise, offline-first unit converter powered by UnitFlow's Rust domain core.
 publish_to: "none"
-version: 0.1.0+1
+version: 0.1.0-alpha.1+1
 
 repository: https://github.com/sanskarIN/unitflow
 
