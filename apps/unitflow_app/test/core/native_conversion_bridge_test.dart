@@ -143,6 +143,46 @@ void main() {
     expect(invalidPrecision.toMap, throwsFormatException);
   });
 
+  test('batch request preserves target order and exact text', () {
+    const request = NativeBridgeBatchConversionRequest(
+      value: '2',
+      fromUnitId: 'meter',
+      targetUnitIds: <String>['centimeter', 'millimeter'],
+      decimalPlaces: 8,
+      roundMode: NativeBridgeRoundMode.nearestEven,
+    );
+
+    final encoded = request.toMap();
+
+    expect(nativeBridgeMaxBatchTargets, 256);
+    expect(encoded['value'], '2');
+    expect(encoded['targetUnitIds'], <String>['centimeter', 'millimeter']);
+    expect(encoded['roundMode'], 'nearestEven');
+  });
+
+  test('batch request rejects malformed targets and oversized batches', () {
+    const malformedTarget = NativeBridgeBatchConversionRequest(
+      value: '2',
+      fromUnitId: 'meter',
+      targetUnitIds: <String>['../centimeter'],
+      decimalPlaces: null,
+      roundMode: NativeBridgeRoundMode.nearestEven,
+    );
+    final oversizedBatch = NativeBridgeBatchConversionRequest(
+      value: '2',
+      fromUnitId: 'meter',
+      targetUnitIds: List<String>.filled(
+        nativeBridgeMaxBatchTargets + 1,
+        'centimeter',
+      ),
+      decimalPlaces: null,
+      roundMode: NativeBridgeRoundMode.nearestEven,
+    );
+
+    expect(malformedTarget.toMap, throwsFormatException);
+    expect(oversizedBatch.toMap, throwsFormatException);
+  });
+
   test('bridge response validates stable unit identifiers', () {
     final response = NativeBridgeConversionResponse.fromMap(
       const <String, Object?>{
