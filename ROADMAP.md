@@ -57,12 +57,13 @@ The roadmap is milestone-oriented. Items are checked only when repository eviden
 - [ ] Commit reviewed Web project and validate a production Web build from the committed project.
 - [ ] Commit iOS-ready native project and validate with macOS/Xcode tooling from the committed project.
 - [x] Keyboard shortcuts and adaptive desktop navigation.
+- [x] Source-level reduced-motion policy plus converter semantic-state safeguards and widget smoke coverage.
 - [ ] Reduced-motion, large-text, high-contrast, and screen-reader manual review.
 - [ ] Native performance profiling and large-catalog virtualization review where measured data requires it.
 
 ## Phase 4 — Quality hardening
 
-- [x] Core Flutter unit/widget smoke tests for converter-adjacent state, navigation, backup, batch export, and safe logging.
+- [x] Core Flutter unit/widget smoke tests for converter-adjacent state, navigation, backup, batch export, safe logging, and accessibility behavior.
 - [x] Persistence race/reference/import-bound regression tests for identified state defects.
 - [x] Controller/repository persisted-journey coverage across restart, settings, favorites, pins, history, custom units, backup/import, conversion reuse, and reset.
 - [x] Repository validation locks bridge protocol, required capabilities, and native batch bounds across docs/Rust/Flutter.
@@ -102,7 +103,7 @@ The roadmap is milestone-oriented. Items are checked only when repository eviden
 2. Rust and Flutter now share a source-level startup negotiation contract: protocol version, required capabilities, bounded metadata, fail-closed compatibility checks, single/batch APIs, stable unit-ID validation, and a shared 256-target batch limit. Generated bindings, actual runtime engine selection, native library loading, generated-boundary parity execution, and per-platform packaging are still not implemented; source DTO/tests do not substitute for executing the production native bridge.
 3. This execution environment does not provide the Rust/Flutter/Dart/native toolchains needed to compile the current repository changes locally, and direct GitHub cloning is unavailable because external DNS is blocked in the execution container. No local full verification result is claimed for this checkpoint.
 4. A successful full GitHub Actions and six-platform release-build matrix for the final candidate commit has not yet been established/reviewed in this continuation.
-5. Controller/repository restart/import/reset journey coverage is present, but full primary UI integration, native E2E journeys, accessibility review, performance baselines, and release-candidate manual checks remain open where listed above.
+5. Automated source-level accessibility safeguards now cover reduced motion and converter pin state, but large-text rendering, contrast, screen-reader behavior, keyboard/focus traversal, touch targets, and real-platform accessibility still require manual release-candidate review.
 6. Real release media/assets, production signing/notarization, and store-ready distributable artifacts remain intentionally deferred until verified native builds exist.
 
 ## Post-1.0 ideas
