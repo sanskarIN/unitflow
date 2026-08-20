@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import unittest
 from pathlib import Path
 
@@ -56,6 +57,27 @@ class ReleaseConsistencyHelperTests(unittest.TestCase):
     def test_require_rejects_missing_value(self) -> None:
         with self.assertRaises(ValueError):
             release_consistency.require(r"version=(\d+)", "missing", "version")
+
+    def test_rust_bridge_protocol_matches_fixture_and_docs(self) -> None:
+        fixture = json.loads(
+            release_consistency.text("fixtures/bridge_parity_v1.json")
+        )
+        documented = int(
+            release_consistency.require(
+                r"Current protocol version:\s*`(\d+)`",
+                release_consistency.text("docs/bridge-protocol.md"),
+                "documented bridge protocol version",
+            )
+        )
+        rust_source = int(
+            release_consistency.require(
+                r"BRIDGE_PROTOCOL_VERSION:\s*u32\s*=\s*(\d+)",
+                release_consistency.text("crates/unitflow_core/src/bridge.rs"),
+                "Rust bridge protocol version",
+            )
+        )
+        self.assertEqual(fixture["protocolVersion"], documented)
+        self.assertEqual(rust_source, documented)
 
 
 class ReleaseTagTests(unittest.TestCase):
