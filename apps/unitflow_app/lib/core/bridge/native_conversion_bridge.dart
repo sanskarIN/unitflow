@@ -13,6 +13,9 @@ const Set<String> nativeBridgeRequiredCapabilities = <String>{
   nativeBridgeCapabilityCanonicalDecimalText,
 };
 
+/// Maximum target count accepted by a native batch request.
+const int nativeBridgeMaxBatchTargets = 256;
+
 /// Stable Flutter-side contract for a future native Rust bridge.
 ///
 /// Decimal values cross this boundary as text so generated bindings never need
@@ -113,18 +116,55 @@ final class NativeBridgeConversionRequest {
   final NativeBridgeRoundMode roundMode;
 
   Map<String, Object?> toMap() {
-    _requireCanonicalDecimal(value, field: 'value');
-    _requireUnitId(fromUnitId, field: 'fromUnitId');
+    _validateCommonRequest(
+      value: value,
+      fromUnitId: fromUnitId,
+      decimalPlaces: decimalPlaces,
+    );
     _requireUnitId(toUnitId, field: 'toUnitId');
-    final places = decimalPlaces;
-    if (places != null && (places < 0 || places > 28)) {
-      throw const FormatException('Invalid native bridge decimal precision.');
-    }
 
     return <String, Object?>{
       'value': value,
       'fromUnitId': fromUnitId,
       'toUnitId': toUnitId,
+      'decimalPlaces': decimalPlaces,
+      'roundMode': roundMode.name,
+    };
+  }
+}
+
+final class NativeBridgeBatchConversionRequest {
+  const NativeBridgeBatchConversionRequest({
+    required this.value,
+    required this.fromUnitId,
+    required this.targetUnitIds,
+    required this.decimalPlaces,
+    required this.roundMode,
+  });
+
+  final String value;
+  final String fromUnitId;
+  final List<String> targetUnitIds;
+  final int? decimalPlaces;
+  final NativeBridgeRoundMode roundMode;
+
+  Map<String, Object?> toMap() {
+    _validateCommonRequest(
+      value: value,
+      fromUnitId: fromUnitId,
+      decimalPlaces: decimalPlaces,
+    );
+    if (targetUnitIds.length > nativeBridgeMaxBatchTargets) {
+      throw const FormatException('Native bridge batch target limit exceeded.');
+    }
+    for (var index = 0; index < targetUnitIds.length; index += 1) {
+      _requireUnitId(targetUnitIds[index], field: 'targetUnitIds[$index]');
+    }
+
+    return <String, Object?>{
+      'value': value,
+      'fromUnitId': fromUnitId,
+      'targetUnitIds': List<String>.unmodifiable(targetUnitIds),
       'decimalPlaces': decimalPlaces,
       'roundMode': roundMode.name,
     };
@@ -187,6 +227,23 @@ abstract interface class NativeConversionBridge {
   Future<NativeBridgeConversionResponse> convert(
     NativeBridgeConversionRequest request,
   );
+
+  Future<List<NativeBridgeConversionResponse>> batchConvert(
+    NativeBridgeBatchConversionRequest request,
+  );
+}
+
+void _validateCommonRequest({
+  required String value,
+  required String fromUnitId,
+  required int? decimalPlaces,
+}) {
+  _requireCanonicalDecimal(value, field: 'value');
+  _requireUnitId(fromUnitId, field: 'fromUnitId');
+  final places = decimalPlaces;
+  if (places != null && (places < 0 || places > 28)) {
+    throw const FormatException('Invalid native bridge decimal precision.');
+  }
 }
 
 void _requireCanonicalDecimal(String value, {required String field}) {
