@@ -1,6 +1,6 @@
 # UnitFlow — Development Handoff
 
-This is the primary continuation checkpoint for future UnitFlow development sessions. Detailed engineering notes live here so chat replies can remain short.
+This file is the primary continuation checkpoint for future UnitFlow development sessions so chat responses can remain short.
 
 Last updated: **2026-08-20**
 
@@ -12,294 +12,337 @@ Current source version: **`2.0.12`**
 
 Flutter build number: **`12`**
 
-Latest inspected implementation/validator commit before this handoff update: **`8402934ce51e16fe516953b41b8030291b7861fe`**
+Latest inspected pre-handoff commit: **`5abbbdf46c5215be50c8001a7ad6ffd3e79f424f`** (`docs: update cross-platform build evidence`)
 
-## Release state
+## Current release state
 
-UnitFlow remains source-aligned to `2.0.12` across the Rust workspace, Flutter package metadata, About surface, changelog, roadmap, testing/release/setup documentation, repository inventory, and consistency validators.
+UnitFlow is now engineered as a six-target Flutter application for:
 
-**Do not describe `2.0.12` as a verified native release yet.** No `v2.0.12` tag was created. Generated native bindings, reviewed committed platform projects, native packaging/build evidence, full CI evidence, accessibility/performance review, and release-candidate checks remain open.
+- Android;
+- iOS;
+- Web;
+- Windows;
+- Linux;
+- macOS.
 
-## 2026-08-20 continuation completed
+The repository has deterministic generation for all six targets, automated platform materialization, release-mode build jobs for all six targets, artifact upload, generated-platform inventory support, and a repository validator that prevents the six-target contract from silently drifting.
 
-This continuation started from the previous `2.0.12` final-handoff commit `0a6791373ad21a875872e61ffffb1aa296f06cae` and audited the roadmap rather than assuming the repository was fully finished.
+**Do not call `v2.0.12` a fully verified store/native release yet.** The currently inspected `main` tree still does not contain the generated Android/iOS/Web/Windows/Linux/macOS project directories, and this continuation does not have successful GitHub Actions execution evidence for the new build matrix. Production Rust↔Flutter generated bindings, real runtime E2E evidence, accessibility/performance review, and production signing/notarization also remain separate release-hardening work.
 
-The audit confirmed that substantial source functionality was already complete, but the production Rust↔Flutter bridge path, deeper persisted-journey coverage, and protocol-drift enforcement still had meaningful source-level work available.
+No `v2.0.12` tag was created.
 
-### Rust source bridge service added
+## Cross-platform continuation completed
 
-New file: `crates/unitflow_core/src/bridge.rs`.
+The user requested that UnitFlow become fully cross-platform supportable rather than merely list six intended targets. This continuation therefore hardened the repository around a concrete six-platform contract.
 
-The Rust core now exposes a generator-friendly bridge protocol service below the future native binding layer:
+### Six-platform generation already available
 
-- protocol version constant `BRIDGE_PROTOCOL_VERSION = 1`;
-- diagnostic backend identifier `rust-core`;
-- `BridgeConversionRequest`;
-- `BridgeConversionResponse`;
-- `BridgeBatchConversionRequest`;
-- `BridgeFailure` with owned binding-friendly strings;
-- long-lived `BridgeService` wrapping a validated `Converter`;
-- single conversion through canonical base-10 decimal strings;
-- ordered batch conversion;
-- decimal payload length ceiling aligned to the Dart boundary;
-- canonical decimal validation using Rust decimal parsing/normalization;
-- safe domain-error to stable bridge-code mapping;
-- no raw unknown-unit identifiers echoed into bridge error messages.
+The existing generation entry points cover all six targets:
 
-Stable source-service error mappings include:
+- `scripts/bootstrap_platforms.sh`;
+- `scripts/bootstrap_platforms.ps1`.
 
-- `invalid_decimal`;
-- `unknown_unit`;
-- `category_mismatch`;
-- `invalid_precision`;
-- `catalog_invalid`;
-- `conversion_failed`.
+Both generate:
 
-Invalid rounding identifiers remain a typed DTO deserialization/binding-layer concern and must be normalized to the documented `invalid_rounding_mode` code by the generated adapter.
+```text
+android,ios,web,windows,linux,macos
+```
 
-`crates/unitflow_core/src/lib.rs` now exports the bridge module, service, DTOs, failure type, protocol version, and backend identifier.
+using Flutter itself with:
 
-This closes the missing **Rust source protocol-service layer**, but it does **not** close the production bridge milestone. Generated Rust↔Flutter bindings, startup negotiation, native library loading, packaging, and platform execution are still required.
+```text
+--org in.sanskar --project-name unitflow
+```
 
-### Rust bridge-service regression coverage added
+They also run dependency resolution, localization generation, Dart formatting checks, Flutter analysis, and Flutter tests after generation.
 
-New file: `crates/unitflow_core/tests/bridge_service.rs`.
+This deliberately avoids hand-copying Flutter native templates that could become stale relative to the installed stable SDK.
 
-Coverage includes:
+### Automated platform materialization added
 
-- protocol version/backend metadata;
-- canonical decimal string conversion;
-- rejection of noncanonical decimal input such as trailing-zero representations;
-- safe unknown-unit failures that do not echo untrusted identifiers;
-- category-mismatch code mapping;
-- invalid-precision code mapping;
-- ordered batch conversion results;
-- camelCase serialized bridge fields;
-- documented `nearestEven` rounding serialization.
+New workflow:
 
-A follow-up compile-risk cleanup changed JSON assertions to explicit `.as_str()` comparisons.
+- `.github/workflows/materialize-platforms.yml`
 
-### Persisted primary journey coverage added
+It performs an all-or-nothing materialization process:
 
-New file: `apps/unitflow_app/test/persisted_primary_journey_test.dart`.
+1. installs Java 17 and stable Flutter;
+2. inspects the six platform directories;
+3. rejects unsafe partial states where only some platform directories exist;
+4. generates all six platform projects together when absent;
+5. runs the existing Flutter bootstrap/source checks;
+6. stages only `.metadata` plus Android/iOS/Web/Windows/Linux/macOS project trees;
+7. regenerates the generated platform inventory;
+8. validates inventory, cross-platform support, release consistency, and repository hygiene;
+9. commits generated platform projects when changes exist;
+10. dispatches the cross-platform release-build workflow for the committed result.
 
-The test covers a broader controller/repository workflow across controller restart:
+The workflow is triggerable manually and is also configured for relevant `main` changes, including Flutter app changes and platform-support/bootstrap infrastructure changes.
 
-- theme persistence;
-- notation persistence;
-- rounding-mode persistence;
-- decimal-place persistence;
-- grouping preference persistence;
-- onboarding completion;
-- favorites;
-- pinned pairs;
-- recent history;
-- custom-unit persistence;
-- custom-unit reuse after restart;
-- conversion using restored settings/catalog;
-- backup export/import;
-- restart after import;
-- local reset;
-- clean baseline persistence after reset.
+The workflow commit identity is configured as:
 
-A follow-up fix corrected the conversion API parameter from the initially written `roundingMode` name to the actual `rounding` parameter.
+```text
+Sanskar <sanskarin@outlook.in>
+```
 
-This is meaningful integration-style source coverage, but it is **not native E2E evidence** and does not replace rendered-UI integration tests.
+### Generated platform inventory support added
 
-### Rust bridge protocol drift guard added
+New documentation:
 
-`scripts/check_release_consistency.py` now extracts `BRIDGE_PROTOCOL_VERSION` directly from `crates/unitflow_core/src/bridge.rs` and requires it to match the documented protocol version in `docs/bridge-protocol.md`.
+- `docs/platform-file-inventory.md`
 
-The existing fixture/documentation check remains in place, so the normal consistency gate now prevents silent divergence among:
+New generator:
 
-- Rust bridge source protocol version;
-- `fixtures/bridge_parity_v1.json` protocol version;
-- `docs/bridge-protocol.md` protocol version.
+- `scripts/update_platform_inventory.py`
 
-`scripts/tests/test_repository_validators.py` now contains a regression test that reads all three declarations and asserts equality.
+The main repository inventory validator now combines:
 
-### Documentation and inventory refreshed
+- `docs/repository-inventory.md` for human-maintained first-party files;
+- `docs/platform-file-inventory.md` for machine-maintained Flutter-generated platform files.
 
-The following existing documents were updated to describe the new state accurately:
+This preserves exact `git ls-files` coverage without requiring maintainers to manually describe every generated Xcode, Gradle, CMake, runner, icon, manifest, and platform project file.
 
-- `docs/repository-inventory.md` — inventories the three new tracked source/test files so exact `git ls-files` parity can remain enforceable;
-- `docs/bridge.md` — records the implemented Rust source service and explicitly separates it from generated/native integration;
-- `docs/bridge-protocol.md` — links both Flutter and Rust source contracts and documents the typed-rounding/deserialization boundary;
-- `docs/testing.md` — documents bridge-service tests and persisted-journey coverage while preserving the native-E2E evidence boundary;
-- `ROADMAP.md` — marks the versioned Rust source bridge/DTO layer complete and the controller/repository persisted journey complete, while leaving generated bindings/full UI integration/native E2E open;
-- `CHANGELOG.md` — refreshed the active `2.0.12` development snapshot to 2026-08-20 with the bridge and persistence hardening work;
+The platform inventory generator reads the staged/tracked Git index, so ignored build outputs and transient generated files are not accidentally documented as intended source files.
+
+### Six-platform release build matrix implemented
+
+`.github/workflows/platform-smoke.yml` retains its historical filename for continuity, but its behavior was promoted from debug scaffold smoke testing to a release-mode cross-platform build matrix.
+
+Current target builds:
+
+- Web: `flutter build web --release`;
+- Android: `flutter build appbundle --release`;
+- Linux: `flutter build linux --release`;
+- Windows: `flutter build windows --release`;
+- macOS: `flutter build macos --release`;
+- iOS: `flutter build ios --release --no-codesign`.
+
+Each target uploads its resulting build artifact through `actions/upload-artifact@v4`.
+
+The workflow is committed-first: if a platform directory exists, it builds that checked-in project. If the directory is absent, it regenerates that one target before compiling it so platform compatibility is not silently skipped during the transition to committed projects.
+
+The iOS job deliberately uses `--no-codesign`; Apple signing/provisioning credentials are distribution secrets and are not required to prove that the iOS source compiles in release mode.
+
+### Cross-platform support validator added
+
+New file:
+
+- `scripts/check_platform_support.py`
+
+The validator treats the six-platform contract as an executable repository invariant.
+
+It requires:
+
+- exactly the six intended target identifiers;
+- a build job for every target in `.github/workflows/platform-smoke.yml`;
+- the expected release build command for every target;
+- all six targets to be referenced by the platform materialization workflow;
+- all six targets to be referenced by both Bash and PowerShell bootstrap scripts;
+- committed platform projects to be either all present or all absent, never partially committed;
+- shared Flutter libraries to avoid a plain unconditional `import 'dart:io';` that would make that library unavailable on Web.
+
+The validator reports the platform state as either:
+
+- `materialized` — all six generated platform projects are present;
+- `generation-ready` — none are committed yet but the six-target generation/build contract is intact.
+
+### Cross-platform validator wired everywhere
+
+`scripts/check_platform_support.py` is now executed from:
+
+- `scripts/verify.sh`;
+- `scripts/verify.ps1`;
+- `.github/workflows/ci.yml` repository-integrity job;
+- `.github/workflows/release.yml`;
+- `.github/workflows/materialize-platforms.yml` after generated projects are staged.
+
+Therefore a later edit cannot silently remove one supported target without breaking normal verification/release gates.
+
+### Cross-platform validator regression coverage added
+
+`scripts/tests/test_repository_validators.py` now checks:
+
+- the platform inventory infrastructure is documented;
+- generated platform inventory lines use the expected inventory format;
+- all six target prefixes are owned by the generated inventory tool;
+- `scripts/check_platform_support.py` exposes exactly Android/iOS/Web/Windows/Linux/macOS;
+- every platform has a release build command;
+- every build command is release-mode;
+- the current repository satisfies the cross-platform contract.
+
+### Repository hygiene hardened
+
+`scripts/check_repository_hygiene.py` now requires the new cross-platform infrastructure to remain present:
+
+- `.github/workflows/materialize-platforms.yml`;
+- `docs/platform-file-inventory.md`;
+- `scripts/check_platform_support.py`;
+- `scripts/update_platform_inventory.py`.
+
+Signing credentials such as `.jks`, `.keystore`, `.p12`, and `.mobileprovision` remain forbidden from tracked source.
+
+### Documentation refreshed
+
+Updated documentation includes:
+
+- `README.md` — publishes the enforced six-platform target matrix, release build paths, generation commands, and distinction between compilation and production signing;
+- `docs/platform-support.md` — defines the supported targets, cross-platform repository contract, materialization workflow, build-versus-distribution boundary, and shared acceptance criteria;
+- `docs/platform-smoke.md` — rewritten around the release-mode cross-platform build matrix while retaining the historical workflow filename;
+- `ROADMAP.md` — records six-platform generation/materialization/build-contract automation as complete while keeping committed-project execution and release-candidate evidence open;
+- `CHANGELOG.md` — records the 2.0.12 six-platform hardening work;
 - this handoff.
 
-## Current implementation summary
+## Previous 2.0.12 hardening retained
 
-### Rust core
+Before this cross-platform continuation, the same 2.0.12 development cycle had already added or fixed:
 
-`crates/unitflow_core` includes:
+- Rust authoritative exact-decimal conversion domain;
+- versioned Rust bridge source service and safe bridge DTO/error contract;
+- shared Rust/Dart parity fixture consumption;
+- bridge protocol version drift validation across Rust source, fixture, and documentation;
+- rounding-mode serialization parity;
+- Rust 1.82 minimum alignment;
+- custom-unit alias bounds;
+- deterministic Dart exact-decimal compatibility engine;
+- locale-aware parsing and Indian/Western grouping support;
+- persistence schema migration and bounded backup import;
+- persistence write/reset race protection;
+- safe reset-failure UX;
+- recent-history reference/input validation;
+- persisted primary controller/repository journey tests;
+- repository inventory/link/release/hygiene validators;
+- CI, CodeQL, dependency review, Dependabot, and source release automation.
 
-- validated categories and unit definitions with stable IDs;
-- exact decimal arithmetic through `rust_decimal`;
-- multiplicative and affine conversion;
-- explicit rounding modes;
-- single and batch conversion;
-- searchable built-in catalog;
-- validated custom affine units;
-- notation formatting;
-- educational category metadata;
-- typed public errors;
-- versioned source bridge protocol service;
-- catalog/conversion/custom-unit/notation/education/invariant/shared-parity/bridge-service tests;
-- dependency-free conversion micro-benchmark.
+## Current platform support interpretation
 
-### Flutter/Dart application
+### Source-supported targets
 
-`apps/unitflow_app` includes:
+All six are now first-class enforced targets:
 
-- adaptive Convert, Batch, Library, History, and Settings workspaces;
-- deterministic exact-decimal Dart compatibility engine;
-- locale-aware parsing and locale-pattern-aware grouping;
-- favorites, pinned pairs, recents, custom units, settings, onboarding;
-- versioned local persistence with schema-1 → schema-2 migration;
-- backup/import/reset with bounded validation;
-- serialized reset ordering and safe persistence-failure UX;
-- CSV/TSV/JSON batch export;
-- generated English localization architecture;
-- keyboard/adaptive navigation;
-- safe structured diagnostics;
-- About/support/project surfaces;
-- Flutter-side native bridge DTO/interface validation;
-- controller/repository persisted-journey tests.
+1. Android
+2. iOS
+3. Web
+4. Windows
+5. Linux
+6. macOS
 
-### Repository engineering
+### Build automation
 
-The repository includes:
+The repository contains release-mode build definitions for every target and build artifact upload definitions for every target.
 
-- repository-integrity, Rust, and Flutter CI definitions;
-- CodeQL;
-- dependency review;
-- Dependabot for Cargo, pub, and GitHub Actions;
-- generated-scaffold smoke builds for Android, Web, Linux, Windows, macOS, and iOS;
-- evidence-based release workflow with source packages/checksums;
-- exact release-tag/version guard;
-- exhaustive tracked-file inventory validation;
-- Markdown-link validation;
-- version/Rust-minimum/schema/protocol consistency validation including the Rust bridge protocol source constant;
-- repository hygiene validation;
-- Bash and PowerShell full-verification entry points;
-- deep architecture/setup/testing/security/platform/release/maintenance documentation.
+### Platform project directories
 
-## Important 2.0.12 defects already fixed before this continuation
+At the latest inspected live tree in this continuation, the six generated platform directories were still absent from `apps/unitflow_app`.
 
-Earlier `2.0.12` hardening already fixed or added regression coverage for:
+The repository now contains the workflow and inventory machinery to materialize them safely, but the current execution environment cannot run Flutter and connected repository writes did not produce an observable materialization commit during this continuation.
 
-- Rust bridge-parity use of the wrong `ConversionResult` field;
-- Rust/Dart parity fixture drift by making both consume the same versioned fixture;
-- snake_case versus camelCase Rust rounding identifiers;
-- Rust minimum-version mismatch, now Rust `1.82+`;
-- Rust formatting/package cleanliness issues;
-- Rust custom-unit alias count parity with Dart;
-- Flutter native bridge canonical decimal/unit-ID/precision validation;
-- production/test backup-import boundary inconsistency;
-- queued-save versus reset persistence race;
-- safe reset failure warning and no false success Snackbar;
-- unknown/cross-category/blank/oversized recent-history validation;
-- locale-specific primary/secondary decimal grouping;
-- release workflow and repository validator hardening.
+Do not claim the platform directories are committed until live `main` actually contains all six.
 
-## Verification status — do not overclaim
+## Verification evidence and limitations
 
-### GitHub repository evidence
+### Authenticated GitHub inspection
 
-The authenticated GitHub integration was used to inspect live `main`, roadmap blockers, source contracts, tests, documentation, repository inventory, validators, and recent commits before and after changes.
+The GitHub integration was used repeatedly to inspect and modify live `main`, including workflows, validators, docs, roadmap, changelog, scripts, tests, and recursive tree state.
 
-The latest inspected pre-handoff implementation/validator commit was `8402934ce51e16fe516953b41b8030291b7861fe` (`test: cover Rust bridge protocol consistency`).
+### Local toolchain limitation
 
-Workflow-run lookup for that commit returned **no workflow runs**. A successful final CI matrix is therefore **not established** by this continuation.
+The available execution container reports Git and Python, but does not have:
 
-### Local execution evidence
+- Flutter;
+- Dart;
+- Cargo/Rust;
+- native Android/iOS/Windows/macOS/Linux build toolchains.
 
-No local Cargo/Rust, Flutter/Dart, or native-platform compile/test result was produced for the new continuation commits. Do not infer successful formatting, compilation, analyzer, test, or platform-build results from source inspection alone.
+A direct clone attempt also failed because the container could not resolve `github.com` through DNS.
 
-The repository's intended verification entry points remain:
+Therefore this continuation does **not** claim local successful output for:
 
-```bash
-bash scripts/verify.sh
-```
+- `flutter create`;
+- Flutter release builds;
+- `flutter analyze`;
+- `flutter test`;
+- Cargo formatting/Clippy/tests;
+- native platform execution.
 
-or:
+### GitHub Actions evidence
 
-```powershell
-./scripts/verify.ps1
-```
+No generated-platform materialization commit named `build: materialize six Flutter platform projects` was observed during this continuation, and no final green six-platform Actions matrix was established through the available connected workflow-status tools.
 
-on a machine with the documented toolchains.
+Workflow definitions are implementation evidence, not proof that a runner execution passed.
 
-## Remaining blockers before a real `v2.0.12` native release
+## Remaining blockers before calling `v2.0.12` fully release-verified
 
-1. Obtain and review a complete green repository/Rust/Flutter/platform GitHub Actions matrix for the final candidate commit.
-2. Run full local clean-clone verification with the documented Python/Rust/Flutter/native toolchains.
-3. Generate and review the Rust↔Flutter binding layer on top of the new Rust `BridgeService`.
-4. Add Flutter startup protocol negotiation and a stable session-level native engine selection policy.
-5. Package/load the Rust library for every native target where Rust authority is claimed.
-6. Generate, review, commit, and validate authoritative Android, Windows, Linux, macOS, Web, and iOS projects as appropriate.
-7. Replace generated-scaffold-only evidence with committed-project build evidence target by target.
-8. Add rendered primary-UI integration tests and native E2E journeys, including conversion, restart persistence, custom units, backup/import, history, and clipboard/batch workflows.
-9. Perform screen-reader, keyboard/focus, large-text, contrast, reduced-motion, and touch-target manual accessibility review.
-10. Record catalog-search, batch-conversion, and native profiling baselines on documented hardware where needed.
-11. Produce final icon/splash assets, screenshots, demo media, native packages, signing/notarization/store validation from verified builds without committing credentials.
-12. Complete the release checklist and downloaded-artifact/release-candidate verification.
-13. Only then validate and create the exact `v2.0.12` tag on the audited release commit.
+1. Materialize/review/commit all six Flutter platform directories and `.metadata` on live `main`.
+2. Run and review the six-platform release build matrix against those committed projects.
+3. Fix any real target-specific build failures surfaced by execution.
+4. Implement generated Rust↔Flutter native bindings and startup protocol negotiation.
+5. Package/load the Rust native library on every native target where Rust authority is claimed.
+6. Add rendered UI integration and native E2E journeys across representative targets.
+7. Perform accessibility review: screen reader, keyboard/focus, large text, contrast, reduced motion, and touch targets.
+8. Record performance/search/batch/native profiling baselines where release decisions need them.
+9. Produce final app icons/splash assets/screenshots/demo media from verified builds.
+10. Validate Android production signing and Apple signing/provisioning/notarization without committing credentials.
+11. Complete clean-clone and downloaded-artifact release-candidate verification.
+12. Complete `docs/release-checklist.md`.
+13. Only then create and verify the exact `v2.0.12` tag.
 
-## Exact next priority for a future continuation
+## Exact next continuation priority
 
-1. Inspect the newest live `main` and GitHub Actions state first.
-2. Fix any actual formatter/Clippy/analyzer/test failures reported by execution.
-3. Implement generated native bindings against `crates/unitflow_core/src/bridge.rs` and `docs/bridge-protocol.md`.
-4. Add Flutter protocol negotiation/engine wiring with no silent mid-session fallback.
-5. Commit reviewed platform projects one target at a time and update `docs/repository-inventory.md` in the same changes.
-6. Add UI integration/native E2E/accessibility/performance evidence.
-7. Generate release media and binary packages only after verified builds exist.
-8. Complete `docs/release-checklist.md`, then tag `v2.0.12` only when all evidence blockers are closed.
+1. Inspect live `main` first for all six generated platform directories.
+2. Inspect the latest cross-platform GitHub Actions results.
+3. If platform directories are still absent, execute `.github/workflows/materialize-platforms.yml` from a GitHub Actions-capable context or run `scripts/bootstrap_platforms.sh`/`.ps1` with Flutter installed, then commit the generated result and refreshed platform inventory.
+4. Fix every actual six-platform build failure before moving on.
+5. Continue with generated Rust↔Flutter bindings and native packaging.
+6. Add native E2E/accessibility/performance/release-candidate evidence.
 
-## Commits created in the 2026-08-20 continuation
+## Cross-platform continuation commits
 
-- `3a36c594` — `feat: add versioned Rust bridge service contract`
-- `d0ca30d9` — `feat: export Rust bridge protocol surface`
-- `5f769a06` — `fix: keep bridge failures binding-friendly`
-- `9781b7ba` — `test: cover Rust bridge service contract`
-- `83d5abdb` — `test: cover persisted primary app journey`
-- `30551728` — `fix: use conversion engine rounding parameter`
-- `29603ff4` — `test: make bridge serde assertions explicit`
-- `7e164fd0` — `docs: inventory bridge service and journey tests`
-- `24fde373` — `docs: record Rust bridge service progress`
-- `78632951` — `docs: link protocol to Rust bridge service`
-- `11e48bda` — `docs: record 2.0.12 bridge and persistence hardening`
-- `2a861a22` — `docs: refine 2.0.12 remaining bridge and journey work`
-- `fb07432b` — `docs: document bridge and persisted journey coverage`
-- `bc6b0007` — `docs: refresh 2.0.12 continuation handoff`
-- `6cb69dd0` — `build: validate Rust bridge protocol version`
-- `8402934c` — `test: cover Rust bridge protocol consistency`
+Meaningful commits created during this continuation include:
 
-This handoff update itself follows those commits.
+- `3aa557ac` — `docs: add generated platform file inventory`
+- `96cb801f` — `build: add platform inventory generator`
+- `2e865223` — `build: support generated platform inventory`
+- `62992005` — `ci: add automatic Flutter platform materialization`
+- `d080e182` — `ci: promote six-platform release build matrix`
+- `5a731a8d` — `docs: inventory platform materialization infrastructure`
+- `ec5c9e9b` — `test: cover cross-platform inventory infrastructure`
+- `a3732759` — `build: enforce six-platform support contract`
+- `bf535fff` — `docs: inventory cross-platform validator`
+- `ac58550f` — `build: verify cross-platform support in Bash`
+- `395d5935` — `build: verify cross-platform support in PowerShell`
+- `8698e530` — `ci: enforce cross-platform support contract`
+- `1c6beb92` — `release: require cross-platform support validation`
+- `89f6f4ac` — `docs: define enforced six-platform support`
+- `3539d20f` — `docs: advance six-platform roadmap`
+- `2837f463` — `build: require cross-platform support infrastructure`
+- `5f74273b` — `ci: harden platform materialization trigger`
+- `125e27bf` — `test: cover six-platform support validator`
+- `b93f3db7` — `docs: publish enforced six-platform support`
+- `33817d29` — `docs: record six-platform hardening`
+- `5abbbdf4` — `docs: update cross-platform build evidence`
+
+This handoff update follows those commits.
 
 ## Commit identity note
 
-Requested local commit identity remains:
+Requested local identity remains:
 
 ```bash
 git config user.name "Sanskar"
 git config user.email "sanskarin@outlook.in"
 ```
 
-The connected GitHub contents API used for these writes does not expose per-write author/committer email fields, so do not claim connector-created commits used a configurable local email value.
+GitHub connector-created commits do not expose a per-write author/committer email override. The materialization workflow itself explicitly configures the requested identity before its generated-platform commit.
 
 ## Handoff rules
 
-For any future continuation:
+For future continuation work:
 
-1. inspect live `main` before relying on this file;
-2. prefer compiler/test/workflow evidence over assumptions;
-3. keep `2.0.12` declarations synchronized unless a different version is explicitly requested;
-4. update this file after meaningful work;
-5. keep commits focused and descriptive;
-6. update the exhaustive repository inventory whenever tracked paths change;
-7. never tag or call the release verified while evidence blockers remain open.
+1. inspect live `main` before trusting this file;
+2. prefer compiler/test/workflow evidence over workflow definitions;
+3. keep all six platform targets synchronized;
+4. never accept a partially committed platform-project set;
+5. regenerate `docs/platform-file-inventory.md` whenever generated platform files change;
+6. keep production signing credentials out of source control;
+7. update this file after meaningful work;
+8. do not tag or call `v2.0.12` release-verified while evidence blockers remain open.
