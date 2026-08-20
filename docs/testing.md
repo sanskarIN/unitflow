@@ -74,9 +74,10 @@ Coverage priorities:
 - batch conversion order and error behavior;
 - educational metadata references real base units;
 - bridge rounding-mode serialization identifiers;
-- direct execution of the shared versioned bridge parity fixture.
+- direct execution of the shared versioned bridge parity fixture;
+- Rust bridge protocol metadata, canonical decimal DTO enforcement, safe failure-code mapping, ordered batch responses, and camelCase serialization.
 
-The Rust suite includes catalog-wide identity and round-trip invariants plus search-ranking regression tests. The dense built-in catalog data table is deliberately excluded from rustfmt rewriting so conversion constants remain compact and reviewable; executable logic and tests remain under normal formatting checks.
+The Rust suite includes catalog-wide identity and round-trip invariants plus search-ranking regression tests. `bridge_service.rs` exercises the generator-facing Rust protocol service independently of any future binding generator. The dense built-in catalog data table is deliberately excluded from rustfmt rewriting so conversion constants remain compact and reviewable; executable logic and tests remain under normal formatting checks.
 
 ## Flutter quality gates
 
@@ -109,17 +110,22 @@ Coverage priorities:
 - execution of the shared bridge parity fixture across every supported rounding mode;
 - CSV/TSV batch export escaping;
 - structured-log redaction;
-- schema migration and local collection cleanup.
+- schema migration and local collection cleanup;
+- controller/repository primary-state survival across restart, backup/import, custom-unit reuse, and reset.
 
 `exact_decimal_properties_test.dart` uses deterministic generated inputs to exercise canonical round trips, comparison antisymmetry, rounding idempotence, and malformed-input bounds without adding a fuzzing dependency to the normal test suite.
 
 `navigation_smoke_test.dart` checks that the main Convert, Batch, Library, History, and Settings destinations remain reachable through the adaptive shell.
+
+`persisted_primary_journey_test.dart` exercises a broader controller/repository journey: user settings, favorites, pins, history, custom units, restart persistence, backup/import, post-restart conversion, and reset. It is intentionally classified as source-level integration-style coverage rather than native end-to-end evidence.
 
 ## Shared bridge parity
 
 `fixtures/bridge_parity_v1.json` is the common executable fixture for both Rust and Dart. The two test suites must deserialize that file directly rather than copying its vectors into language-specific tests. The fixture currently includes representative SI/affine/data/time conversions and every supported rounding mode.
 
 The fixture protocol version must match `docs/bridge-protocol.md`; `scripts/check_release_consistency.py` enforces that relationship.
+
+The Rust source bridge service has additional direct contract coverage in `crates/unitflow_core/tests/bridge_service.rs`. Generated binding parity remains a separate release requirement and must execute through the actual native boundary once that integration exists.
 
 ## Integration and end-to-end tests
 
@@ -138,7 +144,7 @@ Primary journeys should eventually cover:
 11. copy a batch table and verify its delimiter/escaping;
 12. restore a recent conversion from History.
 
-Native end-to-end automation should be added after platform scaffolding is committed. Until then, source-level and widget tests must not be described as proof that native release builds pass.
+Controller/repository coverage now proves several persistence-focused parts of this journey at source-test level. Full UI integration still needs interactions through rendered screens/widgets, and native end-to-end automation should be added after reviewed platform scaffolding and generated bindings are committed. Source-level and widget tests must not be described as proof that native release builds pass.
 
 ## Generated platform smoke builds
 
