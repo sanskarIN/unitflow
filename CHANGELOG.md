@@ -28,14 +28,18 @@ No changes are queued beyond the active `2.0.12` development snapshot documented
 - Persisted primary-journey regression coverage across controller restart, settings, favorites, pins, history, custom units, backup/import, conversion reuse, and reset.
 - Dependency-free Rust conversion micro-benchmark.
 - CI, CodeQL, dependency-review, and verified source-release workflows.
-- Generated-scaffold compatibility builds for Android, Web, Linux, Windows, macOS, and iOS; these remain preliminary evidence rather than reviewed native release verification.
+- Deterministic six-platform Flutter generation for Android, iOS, Web, Windows, Linux, and macOS through matching Bash/PowerShell bootstrap scripts.
+- Automated all-or-nothing platform materialization workflow that stages intended generated projects, regenerates a machine-maintained platform-file inventory, validates repository state, and commits generated platform projects when execution is available.
+- Release-mode cross-platform build jobs for Android, iOS, Web, Windows, Linux, and macOS with uploaded build artifacts; iOS release compilation deliberately uses `--no-codesign` so signing secrets remain outside source control.
+- `scripts/check_platform_support.py`, enforcing the six-target build/generation contract, rejecting partial committed platform sets, and guarding shared Flutter libraries from unconditional `dart:io` imports that would break Web.
+- `docs/platform-file-inventory.md` plus `scripts/update_platform_inventory.py` so generated platform trees can remain exhaustively inventoried without hand-maintaining hundreds of repetitive entries.
 - Dependabot update discovery for Cargo, Flutter/Dart, and GitHub Actions dependencies.
-- Dependency-free Python validators for repository-local Markdown targets, release/version/schema/protocol consistency, tracked-file hygiene, exact release-tag/version matching, and exhaustive tracked-file documentation inventory parity.
-- `docs/repository-inventory.md`, documenting every tracked first-party file and enforced against `git ls-files` in local verification, CI, and release packaging.
-- Standard-library regression tests for the repository validators.
+- Dependency-free Python validators for repository-local Markdown targets, release/version/schema/protocol consistency, tracked-file hygiene, exact release-tag/version matching, exhaustive tracked-file documentation inventory parity, and cross-platform support.
+- `docs/repository-inventory.md`, documenting first-party repository files and combined with the generated platform inventory for exact `git ls-files` enforcement.
+- Standard-library regression tests for the repository validators, including six-platform support and generated-inventory behavior.
 - Structured bug/feature issue templates, pull-request quality checklist, CODEOWNERS, funding metadata, and security/support issue routing.
 - Cross-platform verification scripts for Bash and PowerShell.
-- Documentation for architecture decisions, bridge contract, data schema, unit model, threat model, platform support, native platform completion, generated platform smoke builds, dependency maintenance, localization, keyboard shortcuts, testing, performance, releases, and GitHub maintenance.
+- Documentation for architecture decisions, bridge contract, data schema, unit model, threat model, platform support, native platform completion, generated platform builds, dependency maintenance, localization, keyboard shortcuts, testing, performance, releases, and GitHub maintenance.
 - `.env.example` documenting that core UnitFlow features require no secrets or online configuration.
 
 ### Changed
@@ -54,12 +58,14 @@ No changes are queued beyond the active `2.0.12` development snapshot documented
 - Recent-history persistence now validates nonblank/bounded input plus existing same-category unit references while preserving locale-formatted original input text.
 - Native bridge request/response DTO validation now enforces canonical decimal strings, stable unit-ID syntax, and supported precision before data crosses the future generated binding boundary.
 - Plain decimal display grouping now follows locale decimal-pattern primary/secondary grouping sizes while preserving exact decimal strings.
-- Normal Bash/PowerShell verification, CI, and release packaging now execute repository-integrity validators before language/toolchain checks.
+- The historical generated-platform smoke workflow is now a committed-first six-platform **release build matrix** with generation fallback and artifact upload instead of debug-only compatibility checks.
+- Normal Bash/PowerShell verification, CI, platform materialization, and release packaging now execute the cross-platform support validator in addition to repository-integrity validators.
+- Repository hygiene treats the platform materializer, generated platform inventory, and platform-support validator as required project infrastructure.
 - Flutter CI/release verification runs localization generation explicitly.
 - Dart formatting uses an explicit repository-wide 120-column page width while retaining strict analyzer/lint rules.
 - Rust release packaging no longer permits a dirty working tree.
-- Release documentation and roadmap now distinguish generated scaffold compatibility from reviewed native project/build evidence.
-- Security/threat documentation now covers persistence ordering, import atomicity, repository hygiene, release-tag validation, and native-platform trust boundaries.
+- Platform-support documentation now distinguishes release-mode compilation from production signing, notarization, installer creation, and store submission.
+- Security/threat documentation covers persistence ordering, import atomicity, repository hygiene, release-tag validation, and native-platform trust boundaries.
 
 ### Fixed
 
@@ -76,16 +82,17 @@ No changes are queued beyond the active `2.0.12` development snapshot documented
 - Fixed imported conversion history accepting whitespace-only input.
 - Fixed in-memory backup imports bypassing the production 1,000,000-character payload and JSON-object/string-key boundary.
 - Fixed locale display grouping being hard-coded to groups of three, which produced incorrect grouping for locales with a different secondary group size.
-- Fixed the generated platform-smoke workflow/documentation mismatch by implementing the previously documented Linux, Windows, macOS, and iOS jobs in addition to Web and Android.
+- Fixed the earlier platform-workflow/documentation mismatch by making all six targets first-class release-build jobs and by enforcing that the generation/build matrix cannot silently lose a target.
 
 ### Security
 
 - Added responsible disclosure guidance and secret-handling rules.
 - Added CodeQL analysis, pull-request dependency review, import size/schema validation, safe debug logging, and a project threat model.
-- Repository hygiene now rejects nested tracked `.env` variants, common signing credentials, generated localization output, and build artifacts in addition to checking the complete critical project/documentation set.
-- Tagged release packaging now rejects a `v*` tag unless it exactly equals `v` plus the Cargo workspace package version.
+- Repository hygiene rejects nested tracked `.env` variants, common signing credentials, generated localization output, and build artifacts in addition to checking the complete critical project/documentation set.
+- Tagged release packaging rejects a `v*` tag unless it exactly equals `v` plus the Cargo workspace package version.
 - Native bridge payload validation rejects malformed/non-canonical decimal text and invalid stable unit identifiers before accepting generated-binding data.
 - Rust bridge failures expose stable safe codes/messages rather than raw domain internals or untrusted unit identifiers.
+- Platform release workflows deliberately avoid committing or embedding production signing credentials; Android production keystores and Apple signing/provisioning/notarization remain secure release-infrastructure inputs.
 - Public issue intake instructs reporters to remove secrets and sensitive personal data.
 
 ## [0.1.0-alpha.1] - Historical planning baseline
