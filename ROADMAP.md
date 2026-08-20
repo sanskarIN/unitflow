@@ -42,7 +42,8 @@ The roadmap is milestone-oriented. Items are checked only when repository eviden
 
 ## Phase 3 — Platform polish
 
-- [ ] Rust↔Flutter production bridge and generated bindings workflow.
+- [x] Versioned Rust source bridge service/DTO layer matching bridge protocol v1.
+- [ ] Rust↔Flutter production generated bindings, startup negotiation, and native packaging workflow.
 - [ ] Commit reviewed Android native Flutter project and validate a release build.
 - [ ] Commit reviewed Windows native Flutter project and validate a release build.
 - [ ] Commit reviewed Linux native Flutter project and validate a release build.
@@ -58,7 +59,8 @@ The roadmap is milestone-oriented. Items are checked only when repository eviden
 
 - [x] Core Flutter unit/widget smoke tests for converter-adjacent state, navigation, backup, batch export, and safe logging.
 - [x] Persistence race/reference/import-bound regression tests for identified state defects.
-- [ ] Full integration tests for persisted primary journeys.
+- [x] Controller/repository persisted-journey coverage across restart, settings, favorites, pins, history, custom units, backup/import, conversion reuse, and reset.
+- [ ] Full integration tests for persisted primary UI journeys.
 - [ ] Native end-to-end primary journeys.
 - [x] Deterministic property-style tests for exact-decimal behavior plus catalog-wide Rust invariants.
 - [ ] Long-running Rust/Dart fuzz targets for parsers and conversion invariants.
@@ -90,10 +92,10 @@ The roadmap is milestone-oriented. Items are checked only when repository eviden
 ## Current release blockers
 
 1. Reviewed native Flutter platform directories are not yet committed and release-tested. The generated-scaffold workflow is preliminary compatibility evidence only.
-2. The production Rust↔Flutter bridge/generated binding workflow and native packaging are not yet implemented; Dart/native parity fixtures do not substitute for a production bridge.
+2. The versioned Rust source bridge service now exists and is regression-tested, but generated Rust↔Flutter bindings, Flutter startup negotiation, native library loading, and per-platform packaging are not yet implemented; source DTO/parity tests do not substitute for executing the production native bridge.
 3. This execution environment does not provide the Rust/Flutter/Dart/native toolchains needed to compile the current repository changes locally, so no local full verification result is claimed for this checkpoint.
 4. A successful full GitHub Actions check matrix for the final release commit has not yet been established/reviewed in this continuation.
-5. Native integration/E2E journeys, accessibility review, performance baselines, and release-candidate manual checks remain open where listed above.
+5. Controller/repository restart/import/reset journey coverage is now present, but full primary UI integration, native E2E journeys, accessibility review, performance baselines, and release-candidate manual checks remain open where listed above.
 6. Real release media/assets and platform-native distributable artifacts remain intentionally deferred until verified native builds exist.
 
 ## Post-1.0 ideas
