@@ -3,6 +3,7 @@
 **A precise, offline-first unit converter powered by a Rust conversion core and a Flutter interface.**
 
 [![CI](https://github.com/sanskarIN/unitflow/actions/workflows/ci.yml/badge.svg)](https://github.com/sanskarIN/unitflow/actions/workflows/ci.yml)
+[![Cross-platform](https://github.com/sanskarIN/unitflow/actions/workflows/platform-smoke.yml/badge.svg)](https://github.com/sanskarIN/unitflow/actions/workflows/platform-smoke.yml)
 [![Security](https://github.com/sanskarIN/unitflow/actions/workflows/codeql.yml/badge.svg)](https://github.com/sanskarIN/unitflow/actions/workflows/codeql.yml)
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-sanskarIN-FFDD00?logo=buy-me-a-coffee&logoColor=000000)](https://buymeacoffee.com/sanskarIN)
 
@@ -10,11 +11,11 @@ UnitFlow is an open-source conversion project designed around deterministic offl
 
 ## Status
 
-**Current source version: `2.0.12`. Active development — not yet native release-verified.**
+**Current source version: `2.0.12`. Six-platform source support is implemented; final native release verification is still in progress.**
 
-The Rust core, Flutter feature code, persistence model, tests, localization architecture, repository-integrity automation, dependency updates, and generated platform smoke-build matrix are implemented substantially. Reviewed native Flutter platform projects and the production Rust↔Flutter bridge still need to be committed/integrated and validated before UnitFlow claims tested Android, Windows, Linux, macOS, Web, or iOS release binaries. The source version alone is not a claim that those platform artifacts have passed release verification.
+The shared Flutter application is maintained as one cross-platform codebase for Android, iOS, Web, Windows, Linux, and macOS. The repository now includes deterministic six-platform generation/materialization automation, an enforced platform-support validator, release-mode build jobs for all six targets, and uploaded CI build artifacts. The production Rust↔Flutter generated binding layer, final committed/reviewed generated platform trees, platform signing/notarization, and final release-candidate evidence remain separate release-hardening work.
 
-See [`what_changed.md`](what_changed.md) for the exact continuation checkpoint and [`ROADMAP.md`](ROADMAP.md) for remaining blockers.
+See [`what_changed.md`](what_changed.md) for the exact continuation checkpoint and [`ROADMAP.md`](ROADMAP.md) for remaining release blockers.
 
 ## Current Features
 
@@ -36,16 +37,20 @@ See [`what_changed.md`](what_changed.md) for the exact continuation checkpoint a
 
 ## Platform Targets
 
-| Platform | Product target | Current release status |
-|---|---|---|
-| Android | Primary | Reviewed native project/release build verification pending |
-| Windows | Primary desktop | Reviewed native project/release build verification pending |
-| Linux | Primary desktop | Reviewed native project/release build verification pending |
-| macOS | Supported target | Reviewed native project/release build verification pending |
-| Web | Supported target | Reviewed Web project/release build verification pending |
-| iOS | Ready target | Reviewed Xcode/native project verification pending |
+| Platform | Support target | Automated build path | Distribution note |
+|---|---|---|---|
+| Android | Supported | Release App Bundle | Production signing/store publication remains external to source control |
+| iOS | Supported | Release device app with `--no-codesign` | Apple signing/provisioning is required for distribution |
+| Web | Supported | Release Web bundle | Hosting/security headers are deployment concerns |
+| Windows | Supported | Release desktop bundle | Optional installer/code-signing work remains |
+| Linux | Supported | Release desktop bundle | Distribution/package format remains release-specific |
+| macOS | Supported | Release app bundle | Signing/notarization remains required for distribution |
 
-Generated-scaffold smoke jobs cover all six targets as early compatibility checks, but they are intentionally not counted as release verification. See [`docs/platform-support.md`](docs/platform-support.md), [`docs/native-platforms.md`](docs/native-platforms.md), and [`docs/platform-smoke.md`](docs/platform-smoke.md).
+The historical `.github/workflows/platform-smoke.yml` filename is retained for continuity, but the workflow now performs **release-mode cross-platform builds** and uploads artifacts for all six targets. It prefers committed platform projects and can regenerate a missing target with Flutter before building it.
+
+`scripts/check_platform_support.py` makes the six-target contract enforceable. It prevents platform-job drift, partial platform commits, missing generation coverage, and unconditional shared `dart:io` imports that would break Web.
+
+See [`docs/platform-support.md`](docs/platform-support.md), [`docs/native-platforms.md`](docs/native-platforms.md), and [`docs/platform-smoke.md`](docs/platform-smoke.md).
 
 ## Tech Stack
 
@@ -54,8 +59,8 @@ Generated-scaffold smoke jobs cover all six targets as early compatibility check
 - **Flutter / Dart** — adaptive cross-platform UI and exact-decimal fallback.
 - **Flutter gen-l10n / ARB** — generated localization resources.
 - **Shared Preferences** — initial versioned local application-state repository.
-- **Python 3 standard library** — repository consistency, documentation, hygiene, and release-tag validators.
-- **GitHub Actions** — CI, CodeQL, dependency review, generated platform smoke builds, and source release verification.
+- **Python 3 standard library** — repository, platform-support, documentation, hygiene, and release validators.
+- **GitHub Actions** — CI, CodeQL, dependency review, platform materialization, six-platform release builds, artifact upload, and source release verification.
 - **Dependabot** — scheduled Cargo, Flutter/Dart, and GitHub Actions update discovery.
 
 ## Repository Layout
@@ -64,8 +69,8 @@ Generated-scaffold smoke jobs cover all six targets as early compatibility check
 crates/unitflow_core/   Rust domain, catalog, conversion engine, tests, benchmark
 apps/unitflow_app/      Flutter application, local persistence, tests, l10n resources
 docs/                   Architecture, setup, data format, testing, release, ADRs
-scripts/                Repository validators plus Bash/PowerShell verification commands
-.github/                 CI, security, dependency automation, governance, funding, ownership
+scripts/                Repository/platform validators plus Bash/PowerShell verification commands
+.github/                 CI, platform builds/materialization, security, dependency automation, governance
 ```
 
 ## Quick Start
@@ -87,7 +92,21 @@ flutter test
 flutter run
 ```
 
-Native `flutter run` targets require the corresponding Flutter platform project and toolchain; those reviewed scaffolds remain a documented release task.
+### Generate all six Flutter platform projects
+
+From the repository root on a machine with Flutter installed:
+
+```bash
+bash scripts/bootstrap_platforms.sh
+```
+
+On PowerShell:
+
+```powershell
+./scripts/bootstrap_platforms.ps1
+```
+
+The scripts generate Android, iOS, Web, Windows, Linux, and macOS projects together and run Flutter source checks afterward. The repository also contains `.github/workflows/materialize-platforms.yml` to perform deterministic platform generation, inventorying, validation, and commit preparation in GitHub Actions.
 
 See [`docs/setup.md`](docs/setup.md) for prerequisites.
 
@@ -105,7 +124,7 @@ PowerShell:
 ./scripts/verify.ps1
 ```
 
-The scripts test the repository validators, validate the exhaustive tracked-file inventory plus Markdown/release consistency/repository hygiene, then run Rust formatting/Clippy/tests and Flutter dependency resolution/localization/formatting/analysis/tests. A successful run in your environment is evidence for that checkout; this README does not assume a build passed merely because source files or workflow definitions exist.
+The scripts test the repository validators, validate the exhaustive tracked-file inventories, enforce the six-platform support contract, validate Markdown/release consistency/repository hygiene, then run Rust formatting/Clippy/tests and Flutter dependency resolution/localization/formatting/analysis/tests. A successful run in your environment is evidence for that checkout; this README does not assume a build passed merely because source files or workflow definitions exist.
 
 ## Architecture
 
@@ -130,15 +149,16 @@ The repository includes:
 
 - Rust conversion/catalog invariant and regression tests;
 - shared Rust/Dart bridge parity vectors covering representative affine/scaling conversions and every rounding mode;
-- Flutter exact-decimal, persistence/migration, batch-export, safe-logging, collection-cleanup, recent-reference, reset-ordering/failure, native-bridge-validation, and adaptive-navigation tests;
+- Flutter exact-decimal, persistence/migration, batch-export, safe-logging, collection-cleanup, recent-reference, reset-ordering/failure, native-bridge-validation, persisted-journey, and adaptive-navigation tests;
 - deterministic property-style decimal tests;
 - dependency-free Python regression tests for repository validators;
-- exhaustive tracked-file inventory, Markdown-link, release-consistency, repository-hygiene, and exact release-tag guards;
+- exhaustive tracked-file inventory, Markdown-link, release-consistency, repository-hygiene, six-platform support, and exact release-tag guards;
 - a dependency-free Rust conversion micro-benchmark;
 - CI formatting/lint/analysis/test and repository-integrity gates;
 - CodeQL and pull-request dependency review;
-- generated-scaffold smoke builds for Android, Web, Linux, Windows, macOS, and iOS;
-- a release workflow that re-runs source quality gates, rejects mismatched tags, requires a clean Rust package tree, and emits SHA-256 checksums.
+- release-mode builds for Android, Web, Linux, Windows, macOS, and iOS, with build artifact upload;
+- deterministic all-or-nothing Flutter platform materialization and generated-file inventory automation;
+- a release workflow that re-runs source quality/platform-contract gates, rejects mismatched tags, requires a clean Rust package tree, and emits SHA-256 checksums.
 
 See [`docs/testing.md`](docs/testing.md), [`docs/performance.md`](docs/performance.md), and [`docs/release-checklist.md`](docs/release-checklist.md).
 
@@ -158,7 +178,7 @@ Read [`SECURITY.md`](SECURITY.md), [`PRIVACY.md`](PRIVACY.md), and [`docs/threat
 
 ## Screenshots
 
-Real screenshots and demo media are intentionally deferred until native release builds are generated and verified. The project does not use fabricated screenshots as release evidence.
+Real screenshots and demo media are intentionally deferred until release-candidate builds are generated and verified. The project does not use fabricated screenshots as release evidence.
 
 ## Contributing
 
