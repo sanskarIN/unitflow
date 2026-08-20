@@ -1,0 +1,121 @@
+name: Materialize Flutter platform projects
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/materialize-platforms.yml'
+      - 'scripts/bootstrap_platforms.sh'
+      - 'scripts/update_platform_inventory.py'
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: materialize-flutter-platforms
+  cancel-in-progress: false
+
+jobs:
+  materialize:
+    name: Generate and commit six platform projects
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Install Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install stable Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Inspect committed platform state
+        id: platform_state
+        shell: bash
+        run: |
+          set -euo pipefail
+          app='apps/unitflow_app'
+          present=0
+          missing=0
+          for platform in android ios web windows linux macos; do
+            if [[ -d "$app/$platform" ]]; then
+              present=$((present + 1))
+            else
+              missing=$((missing + 1))
+            fi
+          done
+
+          if [[ "$present" -ne 0 && "$missing" -ne 0 ]]; then
+            echo "Refusing partial platform regeneration: $present present, $missing missing." >&2
+            exit 2
+          fi
+
+          if [[ "$missing" -eq 0 ]]; then
+            echo 'already_materialized=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'already_materialized=false' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Generate all Flutter platform projects
+        if: steps.platform_state.outputs.already_materialized != 'true'
+        run: bash scripts/bootstrap_platforms.sh
+
+      - name: Stage intended generated platform files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add -f apps/unitflow_app/.metadata
+          git add \
+            apps/unitflow_app/android \
+            apps/unitflow_app/ios \
+            apps/unitflow_app/web \
+            apps/unitflow_app/windows \
+            apps/unitflow_app/linux \
+            apps/unitflow_app/macos
+
+      - name: Refresh generated platform inventory
+        run: |
+          python3 scripts/update_platform_inventory.py
+          git add docs/platform-file-inventory.md
+
+      - name: Validate inventories and repository consistency
+        run: |
+          python3 scripts/check_repository_inventory.py
+          python3 scripts/check_release_consistency.py
+          python3 scripts/check_repository_hygiene.py
+
+      - name: Commit platform projects
+        id: commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --cached --quiet; then
+            echo 'created=false' >> "$GITHUB_OUTPUT"
+            echo 'Platform projects are already materialized and current.'
+            exit 0
+          fi
+
+          git config user.name 'Sanskar'
+          git config user.email 'sanskarin@outlook.in'
+          git commit -m 'build: materialize six Flutter platform projects'
+          git push origin HEAD:main
+          echo 'created=true' >> "$GITHUB_OUTPUT"
+
+      - name: Run committed cross-platform build matrix
+        if: steps.commit.outputs.created == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run platform-smoke.yml --ref main
