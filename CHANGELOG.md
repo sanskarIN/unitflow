@@ -24,7 +24,11 @@ No changes are queued beyond the active `2.0.12` development snapshot documented
 - Rust catalog/conversion invariant tests, Flutter persistence/export/navigation tests, and deterministic exact-decimal property checks.
 - Shared Rust/Dart bridge-parity fixture coverage, including all supported rounding modes.
 - Versioned Rust bridge service source layer with canonical decimal-string DTOs, ordered batch conversion, stable protocol metadata, and safe failure-code mapping for future generated bindings.
-- Rust bridge-service regression tests covering canonical payloads, error codes, protocol metadata, batch ordering, and camelCase serialization.
+- Source-level native startup negotiation metadata with stable bridge capabilities for single conversion, ordered batch conversion, and canonical decimal text.
+- Flutter `NativeBridgeInfo` compatibility validation with fail-closed protocol/capability mismatch handling before future native engine selection.
+- Shared 256-target native/fallback batch-conversion ceiling with Rust bridge input bounds, Flutter bridge DTO bounds, and deterministic Dart fallback enforcement.
+- Rust bridge-service regression tests covering canonical payloads, error codes, protocol/capability metadata, bounded batches, unit-ID validation, batch ordering, and camelCase serialization.
+- Flutter regression tests covering bridge metadata compatibility, malformed startup payloads, bounded batch requests, and fallback batch-limit parity.
 - Persisted primary-journey regression coverage across controller restart, settings, favorites, pins, history, custom units, backup/import, conversion reuse, and reset.
 - Dependency-free Rust conversion micro-benchmark.
 - CI, CodeQL, dependency-review, and verified source-release workflows.
@@ -36,7 +40,7 @@ No changes are queued beyond the active `2.0.12` development snapshot documented
 - Dependabot update discovery for Cargo, Flutter/Dart, and GitHub Actions dependencies.
 - Dependency-free Python validators for repository-local Markdown targets, release/version/schema/protocol consistency, tracked-file hygiene, exact release-tag/version matching, exhaustive tracked-file documentation inventory parity, and cross-platform support.
 - `docs/repository-inventory.md`, documenting first-party repository files and combined with the generated platform inventory for exact `git ls-files` enforcement.
-- Standard-library regression tests for the repository validators, including six-platform support and generated-inventory behavior.
+- Standard-library regression tests for the repository validators, including six-platform support, generated-inventory behavior, bridge protocol/capability parity, and shared batch bounds.
 - Structured bug/feature issue templates, pull-request quality checklist, CODEOWNERS, funding metadata, and security/support issue routing.
 - Cross-platform verification scripts for Bash and PowerShell.
 - Documentation for architecture decisions, bridge contract, data schema, unit model, threat model, platform support, native platform completion, generated platform builds, dependency maintenance, localization, keyboard shortcuts, testing, performance, releases, and GitHub maintenance.
@@ -48,7 +52,9 @@ No changes are queued beyond the active `2.0.12` development snapshot documented
 - Rust minimum supported version is aligned at `1.82` with the standard-library APIs used by the core.
 - Rust bridge rounding-mode serialization now uses the documented camelCase identifiers such as `nearestEven` and `halfAwayFromZero`.
 - Rust bridge parity tests now deserialize the same versioned fixture consumed by Dart instead of maintaining a copied vector list.
-- Bridge documentation now distinguishes the implemented Rust source-level protocol service from still-pending generated native bindings and per-platform packaging.
+- Bridge documentation now distinguishes the implemented source-level protocol/capability negotiation contract from still-pending generated native bindings, runtime engine selection, and per-platform packaging.
+- Repository release-consistency validation now locks the bridge protocol number, required capability set, and 256-target batch ceiling across Rust source, Flutter bridge source, deterministic fallback source, fixtures, and documentation.
+- Deterministic Dart batch conversion now bounds iterable consumption to one item beyond the documented limit before rejecting oversized work, preventing an unbounded iterable from being fully materialized.
 - Main conversion and batch flows now use the persisted user-selected rounding strategy.
 - App navigation expanded with dedicated Batch and History workspaces and desktop shortcuts.
 - Custom-unit deletion now removes dangling favorites, pins, and history references.
@@ -56,7 +62,7 @@ No changes are queued beyond the active `2.0.12` development snapshot documented
 - Backup/custom-unit error surfaces now avoid displaying raw internal exception text.
 - Production and in-memory state repositories now share the same bounded JSON decoder so tests cannot rely on weaker backup-import validation.
 - Recent-history persistence now validates nonblank/bounded input plus existing same-category unit references while preserving locale-formatted original input text.
-- Native bridge request/response DTO validation now enforces canonical decimal strings, stable unit-ID syntax, and supported precision before data crosses the future generated binding boundary.
+- Native bridge request/response DTO validation now enforces canonical decimal strings, stable unit-ID syntax, supported precision, startup metadata bounds, and batch target limits before data crosses the future generated binding boundary.
 - Plain decimal display grouping now follows locale decimal-pattern primary/secondary grouping sizes while preserving exact decimal strings.
 - The historical generated-platform smoke workflow is now a committed-first six-platform **release build matrix** with generation fallback and artifact upload instead of debug-only compatibility checks.
 - Normal Bash/PowerShell verification, CI, platform materialization, and release packaging now execute the cross-platform support validator in addition to repository-integrity validators.
@@ -83,6 +89,8 @@ No changes are queued beyond the active `2.0.12` development snapshot documented
 - Fixed in-memory backup imports bypassing the production 1,000,000-character payload and JSON-object/string-key boundary.
 - Fixed locale display grouping being hard-coded to groups of three, which produced incorrect grouping for locales with a different secondary group size.
 - Fixed the earlier platform-workflow/documentation mismatch by making all six targets first-class release-build jobs and by enforcing that the generation/build matrix cannot silently lose a target.
+- Fixed the source-level batch capability mismatch where Flutter required `batchConvert` during negotiation without exposing a corresponding bridge batch method.
+- Fixed native-versus-fallback batch behavior divergence by applying the same documented target ceiling to both paths.
 
 ### Security
 
@@ -91,6 +99,8 @@ No changes are queued beyond the active `2.0.12` development snapshot documented
 - Repository hygiene rejects nested tracked `.env` variants, common signing credentials, generated localization output, and build artifacts in addition to checking the complete critical project/documentation set.
 - Tagged release packaging rejects a `v*` tag unless it exactly equals `v` plus the Cargo workspace package version.
 - Native bridge payload validation rejects malformed/non-canonical decimal text and invalid stable unit identifiers before accepting generated-binding data.
+- Native startup negotiation fails closed on unsupported protocol versions and missing required capabilities instead of silently selecting an incompatible backend.
+- Native bridge batch requests are resource-bounded before conversion work, and oversized requests return a stable safe `invalid_batch` failure.
 - Rust bridge failures expose stable safe codes/messages rather than raw domain internals or untrusted unit identifiers.
 - Platform release workflows deliberately avoid committing or embedding production signing credentials; Android production keystores and Apple signing/provisioning/notarization remain secure release-infrastructure inputs.
 - Public issue intake instructs reporters to remove secrets and sensitive personal data.
