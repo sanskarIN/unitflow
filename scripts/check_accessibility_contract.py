@@ -16,6 +16,13 @@ CONVERTER_SCREEN = (
     APP_LIB / "features" / "converter" / "presentation" / "converter_screen.dart"
 )
 ACCESSIBILITY_TEST = ROOT / "apps" / "unitflow_app" / "test" / "accessibility_smoke_test.dart"
+VERIFY_BASH = ROOT / "scripts" / "verify.sh"
+VERIFY_POWERSHELL = ROOT / "scripts" / "verify.ps1"
+CI_WORKFLOW = ROOT / ".github" / "workflows" / "ci.yml"
+RELEASE_WORKFLOW = ROOT / ".github" / "workflows" / "release.yml"
+MATERIALIZE_WORKFLOW = ROOT / ".github" / "workflows" / "materialize-platforms.yml"
+HYGIENE_VALIDATOR = ROOT / "scripts" / "check_repository_hygiene.py"
+VALIDATOR_TOKEN = "scripts/check_accessibility_contract.py"
 
 
 class ModalCall(NamedTuple):
@@ -55,7 +62,18 @@ def modal_calls() -> list[ModalCall]:
 
 def validate() -> list[str]:
     errors: list[str] = []
-    required_files = (APP_THEME, APP_SHELL, CONVERTER_SCREEN, ACCESSIBILITY_TEST)
+    required_files = (
+        APP_THEME,
+        APP_SHELL,
+        CONVERTER_SCREEN,
+        ACCESSIBILITY_TEST,
+        VERIFY_BASH,
+        VERIFY_POWERSHELL,
+        CI_WORKFLOW,
+        RELEASE_WORKFLOW,
+        MATERIALIZE_WORKFLOW,
+        HYGIENE_VALIDATOR,
+    )
     for path in required_files:
         if not path.is_file():
             errors.append(f"missing accessibility contract file: {path.relative_to(ROOT)}")
@@ -105,6 +123,15 @@ def validate() -> list[str]:
     ):
         if token not in test_source:
             errors.append(f"accessibility smoke coverage is missing expected assertion token: {token}")
+
+    for path in (VERIFY_BASH, VERIFY_POWERSHELL, CI_WORKFLOW, RELEASE_WORKFLOW, MATERIALIZE_WORKFLOW):
+        if VALIDATOR_TOKEN not in text(path):
+            errors.append(
+                f"accessibility validator is not wired into {path.relative_to(ROOT).as_posix()}"
+            )
+
+    if VALIDATOR_TOKEN not in text(HYGIENE_VALIDATOR):
+        errors.append("repository hygiene does not require the accessibility validator")
 
     return errors
 
