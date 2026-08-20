@@ -75,6 +75,7 @@ REQUIRED_FILES = (
     "docs/adr/0004-deterministic-dart-fallback.md",
     "scripts/bootstrap_platforms.sh",
     "scripts/bootstrap_platforms.ps1",
+    "scripts/check_accessibility_contract.py",
     "scripts/check_markdown_links.py",
     "scripts/check_platform_support.py",
     "scripts/check_release_consistency.py",
