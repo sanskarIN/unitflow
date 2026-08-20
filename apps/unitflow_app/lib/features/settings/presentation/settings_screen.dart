@@ -278,6 +278,7 @@ final class SettingsScreen extends StatelessWidget {
     final strings = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
+      animationStyle: AppMotion.modalSurfaceStyle(context),
       builder: (context) => AlertDialog(
         title: Text(strings.clearDataDialogTitle),
         content: Text(strings.clearDataDialogBody),
