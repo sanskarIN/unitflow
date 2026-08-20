@@ -43,7 +43,9 @@ The roadmap is milestone-oriented. Items are checked only when repository eviden
 ## Phase 3 — Platform polish
 
 - [x] Versioned Rust source bridge service/DTO layer matching bridge protocol v1.
-- [ ] Rust↔Flutter production generated bindings, startup negotiation, and native packaging workflow.
+- [x] Source-level Rust/Flutter startup protocol + capability negotiation contract with fail-closed compatibility checks.
+- [x] Source-level bounded native batch bridge contract with a shared 256-target limit and stable unit-ID validation.
+- [ ] Rust↔Flutter production generated bindings, runtime engine selection, native library loading, and native packaging workflow.
 - [x] Six-target Flutter generation contract for Android, iOS, Web, Windows, Linux, and macOS.
 - [x] Automated all-or-nothing platform materialization workflow with generated-file inventory support.
 - [x] Committed-first six-platform release build matrix with uploaded build artifacts and generation fallback.
@@ -63,6 +65,7 @@ The roadmap is milestone-oriented. Items are checked only when repository eviden
 - [x] Core Flutter unit/widget smoke tests for converter-adjacent state, navigation, backup, batch export, and safe logging.
 - [x] Persistence race/reference/import-bound regression tests for identified state defects.
 - [x] Controller/repository persisted-journey coverage across restart, settings, favorites, pins, history, custom units, backup/import, conversion reuse, and reset.
+- [x] Repository validation locks bridge protocol, required capabilities, and native batch bounds across docs/Rust/Flutter.
 - [ ] Full integration tests for persisted primary UI journeys.
 - [ ] Native end-to-end primary journeys.
 - [x] Deterministic property-style tests for exact-decimal behavior plus catalog-wide Rust invariants.
@@ -95,8 +98,8 @@ The roadmap is milestone-oriented. Items are checked only when repository eviden
 
 ## Current release blockers
 
-1. The repository now has deterministic six-platform generation, materialization automation, release-build jobs, artifact upload, and cross-platform contract validation. However, the generated Android/iOS/Web/Windows/Linux/macOS directories are not yet present on the currently inspected `main` HEAD, so committed-project build evidence is still required before calling the native projects release-verified.
-2. The versioned Rust source bridge service exists and is regression-tested, but generated Rust↔Flutter bindings, Flutter startup negotiation, native library loading, and per-platform packaging are not yet implemented; source DTO/parity tests do not substitute for executing the production native bridge.
+1. The repository has deterministic six-platform generation, materialization automation, release-build jobs, artifact upload, and cross-platform contract validation. However, the generated Android/iOS/Web/Windows/Linux/macOS directories are not yet present on the currently inspected `main` tree, so committed-project build evidence is still required before calling the native projects release-verified.
+2. Rust and Flutter now share a source-level startup negotiation contract: protocol version, required capabilities, bounded metadata, fail-closed compatibility checks, single/batch APIs, stable unit-ID validation, and a shared 256-target batch limit. Generated bindings, actual runtime engine selection, native library loading, generated-boundary parity execution, and per-platform packaging are still not implemented; source DTO/tests do not substitute for executing the production native bridge.
 3. This execution environment does not provide the Rust/Flutter/Dart/native toolchains needed to compile the current repository changes locally, and direct GitHub cloning is unavailable because external DNS is blocked in the execution container. No local full verification result is claimed for this checkpoint.
 4. A successful full GitHub Actions and six-platform release-build matrix for the final candidate commit has not yet been established/reviewed in this continuation.
 5. Controller/repository restart/import/reset journey coverage is present, but full primary UI integration, native E2E journeys, accessibility review, performance baselines, and release-candidate manual checks remain open where listed above.
