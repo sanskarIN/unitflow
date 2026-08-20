@@ -25,6 +25,9 @@ release_tag = load_module("check_release_tag", "scripts/check_release_tag.py")
 repository_inventory = load_module(
     "check_repository_inventory", "scripts/check_repository_inventory.py"
 )
+platform_inventory = load_module(
+    "update_platform_inventory", "scripts/update_platform_inventory.py"
+)
 
 
 class MarkdownLinkParserTests(unittest.TestCase):
@@ -103,14 +106,31 @@ class ReleaseTagTests(unittest.TestCase):
 
 
 class RepositoryInventoryTests(unittest.TestCase):
-    def test_inventory_parser_documents_itself_and_validator(self) -> None:
+    def test_inventory_parser_documents_repository_and_platform_support(self) -> None:
         documented = repository_inventory.documented_files()
         self.assertIn("docs/repository-inventory.md", documented)
         self.assertIn("scripts/check_repository_inventory.py", documented)
+        self.assertIn("docs/platform-file-inventory.md", documented)
+        self.assertIn("scripts/update_platform_inventory.py", documented)
+        self.assertIn(".github/workflows/materialize-platforms.yml", documented)
 
     def test_inventory_entries_are_unique(self) -> None:
         documented = repository_inventory.documented_files()
         self.assertEqual(len(documented), len(set(documented)))
+
+    def test_generated_platform_entries_use_inventory_format(self) -> None:
+        section = platform_inventory.generated_section(
+            ["apps/unitflow_app/android/app/build.gradle.kts"]
+        )
+        self.assertIn(
+            "- `apps/unitflow_app/android/app/build.gradle.kts` — Flutter-generated cross-platform scaffold file.",
+            section,
+        )
+
+    def test_platform_inventory_targets_all_six_platforms(self) -> None:
+        for platform in ("android", "ios", "web", "windows", "linux", "macos"):
+            prefix = f"apps/unitflow_app/{platform}/"
+            self.assertIn(prefix, platform_inventory.PLATFORM_PREFIXES)
 
 
 if __name__ == "__main__":
