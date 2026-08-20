@@ -1,6 +1,8 @@
 use unitflow_core::{
     BridgeBatchConversionRequest, BridgeConversionRequest, BridgeService, RoundMode,
-    BRIDGE_BACKEND_ID, BRIDGE_PROTOCOL_VERSION,
+    BRIDGE_BACKEND_ID, BRIDGE_CAPABILITIES, BRIDGE_CAPABILITY_BATCH_CONVERT,
+    BRIDGE_CAPABILITY_CANONICAL_DECIMAL_TEXT, BRIDGE_CAPABILITY_CONVERT,
+    BRIDGE_PROTOCOL_VERSION,
 };
 
 fn request(value: &str, from: &str, to: &str) -> BridgeConversionRequest {
@@ -19,6 +21,39 @@ fn exposes_stable_protocol_metadata() {
     assert_eq!(service.protocol_version(), BRIDGE_PROTOCOL_VERSION);
     assert_eq!(service.backend_id(), BRIDGE_BACKEND_ID);
     assert_eq!(BRIDGE_PROTOCOL_VERSION, 1);
+
+    let info = service.info();
+    assert_eq!(info.protocol_version, BRIDGE_PROTOCOL_VERSION);
+    assert_eq!(info.backend_id, BRIDGE_BACKEND_ID);
+    assert_eq!(
+        info.capabilities,
+        BRIDGE_CAPABILITIES
+            .iter()
+            .map(|capability| (*capability).to_owned())
+            .collect::<Vec<_>>()
+    );
+    assert_eq!(
+        BRIDGE_CAPABILITIES,
+        [
+            BRIDGE_CAPABILITY_CONVERT,
+            BRIDGE_CAPABILITY_BATCH_CONVERT,
+            BRIDGE_CAPABILITY_CANONICAL_DECIMAL_TEXT,
+        ]
+    );
+}
+
+#[test]
+fn serializes_startup_metadata_with_camel_case_fields() {
+    let service = BridgeService::with_built_in_catalog().expect("built-in bridge service");
+    let encoded = serde_json::to_value(service.info()).expect("bridge info serializes");
+
+    assert_eq!(encoded["protocolVersion"].as_u64(), Some(1));
+    assert_eq!(encoded["backendId"].as_str(), Some("rust-core"));
+    assert_eq!(
+        encoded["capabilities"].as_array().map(Vec::len),
+        Some(BRIDGE_CAPABILITIES.len())
+    );
+    assert!(encoded.get("protocol_version").is_none());
 }
 
 #[test]
