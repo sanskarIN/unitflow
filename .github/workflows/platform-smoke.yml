@@ -1,4 +1,4 @@
-name: Generated platform smoke
+name: Cross-platform build matrix
 
 on:
   push:
@@ -17,12 +17,12 @@ permissions:
   contents: read
 
 concurrency:
-  group: platform-smoke-${{ github.ref }}
+  group: cross-platform-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   web:
-    name: Generated Web release build
+    name: Web release build
     runs-on: ubuntu-latest
     timeout-minutes: 30
     defaults:
@@ -38,8 +38,12 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Generate Web scaffold
-        run: flutter create --platforms=web --org in.sanskar --project-name unitflow .
+      - name: Ensure Web project exists
+        shell: bash
+        run: |
+          if [[ ! -d web ]]; then
+            flutter create --platforms=web --org in.sanskar --project-name unitflow .
+          fi
 
       - name: Resolve and generate
         run: |
@@ -49,10 +53,17 @@ jobs:
       - name: Build Web release
         run: flutter build web --release
 
+      - name: Upload Web bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: unitflow-web-release
+          path: apps/unitflow_app/build/web
+          if-no-files-found: error
+
   android:
-    name: Generated Android debug build
+    name: Android release bundle
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 40
     defaults:
       run:
         working-directory: apps/unitflow_app
@@ -72,21 +83,32 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Generate Android scaffold
-        run: flutter create --platforms=android --org in.sanskar --project-name unitflow .
+      - name: Ensure Android project exists
+        shell: bash
+        run: |
+          if [[ ! -d android ]]; then
+            flutter create --platforms=android --org in.sanskar --project-name unitflow .
+          fi
 
       - name: Resolve and generate
         run: |
           flutter pub get
           flutter gen-l10n
 
-      - name: Build Android debug APK
-        run: flutter build apk --debug
+      - name: Build Android release app bundle
+        run: flutter build appbundle --release
+
+      - name: Upload Android bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: unitflow-android-release-aab
+          path: apps/unitflow_app/build/app/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
 
   linux:
-    name: Generated Linux debug build
+    name: Linux release bundle
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 40
     defaults:
       run:
         working-directory: apps/unitflow_app
@@ -105,21 +127,35 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Generate Linux scaffold
-        run: flutter create --platforms=linux --org in.sanskar --project-name unitflow .
+      - name: Enable Linux desktop
+        run: flutter config --enable-linux-desktop
+
+      - name: Ensure Linux project exists
+        shell: bash
+        run: |
+          if [[ ! -d linux ]]; then
+            flutter create --platforms=linux --org in.sanskar --project-name unitflow .
+          fi
 
       - name: Resolve and generate
         run: |
           flutter pub get
           flutter gen-l10n
 
-      - name: Build Linux debug bundle
-        run: flutter build linux --debug
+      - name: Build Linux release bundle
+        run: flutter build linux --release
+
+      - name: Upload Linux bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: unitflow-linux-release
+          path: apps/unitflow_app/build/linux/x64/release/bundle
+          if-no-files-found: error
 
   windows:
-    name: Generated Windows debug build
+    name: Windows release bundle
     runs-on: windows-latest
-    timeout-minutes: 40
+    timeout-minutes: 45
     defaults:
       run:
         working-directory: apps/unitflow_app
@@ -133,8 +169,15 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Generate Windows scaffold
-        run: flutter create --platforms=windows --org in.sanskar --project-name unitflow .
+      - name: Enable Windows desktop
+        run: flutter config --enable-windows-desktop
+
+      - name: Ensure Windows project exists
+        shell: pwsh
+        run: |
+          if (-not (Test-Path windows)) {
+            flutter create --platforms=windows --org in.sanskar --project-name unitflow .
+          }
 
       - name: Resolve dependencies
         run: flutter pub get
@@ -142,39 +185,18 @@ jobs:
       - name: Generate localizations
         run: flutter gen-l10n
 
-      - name: Build Windows debug bundle
-        run: flutter build windows --debug
+      - name: Build Windows release bundle
+        run: flutter build windows --release
+
+      - name: Upload Windows bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: unitflow-windows-release
+          path: apps/unitflow_app/build/windows/x64/runner/Release
+          if-no-files-found: error
 
   macos:
-    name: Generated macOS debug build
-    runs-on: macos-latest
-    timeout-minutes: 40
-    defaults:
-      run:
-        working-directory: apps/unitflow_app
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          cache: true
-
-      - name: Generate macOS scaffold
-        run: flutter create --platforms=macos --org in.sanskar --project-name unitflow .
-
-      - name: Resolve and generate
-        run: |
-          flutter pub get
-          flutter gen-l10n
-
-      - name: Build macOS debug app
-        run: flutter build macos --debug
-
-  ios:
-    name: Generated iOS simulator debug build
+    name: macOS release app
     runs-on: macos-latest
     timeout-minutes: 45
     defaults:
@@ -190,13 +212,66 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Generate iOS scaffold
-        run: flutter create --platforms=ios --org in.sanskar --project-name unitflow .
+      - name: Enable macOS desktop
+        run: flutter config --enable-macos-desktop
+
+      - name: Ensure macOS project exists
+        shell: bash
+        run: |
+          if [[ ! -d macos ]]; then
+            flutter create --platforms=macos --org in.sanskar --project-name unitflow .
+          fi
 
       - name: Resolve and generate
         run: |
           flutter pub get
           flutter gen-l10n
 
-      - name: Build iOS simulator debug app
-        run: flutter build ios --debug --simulator
+      - name: Build macOS release app
+        run: flutter build macos --release
+
+      - name: Upload macOS app
+        uses: actions/upload-artifact@v4
+        with:
+          name: unitflow-macos-release
+          path: apps/unitflow_app/build/macos/Build/Products/Release/*.app
+          if-no-files-found: error
+
+  ios:
+    name: iOS release app (no codesign)
+    runs-on: macos-latest
+    timeout-minutes: 50
+    defaults:
+      run:
+        working-directory: apps/unitflow_app
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Ensure iOS project exists
+        shell: bash
+        run: |
+          if [[ ! -d ios ]]; then
+            flutter create --platforms=ios --org in.sanskar --project-name unitflow .
+          fi
+
+      - name: Resolve and generate
+        run: |
+          flutter pub get
+          flutter gen-l10n
+
+      - name: Build iOS release app without signing
+        run: flutter build ios --release --no-codesign
+
+      - name: Upload iOS app bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: unitflow-ios-release-no-codesign
+          path: apps/unitflow_app/build/ios/iphoneos/Runner.app
+          if-no-files-found: error
