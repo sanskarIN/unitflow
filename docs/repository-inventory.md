@@ -82,6 +82,7 @@ This inventory documents every tracked first-party file in UnitFlow and its role
 
 ## Flutter tests
 
+- `apps/unitflow_app/test/accessibility_smoke_test.dart` — reduced-motion policy and converter semantic-state regression coverage.
 - `apps/unitflow_app/test/app_controller_reference_validation_test.dart` — imported favorite/pin/recent reference and category validation.
 - `apps/unitflow_app/test/app_controller_test.dart` — collection cleanup and custom-unit reference lifecycle behavior.
 - `apps/unitflow_app/test/backup_atomicity_test.dart` — rejected-import atomicity and duplicate custom-ID protection.
