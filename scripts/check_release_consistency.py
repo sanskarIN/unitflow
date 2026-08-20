@@ -22,6 +22,67 @@ def require(pattern: str, value: str, label: str, *, flags: int = 0) -> str:
     return match.group(1)
 
 
+def declared_bridge_capabilities() -> tuple[set[str], set[str], set[str]]:
+    rust_source = text("crates/unitflow_core/src/bridge.rs")
+    flutter_source = text(
+        "apps/unitflow_app/lib/core/bridge/native_conversion_bridge.dart"
+    )
+    protocol_docs = text("docs/bridge-protocol.md")
+
+    rust_constants = dict(
+        re.findall(
+            r'^pub const (BRIDGE_CAPABILITY_[A-Z_]+): &str = "([^"]+)";$',
+            rust_source,
+            flags=re.MULTILINE,
+        )
+    )
+    rust_list = require(
+        r"BRIDGE_CAPABILITIES:\s*\[&str;\s*\d+\]\s*=\s*\[([\s\S]*?)\];",
+        rust_source,
+        "Rust bridge capability list",
+    )
+    rust_names = set(re.findall(r"\bBRIDGE_CAPABILITY_[A-Z_]+\b", rust_list))
+    unknown_rust_names = rust_names - rust_constants.keys()
+    if unknown_rust_names:
+        raise ValueError(
+            "Rust bridge capability list references undefined constants: "
+            + ", ".join(sorted(unknown_rust_names))
+        )
+    rust_capabilities = {rust_constants[name] for name in rust_names}
+
+    flutter_constants = dict(
+        re.findall(
+            r"^const String (nativeBridgeCapability[A-Za-z0-9]+)\s*=\s*'([^']+)';$",
+            flutter_source,
+            flags=re.MULTILINE,
+        )
+    )
+    flutter_list = require(
+        r"nativeBridgeRequiredCapabilities\s*=\s*<String>\{([\s\S]*?)\};",
+        flutter_source,
+        "Flutter bridge capability set",
+    )
+    flutter_names = set(
+        re.findall(r"\bnativeBridgeCapability[A-Za-z0-9]+\b", flutter_list)
+    )
+    unknown_flutter_names = flutter_names - flutter_constants.keys()
+    if unknown_flutter_names:
+        raise ValueError(
+            "Flutter bridge capability set references undefined constants: "
+            + ", ".join(sorted(unknown_flutter_names))
+        )
+    flutter_capabilities = {flutter_constants[name] for name in flutter_names}
+
+    documented_line = require(
+        r"Current required capabilities:\s*([^\n]+)",
+        protocol_docs,
+        "documented bridge capabilities",
+    )
+    documented_capabilities = set(re.findall(r"`([^`]+)`", documented_line))
+
+    return rust_capabilities, flutter_capabilities, documented_capabilities
+
+
 def main() -> int:
     errors: list[str] = []
     cargo = text("Cargo.toml")
@@ -131,6 +192,24 @@ def main() -> int:
             f"{dart_bridge_protocol} does not match documented protocol {documented_protocol}."
         )
 
+    rust_capabilities, flutter_capabilities, documented_capabilities = (
+        declared_bridge_capabilities()
+    )
+    if not documented_capabilities:
+        errors.append("Bridge protocol documentation declares no required capabilities.")
+    if rust_capabilities != documented_capabilities:
+        errors.append(
+            "Rust bridge capabilities "
+            f"{sorted(rust_capabilities)!r} do not match documentation "
+            f"{sorted(documented_capabilities)!r}."
+        )
+    if flutter_capabilities != documented_capabilities:
+        errors.append(
+            "Flutter bridge capabilities "
+            f"{sorted(flutter_capabilities)!r} do not match documentation "
+            f"{sorted(documented_capabilities)!r}."
+        )
+
     if errors:
         print("Release consistency validation failed:", file=sys.stderr)
         for error in errors:
@@ -140,7 +219,8 @@ def main() -> int:
     print(
         "Release consistency validation passed: "
         f"version={cargo_version}, rust={cargo_rust_version}, "
-        f"schema={dart_schema}, bridge_protocol={documented_protocol}."
+        f"schema={dart_schema}, bridge_protocol={documented_protocol}, "
+        f"bridge_capabilities={','.join(sorted(documented_capabilities))}."
     )
     return 0
 
