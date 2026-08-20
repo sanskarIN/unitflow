@@ -21,6 +21,14 @@ abstract final class AppBreakpoints {
   static const expanded = 1000.0;
 }
 
+abstract final class AppMotion {
+  static AnimationStyle? modalSurfaceStyle(BuildContext context) =>
+      MediaQuery.disableAnimationsOf(context) ? AnimationStyle.noAnimation : null;
+
+  static Duration routeDuration(BuildContext context, Duration duration) =>
+      MediaQuery.disableAnimationsOf(context) ? Duration.zero : duration;
+}
+
 abstract final class AppTheme {
   static const _seed = Color(0xFF4F46E5);
 
