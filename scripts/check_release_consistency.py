@@ -109,6 +109,13 @@ def main() -> int:
             "Rust bridge protocol version",
         )
     )
+    dart_bridge_protocol = int(
+        require(
+            r"nativeBridgeProtocolVersion\s*=\s*(\d+)",
+            text("apps/unitflow_app/lib/core/bridge/native_conversion_bridge.dart"),
+            "Flutter bridge protocol version",
+        )
+    )
     if fixture_protocol != documented_protocol:
         errors.append(
             f"Bridge fixture protocol {fixture_protocol!r} does not match documented protocol {documented_protocol}."
@@ -117,6 +124,11 @@ def main() -> int:
         errors.append(
             "Rust bridge protocol "
             f"{rust_bridge_protocol} does not match documented protocol {documented_protocol}."
+        )
+    if dart_bridge_protocol != documented_protocol:
+        errors.append(
+            "Flutter bridge protocol "
+            f"{dart_bridge_protocol} does not match documented protocol {documented_protocol}."
         )
 
     if errors:
