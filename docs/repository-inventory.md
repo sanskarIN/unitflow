@@ -170,6 +170,7 @@ This inventory documents every tracked first-party file in UnitFlow and its role
 
 - `scripts/bootstrap_platforms.sh` — Bash helper for deliberate Flutter native-platform scaffold generation/review.
 - `scripts/bootstrap_platforms.ps1` — PowerShell equivalent for native-platform scaffold generation/review.
+- `scripts/check_accessibility_contract.py` — source-level reduced-motion, modal-surface, converter semantics, and accessibility-smoke contract validator.
 - `scripts/check_markdown_links.py` — repository-local Markdown target validator.
 - `scripts/check_release_consistency.py` — package/version/changelog/Rust-minimum/schema/bridge-protocol declaration consistency validator.
 - `scripts/check_release_tag.py` — exact `v<workspace-version>` release tag validator.
