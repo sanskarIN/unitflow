@@ -25,7 +25,11 @@ pub const BRIDGE_CAPABILITIES: [&str; 3] = [
     BRIDGE_CAPABILITY_CANONICAL_DECIMAL_TEXT,
 ];
 
+/// Maximum number of target units accepted by one bridge batch request.
+pub const BRIDGE_MAX_BATCH_TARGETS: usize = 256;
+
 const MAX_DECIMAL_TEXT_LENGTH: usize = 1024;
+const MAX_UNIT_ID_LENGTH: usize = 64;
 
 /// Generator-friendly startup metadata used before routing conversions natively.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -170,6 +174,8 @@ impl BridgeService {
         request: BridgeConversionRequest,
     ) -> Result<BridgeConversionResponse, BridgeFailure> {
         let value = parse_canonical_decimal(&request.value)?;
+        validate_bridge_unit_id(&request.from_unit_id)?;
+        validate_bridge_unit_id(&request.to_unit_id)?;
         let result = self
             .converter
             .convert(&ConversionRequest {
@@ -183,12 +189,24 @@ impl BridgeService {
         Ok(response_from_result(result))
     }
 
-    /// Performs an ordered batch conversion using the same canonical decimal contract.
+    /// Performs an ordered, resource-bounded batch conversion.
     pub fn batch_convert(
         &self,
         request: BridgeBatchConversionRequest,
     ) -> Result<Vec<BridgeConversionResponse>, BridgeFailure> {
+        if request.target_unit_ids.len() > BRIDGE_MAX_BATCH_TARGETS {
+            return Err(BridgeFailure::new(
+                "invalid_batch",
+                "The batch conversion request exceeds the supported target limit.",
+            ));
+        }
+
         let value = parse_canonical_decimal(&request.value)?;
+        validate_bridge_unit_id(&request.from_unit_id)?;
+        for target in &request.target_unit_ids {
+            validate_bridge_unit_id(target)?;
+        }
+
         self.converter
             .batch_convert(
                 value,
@@ -221,6 +239,22 @@ fn parse_canonical_decimal(value: &str) -> Result<Decimal, BridgeFailure> {
         return Err(invalid_decimal());
     }
     Ok(parsed)
+}
+
+fn validate_bridge_unit_id(value: &str) -> Result<(), BridgeFailure> {
+    let valid = !value.is_empty()
+        && value.len() <= MAX_UNIT_ID_LENGTH
+        && value
+            .bytes()
+            .all(|byte| byte.is_ascii_lowercase() || byte.is_ascii_digit() || matches!(byte, b'_' | b'-'));
+    if valid {
+        Ok(())
+    } else {
+        Err(BridgeFailure::new(
+            "unknown_unit",
+            "Unknown unit identifier.",
+        ))
+    }
 }
 
 fn canonical_decimal(value: Decimal) -> String {
