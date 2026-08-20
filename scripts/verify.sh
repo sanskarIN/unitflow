@@ -18,6 +18,9 @@ python3 scripts/check_repository_inventory.py
 echo "==> Cross-platform support contract"
 python3 scripts/check_platform_support.py
 
+echo "==> Accessibility source contract"
+python3 scripts/check_accessibility_contract.py
+
 echo "==> Markdown links"
 python3 scripts/check_markdown_links.py
 
