@@ -1,6 +1,6 @@
 # Testing Strategy
 
-UnitFlow treats conversion correctness, persistence integrity, bridge-contract parity, and repository/documentation integrity as core product requirements.
+UnitFlow treats conversion correctness, persistence integrity, bridge-contract parity, accessibility safeguards, and repository/documentation integrity as core product requirements.
 
 ## One-command verification
 
@@ -39,7 +39,7 @@ These checks cover:
 - Cargo minimum-Rust-version versus setup-documentation parity;
 - changelog coverage for the current version;
 - local-state schema documentation parity;
-- Rust↔Flutter bridge protocol fixture/documentation parity;
+- Rust↔Flutter bridge protocol/capability/batch-limit parity;
 - complete critical repository/configuration/documentation file presence;
 - tracked `.env`, signing material, generated localization output, and build-output hygiene.
 
@@ -75,7 +75,7 @@ Coverage priorities:
 - educational metadata references real base units;
 - bridge rounding-mode serialization identifiers;
 - direct execution of the shared versioned bridge parity fixture;
-- Rust bridge protocol metadata, canonical decimal DTO enforcement, safe failure-code mapping, ordered batch responses, and camelCase serialization.
+- Rust bridge protocol/capability metadata, canonical decimal DTO enforcement, safe failure-code mapping, ordered/bounded batch responses, unit-ID validation, and camelCase serialization.
 
 The Rust suite includes catalog-wide identity and round-trip invariants plus search-ranking regression tests. `bridge_service.rs` exercises the generator-facing Rust protocol service independently of any future binding generator. The dense built-in catalog data table is deliberately excluded from rustfmt rewriting so conversion constants remain compact and reviewable; executable logic and tests remain under normal formatting checks.
 
@@ -101,12 +101,14 @@ Coverage priorities:
 - theme switching;
 - favorites/pin/history state behavior;
 - settings and About page content;
-- semantics for major controls;
+- semantics for major controls and toggle state;
+- reduced-motion policy for modal/route transitions;
 - custom-unit validation;
 - import/export failure states and consistent import bounds across repositories;
 - persistence ordering for reset/save operations and safe reset-failure reporting;
 - recent-history reference/category/input bounds while retaining locale-formatted original text;
 - canonical native-bridge decimal/unit/precision DTO validation;
+- startup bridge protocol/capability negotiation and batch bounds;
 - execution of the shared bridge parity fixture across every supported rounding mode;
 - CSV/TSV batch export escaping;
 - structured-log redaction;
@@ -117,13 +119,15 @@ Coverage priorities:
 
 `navigation_smoke_test.dart` checks that the main Convert, Batch, Library, History, and Settings destinations remain reachable through the adaptive shell.
 
+`accessibility_smoke_test.dart` locks the centralized reduced-motion policy and verifies that the converter pin action exposes semantic on/off state. It is source/widget evidence only; it does not replace TalkBack, VoiceOver, keyboard/focus, contrast, touch-target, or large-text review on real release-candidate platforms.
+
 `persisted_primary_journey_test.dart` exercises a broader controller/repository journey: user settings, favorites, pins, history, custom units, restart persistence, backup/import, post-restart conversion, and reset. It is intentionally classified as source-level integration-style coverage rather than native end-to-end evidence.
 
 ## Shared bridge parity
 
 `fixtures/bridge_parity_v1.json` is the common executable fixture for both Rust and Dart. The two test suites must deserialize that file directly rather than copying its vectors into language-specific tests. The fixture currently includes representative SI/affine/data/time conversions and every supported rounding mode.
 
-The fixture protocol version must match `docs/bridge-protocol.md`; `scripts/check_release_consistency.py` enforces that relationship.
+The fixture protocol version must match `docs/bridge-protocol.md`; `scripts/check_release_consistency.py` additionally locks the Rust/Flutter protocol declarations, required capabilities, and shared 256-target batch ceiling.
 
 The Rust source bridge service has additional direct contract coverage in `crates/unitflow_core/tests/bridge_service.rs`. Generated binding parity remains a separate release requirement and must execute through the actual native boundary once that integration exists.
 
@@ -146,9 +150,11 @@ Primary journeys should eventually cover:
 
 Controller/repository coverage now proves several persistence-focused parts of this journey at source-test level. Full UI integration still needs interactions through rendered screens/widgets, and native end-to-end automation should be added after reviewed platform scaffolding and generated bindings are committed. Source-level and widget tests must not be described as proof that native release builds pass.
 
-## Generated platform smoke builds
+## Cross-platform release builds
 
-`.github/workflows/platform-smoke.yml` generates temporary Flutter platform scaffolds in clean runners and attempts Android, Web, Linux, Windows, macOS, and iOS target builds. These jobs are useful source/toolchain compatibility evidence, but they are intentionally distinct from release verification of committed native projects. See `docs/platform-smoke.md` for the exact evidence boundary.
+`.github/workflows/platform-smoke.yml` retains its historical filename, but it is now a committed-first release-mode build matrix for Android, Web, Linux, Windows, macOS, and iOS. When a platform directory is not yet committed during the transition period, the job can generate that target before compiling so compatibility is not silently skipped. Each target uploads its build artifact; iOS intentionally builds with `--no-codesign`.
+
+These jobs are useful compilation/toolchain evidence, but successful workflow definitions alone do not prove a release candidate passed. Release verification requires reviewing actual workflow executions against the final committed platform projects and then completing signing/notarization/store-specific checks where applicable. See `docs/platform-smoke.md` and `docs/platform-support.md` for the exact evidence boundary.
 
 ## Property/fuzz testing
 
@@ -180,4 +186,4 @@ A repository-structure change must update `docs/repository-inventory.md` in the 
 
 ## CI policy
 
-CI fails on repository-inventory/integrity validation, validator regression tests, formatting, lint, localization generation, analysis, or test failures. Security scanning, dependency review, generated platform smoke builds, and release packaging run in their respective workflows. A skipped platform check must be explicit rather than silently treated as success.
+CI fails on repository-inventory/integrity validation, validator regression tests, formatting, lint, localization generation, analysis, or test failures. Security scanning, dependency review, cross-platform release builds, and release packaging run in their respective workflows. A skipped platform check must be explicit rather than silently treated as success.
