@@ -36,6 +36,9 @@ jobs:
       - name: Check cross-platform support contract
         run: python3 scripts/check_platform_support.py
 
+      - name: Check accessibility source contract
+        run: python3 scripts/check_accessibility_contract.py
+
       - name: Check Markdown links
         run: python3 scripts/check_markdown_links.py
 
