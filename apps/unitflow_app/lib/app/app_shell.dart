@@ -213,7 +213,18 @@ final class _AppShellState extends State<AppShell> {
     setState(() => _selectedIndex = 0);
   }
 
-  Future<void> _openAbout() => Navigator.of(context).push<void>(
-    MaterialPageRoute<void>(builder: (_) => const Scaffold(body: SafeArea(child: AboutScreen()))),
-  );
+  Future<void> _openAbout() {
+    final Widget page = const Scaffold(body: SafeArea(child: AboutScreen()));
+    final Route<void> route;
+    if (MediaQuery.disableAnimationsOf(context)) {
+      route = PageRouteBuilder<void>(
+        pageBuilder: (_, _, _) => page,
+        transitionDuration: AppMotion.routeDuration(context, const Duration(milliseconds: 300)),
+        reverseTransitionDuration: AppMotion.routeDuration(context, const Duration(milliseconds: 300)),
+      );
+    } else {
+      route = MaterialPageRoute<void>(builder: (_) => page);
+    }
+    return Navigator.of(context).push<void>(route);
+  }
 }
