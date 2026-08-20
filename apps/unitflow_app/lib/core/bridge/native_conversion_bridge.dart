@@ -1,5 +1,18 @@
 import '../math/exact_decimal.dart';
 
+/// Application-level native bridge protocol supported by this Flutter source.
+const int nativeBridgeProtocolVersion = 1;
+
+/// Stable capabilities required before UnitFlow may route a session to Rust.
+const String nativeBridgeCapabilityConvert = 'convert';
+const String nativeBridgeCapabilityBatchConvert = 'batchConvert';
+const String nativeBridgeCapabilityCanonicalDecimalText = 'canonicalDecimalText';
+const Set<String> nativeBridgeRequiredCapabilities = <String>{
+  nativeBridgeCapabilityConvert,
+  nativeBridgeCapabilityBatchConvert,
+  nativeBridgeCapabilityCanonicalDecimalText,
+};
+
 /// Stable Flutter-side contract for a future native Rust bridge.
 ///
 /// Decimal values cross this boundary as text so generated bindings never need
@@ -11,6 +24,77 @@ enum NativeBridgeRoundMode {
   awayFromZero,
   floor,
   ceiling,
+}
+
+final class NativeBridgeInfo {
+  const NativeBridgeInfo({
+    required this.protocolVersion,
+    required this.backendId,
+    required this.capabilities,
+  });
+
+  final int protocolVersion;
+  final String backendId;
+  final Set<String> capabilities;
+
+  factory NativeBridgeInfo.fromMap(Map<String, Object?> value) {
+    final protocolVersion = value['protocolVersion'];
+    final backendId = value['backendId'];
+    final capabilities = value['capabilities'];
+    if (protocolVersion is! int || protocolVersion <= 0 || protocolVersion > 0x7fffffff) {
+      throw const FormatException('Invalid native bridge protocol version.');
+    }
+    if (backendId is! String || !RegExp(r'^[a-z0-9][a-z0-9._-]{0,63}$').hasMatch(backendId)) {
+      throw const FormatException('Invalid native bridge backend identifier.');
+    }
+    if (capabilities is! List<Object?> || capabilities.length > 32) {
+      throw const FormatException('Invalid native bridge capabilities.');
+    }
+
+    final parsedCapabilities = <String>{};
+    for (final capability in capabilities) {
+      if (capability is! String ||
+          !RegExp(r'^[A-Za-z][A-Za-z0-9._-]{0,63}$').hasMatch(capability) ||
+          !parsedCapabilities.add(capability)) {
+        throw const FormatException('Invalid native bridge capability identifier.');
+      }
+    }
+
+    return NativeBridgeInfo(
+      protocolVersion: protocolVersion,
+      backendId: backendId,
+      capabilities: Set<String>.unmodifiable(parsedCapabilities),
+    );
+  }
+
+  bool get isCompatible {
+    if (protocolVersion != nativeBridgeProtocolVersion) {
+      return false;
+    }
+    for (final requiredCapability in nativeBridgeRequiredCapabilities) {
+      if (!capabilities.contains(requiredCapability)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  void requireCompatible() {
+    if (protocolVersion != nativeBridgeProtocolVersion) {
+      throw const NativeBridgeFailure(
+        code: 'protocol_mismatch',
+        message: 'The native conversion backend protocol is not supported.',
+      );
+    }
+    for (final requiredCapability in nativeBridgeRequiredCapabilities) {
+      if (!capabilities.contains(requiredCapability)) {
+        throw const NativeBridgeFailure(
+          code: 'capability_mismatch',
+          message: 'The native conversion backend is missing a required capability.',
+        );
+      }
+    }
+  }
 }
 
 final class NativeBridgeConversionRequest {
@@ -97,11 +181,8 @@ final class NativeBridgeFailure implements Exception {
 }
 
 abstract interface class NativeConversionBridge {
-  /// Version of the request/response contract, independent of app version.
-  int get protocolVersion;
-
-  /// Diagnostic backend identifier such as `rust-native`.
-  String get backendId;
+  /// Validated startup metadata reported by the native backend.
+  NativeBridgeInfo get info;
 
   Future<NativeBridgeConversionResponse> convert(
     NativeBridgeConversionRequest request,
