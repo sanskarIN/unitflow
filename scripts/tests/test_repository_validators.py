@@ -31,6 +31,9 @@ platform_inventory = load_module(
 platform_support = load_module(
     "check_platform_support", "scripts/check_platform_support.py"
 )
+accessibility_contract = load_module(
+    "check_accessibility_contract", "scripts/check_accessibility_contract.py"
+)
 
 
 class MarkdownLinkParserTests(unittest.TestCase):
@@ -145,6 +148,7 @@ class RepositoryInventoryTests(unittest.TestCase):
         self.assertIn("docs/platform-file-inventory.md", documented)
         self.assertIn("scripts/update_platform_inventory.py", documented)
         self.assertIn("scripts/check_platform_support.py", documented)
+        self.assertIn("scripts/check_accessibility_contract.py", documented)
         self.assertIn(".github/workflows/materialize-platforms.yml", documented)
 
     def test_inventory_entries_are_unique(self) -> None:
@@ -164,6 +168,27 @@ class RepositoryInventoryTests(unittest.TestCase):
         for platform in ("android", "ios", "web", "windows", "linux", "macos"):
             prefix = f"apps/unitflow_app/{platform}/"
             self.assertIn(prefix, platform_inventory.PLATFORM_PREFIXES)
+
+
+class AccessibilityContractTests(unittest.TestCase):
+    def test_current_tree_satisfies_accessibility_source_contract(self) -> None:
+        self.assertEqual(accessibility_contract.validate(), [])
+
+    def test_all_modal_surfaces_are_discovered_and_guarded(self) -> None:
+        calls = accessibility_contract.modal_calls()
+        self.assertGreaterEqual(len(calls), 4)
+        self.assertTrue(any(call.kind == "dialog" for call in calls))
+        self.assertTrue(any(call.kind == "bottomSheet" for call in calls))
+        for call in calls:
+            expected = (
+                "animationStyle: AppMotion.modalSurfaceStyle(context)"
+                if call.kind == "dialog"
+                else "sheetAnimationStyle: AppMotion.modalSurfaceStyle(context)"
+            )
+            self.assertIn(expected, call.header, call.path)
+
+    def test_accessibility_validator_main_accepts_current_tree(self) -> None:
+        self.assertEqual(accessibility_contract.main(), 0)
 
 
 class PlatformSupportTests(unittest.TestCase):
