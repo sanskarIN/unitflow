@@ -12,7 +12,7 @@ Current source version: **`2.0.12`**
 
 Flutter build number: **`12`**
 
-Latest inspected continuation commit before this handoff update: **`fb07432b71e7f7cea1f6a5f6cddf950acb21996e`**
+Latest inspected implementation/validator commit before this handoff update: **`8402934ce51e16fe516953b41b8030291b7861fe`**
 
 ## Release state
 
@@ -24,7 +24,7 @@ UnitFlow remains source-aligned to `2.0.12` across the Rust workspace, Flutter p
 
 This continuation started from the previous `2.0.12` final-handoff commit `0a6791373ad21a875872e61ffffb1aa296f06cae` and audited the roadmap rather than assuming the repository was fully finished.
 
-The audit confirmed that substantial source functionality was already complete, but the production Rust↔Flutter bridge path and deeper persisted-journey coverage still had meaningful source-level work available.
+The audit confirmed that substantial source functionality was already complete, but the production Rust↔Flutter bridge path, deeper persisted-journey coverage, and protocol-drift enforcement still had meaningful source-level work available.
 
 ### Rust source bridge service added
 
@@ -106,6 +106,18 @@ A follow-up fix corrected the conversion API parameter from the initially writte
 
 This is meaningful integration-style source coverage, but it is **not native E2E evidence** and does not replace rendered-UI integration tests.
 
+### Rust bridge protocol drift guard added
+
+`scripts/check_release_consistency.py` now extracts `BRIDGE_PROTOCOL_VERSION` directly from `crates/unitflow_core/src/bridge.rs` and requires it to match the documented protocol version in `docs/bridge-protocol.md`.
+
+The existing fixture/documentation check remains in place, so the normal consistency gate now prevents silent divergence among:
+
+- Rust bridge source protocol version;
+- `fixtures/bridge_parity_v1.json` protocol version;
+- `docs/bridge-protocol.md` protocol version.
+
+`scripts/tests/test_repository_validators.py` now contains a regression test that reads all three declarations and asserts equality.
+
 ### Documentation and inventory refreshed
 
 The following existing documents were updated to describe the new state accurately:
@@ -170,7 +182,7 @@ The repository includes:
 - exact release-tag/version guard;
 - exhaustive tracked-file inventory validation;
 - Markdown-link validation;
-- version/Rust-minimum/schema/protocol consistency validation;
+- version/Rust-minimum/schema/protocol consistency validation including the Rust bridge protocol source constant;
 - repository hygiene validation;
 - Bash and PowerShell full-verification entry points;
 - deep architecture/setup/testing/security/platform/release/maintenance documentation.
@@ -197,9 +209,9 @@ Earlier `2.0.12` hardening already fixed or added regression coverage for:
 
 ### GitHub repository evidence
 
-The authenticated GitHub integration was used to inspect live `main`, roadmap blockers, source contracts, tests, documentation, repository inventory, and recent commits before and after changes.
+The authenticated GitHub integration was used to inspect live `main`, roadmap blockers, source contracts, tests, documentation, repository inventory, validators, and recent commits before and after changes.
 
-The latest inspected pre-handoff HEAD was `fb07432b71e7f7cea1f6a5f6cddf950acb21996e` (`docs: document bridge and persisted journey coverage`).
+The latest inspected pre-handoff implementation/validator commit was `8402934ce51e16fe516953b41b8030291b7861fe` (`test: cover Rust bridge protocol consistency`).
 
 Workflow-run lookup for that commit returned **no workflow runs**. A successful final CI matrix is therefore **not established** by this continuation.
 
@@ -263,6 +275,9 @@ on a machine with the documented toolchains.
 - `11e48bda` — `docs: record 2.0.12 bridge and persistence hardening`
 - `2a861a22` — `docs: refine 2.0.12 remaining bridge and journey work`
 - `fb07432b` — `docs: document bridge and persisted journey coverage`
+- `bc6b0007` — `docs: refresh 2.0.12 continuation handoff`
+- `6cb69dd0` — `build: validate Rust bridge protocol version`
+- `8402934c` — `test: cover Rust bridge protocol consistency`
 
 This handoff update itself follows those commits.
 
