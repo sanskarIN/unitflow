@@ -5,6 +5,10 @@ import 'package:unitflow/app/theme/app_theme.dart';
 import 'package:unitflow/app/unitflow_app.dart';
 import 'package:unitflow/core/persistence/user_state.dart';
 import 'package:unitflow/core/persistence/user_state_repository.dart';
+import 'package:unitflow/features/history/presentation/history_screen.dart';
+import 'package:unitflow/features/library/presentation/library_screen.dart';
+import 'package:unitflow/features/settings/presentation/settings_screen.dart';
+import 'package:unitflow/l10n/generated/app_localizations.dart';
 
 void main() {
   testWidgets('reduced-motion policy removes modal and route durations', (tester) async {
@@ -66,9 +70,89 @@ void main() {
       isSemantics(hasToggledState: true, isToggled: true),
     );
   });
+
+  testWidgets('library and custom-unit dialog survive compact 200% text', (tester) async {
+    await _useCompactLargeText(tester);
+    final controller = await _controller();
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      _localizedApp(
+        LibraryScreen(
+          appController: controller,
+          onOpenPair: (_) {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+
+    await tester.tap(find.text('Custom unit'));
+    await tester.pumpAndSettle();
+    expect(find.text('Create custom unit'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('settings and history survive compact 200% text', (tester) async {
+    await _useCompactLargeText(tester);
+    final controller = await _controller();
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      _localizedApp(
+        SettingsScreen(
+          appController: controller,
+          onOpenAbout: () {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Conversion and formatting'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(
+      _localizedApp(
+        HistoryScreen(
+          appController: controller,
+          onOpenRecent: (_) {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('No recent conversions'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }
 
 Finder _pinSemantics({required bool isToggled}) => find.byWidgetPredicate(
   (widget) => widget is Semantics && widget.properties.toggled == isToggled,
   description: 'pin semantic state toggled=$isToggled',
 );
+
+Future<AppController> _controller() async {
+  final controller = AppController(
+    repository: MemoryUserStateRepository(
+      UserState(onboardingComplete: true),
+    ),
+  );
+  await controller.initialize();
+  return controller;
+}
+
+Widget _localizedApp(Widget home) => MaterialApp(
+  theme: AppTheme.light(),
+  localizationsDelegates: AppLocalizations.localizationsDelegates,
+  supportedLocales: AppLocalizations.supportedLocales,
+  home: Scaffold(body: home),
+);
+
+Future<void> _useCompactLargeText(WidgetTester tester) async {
+  await tester.binding.setSurfaceSize(const Size(390, 844));
+  tester.platformDispatcher.textScaleFactorTestValue = 2.0;
+  addTearDown(() => tester.binding.setSurfaceSize(null));
+  addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+}
