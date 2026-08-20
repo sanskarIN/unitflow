@@ -102,10 +102,13 @@ class ReleaseConsistencyHelperTests(unittest.TestCase):
         self.assertEqual(flutter, expected)
         self.assertEqual(documented, expected)
 
-    def test_bridge_batch_limits_match_docs_rust_and_flutter(self) -> None:
-        rust, flutter, documented = release_consistency.declared_bridge_batch_limits()
+    def test_bridge_batch_limits_match_all_execution_contracts(self) -> None:
+        rust, flutter_bridge, flutter_fallback, documented = (
+            release_consistency.declared_bridge_batch_limits()
+        )
         self.assertEqual(rust, 256)
-        self.assertEqual(flutter, 256)
+        self.assertEqual(flutter_bridge, 256)
+        self.assertEqual(flutter_fallback, 256)
         self.assertEqual(documented, 256)
 
     def test_release_consistency_accepts_current_tree(self) -> None:
