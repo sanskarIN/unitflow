@@ -5,8 +5,8 @@ from __future__ import annotations
 
 import re
 import sys
-from dataclasses import dataclass
 from pathlib import Path
+from typing import NamedTuple
 
 ROOT = Path(__file__).resolve().parents[1]
 APP_LIB = ROOT / "apps" / "unitflow_app" / "lib"
@@ -18,8 +18,7 @@ CONVERTER_SCREEN = (
 ACCESSIBILITY_TEST = ROOT / "apps" / "unitflow_app" / "test" / "accessibility_smoke_test.dart"
 
 
-@dataclass(frozen=True)
-class ModalCall:
+class ModalCall(NamedTuple):
     path: str
     kind: str
     header: str
