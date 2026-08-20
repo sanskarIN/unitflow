@@ -98,8 +98,8 @@ fn bridge_dtos_use_documented_camel_case_rounding_identifiers() {
     let encoded = serde_json::to_value(request("1", "meter", "centimeter"))
         .expect("bridge request serializes");
 
-    assert_eq!(encoded["fromUnitId"], "meter");
-    assert_eq!(encoded["toUnitId"], "centimeter");
-    assert_eq!(encoded["roundMode"], "nearestEven");
+    assert_eq!(encoded["fromUnitId"].as_str(), Some("meter"));
+    assert_eq!(encoded["toUnitId"].as_str(), Some("centimeter"));
+    assert_eq!(encoded["roundMode"].as_str(), Some("nearestEven"));
     assert!(encoded.get("from_unit_id").is_none());
 }
