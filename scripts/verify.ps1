@@ -49,6 +49,9 @@ try {
     Write-Host '==> Cross-platform support contract'
     Invoke-PythonCheck -Arguments @('scripts/check_platform_support.py') -FailureMessage 'Cross-platform support validation failed'
 
+    Write-Host '==> Accessibility source contract'
+    Invoke-PythonCheck -Arguments @('scripts/check_accessibility_contract.py') -FailureMessage 'Accessibility source-contract validation failed'
+
     Write-Host '==> Markdown links'
     Invoke-PythonCheck -Arguments @('scripts/check_markdown_links.py') -FailureMessage 'Markdown link validation failed'
 
