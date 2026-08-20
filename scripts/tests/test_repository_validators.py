@@ -64,7 +64,7 @@ class ReleaseConsistencyHelperTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             release_consistency.require(r"version=(\d+)", "missing", "version")
 
-    def test_rust_bridge_protocol_matches_fixture_and_docs(self) -> None:
+    def test_bridge_protocol_matches_fixture_docs_rust_and_flutter(self) -> None:
         fixture = json.loads(
             release_consistency.text("fixtures/bridge_parity_v1.json")
         )
@@ -82,8 +82,18 @@ class ReleaseConsistencyHelperTests(unittest.TestCase):
                 "Rust bridge protocol version",
             )
         )
+        flutter_source = int(
+            release_consistency.require(
+                r"nativeBridgeProtocolVersion\s*=\s*(\d+)",
+                release_consistency.text(
+                    "apps/unitflow_app/lib/core/bridge/native_conversion_bridge.dart"
+                ),
+                "Flutter bridge protocol version",
+            )
+        )
         self.assertEqual(fixture["protocolVersion"], documented)
         self.assertEqual(rust_source, documented)
+        self.assertEqual(flutter_source, documented)
 
 
 class ReleaseTagTests(unittest.TestCase):
