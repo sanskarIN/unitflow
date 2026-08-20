@@ -11,7 +11,30 @@ pub const BRIDGE_PROTOCOL_VERSION: u32 = 1;
 /// Diagnostic identifier for the Rust domain bridge implementation.
 pub const BRIDGE_BACKEND_ID: &str = "rust-core";
 
+/// Capability identifier for single conversions.
+pub const BRIDGE_CAPABILITY_CONVERT: &str = "convert";
+/// Capability identifier for ordered batch conversions.
+pub const BRIDGE_CAPABILITY_BATCH_CONVERT: &str = "batchConvert";
+/// Capability identifier guaranteeing canonical base-10 text at the boundary.
+pub const BRIDGE_CAPABILITY_CANONICAL_DECIMAL_TEXT: &str = "canonicalDecimalText";
+
+/// Stable capability set exposed during startup negotiation.
+pub const BRIDGE_CAPABILITIES: [&str; 3] = [
+    BRIDGE_CAPABILITY_CONVERT,
+    BRIDGE_CAPABILITY_BATCH_CONVERT,
+    BRIDGE_CAPABILITY_CANONICAL_DECIMAL_TEXT,
+];
+
 const MAX_DECIMAL_TEXT_LENGTH: usize = 1024;
+
+/// Generator-friendly startup metadata used before routing conversions natively.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BridgeInfo {
+    pub protocol_version: u32,
+    pub backend_id: String,
+    pub capabilities: Vec<String>,
+}
 
 /// Generator-friendly single-conversion request.
 ///
@@ -126,6 +149,19 @@ impl BridgeService {
     #[must_use]
     pub const fn backend_id(&self) -> &'static str {
         BRIDGE_BACKEND_ID
+    }
+
+    /// Returns startup metadata for protocol and capability negotiation.
+    #[must_use]
+    pub fn info(&self) -> BridgeInfo {
+        BridgeInfo {
+            protocol_version: self.protocol_version(),
+            backend_id: self.backend_id().to_owned(),
+            capabilities: BRIDGE_CAPABILITIES
+                .iter()
+                .map(|capability| (*capability).to_owned())
+                .collect(),
+        }
     }
 
     /// Performs one conversion while preserving the bridge string contract.
