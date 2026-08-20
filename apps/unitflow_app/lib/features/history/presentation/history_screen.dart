@@ -101,6 +101,7 @@ final class HistoryScreen extends StatelessWidget {
     final strings = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
+      animationStyle: AppMotion.modalSurfaceStyle(context),
       builder: (context) => AlertDialog(
         title: Text(strings.clearHistoryDialogTitle),
         content: Text(strings.clearHistoryDialogBody),
