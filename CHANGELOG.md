@@ -29,6 +29,7 @@ No changes are queued beyond the active `2.0.12` development snapshot documented
 - Shared 256-target native/fallback batch-conversion ceiling with Rust bridge input bounds, Flutter bridge DTO bounds, and deterministic Dart fallback enforcement.
 - Rust bridge-service regression tests covering canonical payloads, error codes, protocol/capability metadata, bounded batches, unit-ID validation, batch ordering, and camelCase serialization.
 - Flutter regression tests covering bridge metadata compatibility, malformed startup payloads, bounded batch requests, and fallback batch-limit parity.
+- Accessibility smoke coverage for reduced-motion policy and converter pin semantic-state behavior.
 - Persisted primary-journey regression coverage across controller restart, settings, favorites, pins, history, custom units, backup/import, conversion reuse, and reset.
 - Dependency-free Rust conversion micro-benchmark.
 - CI, CodeQL, dependency-review, and verified source-release workflows.
@@ -57,6 +58,8 @@ No changes are queued beyond the active `2.0.12` development snapshot documented
 - Deterministic Dart batch conversion now bounds iterable consumption to one item beyond the documented limit before rejecting oversized work, preventing an unbounded iterable from being fully materialized.
 - Main conversion and batch flows now use the persisted user-selected rounding strategy.
 - App navigation expanded with dedicated Batch and History workspaces and desktop shortcuts.
+- App modal surfaces and About navigation now honor the platform reduced-animation preference through a centralized `AppMotion` policy.
+- Converter pin actions now expose semantic toggled state, and category/source/target selectors expose explicit semantic label/value context.
 - Custom-unit deletion now removes dangling favorites, pins, and history references.
 - Rust and Dart custom-unit boundaries enforce a maximum of 32 aliases.
 - Backup/custom-unit error surfaces now avoid displaying raw internal exception text.
@@ -91,6 +94,7 @@ No changes are queued beyond the active `2.0.12` development snapshot documented
 - Fixed the earlier platform-workflow/documentation mismatch by making all six targets first-class release-build jobs and by enforcing that the generation/build matrix cannot silently lose a target.
 - Fixed the source-level batch capability mismatch where Flutter required `batchConvert` during negotiation without exposing a corresponding bridge batch method.
 - Fixed native-versus-fallback batch behavior divergence by applying the same documented target ceiling to both paths.
+- Fixed conversion output being configured as a live region on every keystroke, reducing unnecessary screen-reader announcements while preserving a semantic result description.
 
 ### Security
 
