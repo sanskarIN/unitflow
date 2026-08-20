@@ -34,31 +34,55 @@ final class HistoryScreen extends StatelessWidget {
               child: Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 900),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: <Widget>[
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final heading = Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            strings.historyTitle,
+                            style: Theme.of(context).textTheme.headlineMedium,
+                          ),
+                          const SizedBox(height: AppSpacing.xxs),
+                          Text(
+                            strings.historyDescription,
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ],
+                      );
+                      final clearButton = OutlinedButton.icon(
+                        onPressed: () => _confirmClear(context),
+                        icon: const Icon(Icons.delete_sweep_outlined),
+                        label: Text(strings.clearAction),
+                      );
+
+                      if (constraints.maxWidth < AppBreakpoints.compact) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: <Widget>[
-                            Text(strings.historyTitle, style: Theme.of(context).textTheme.headlineMedium),
-                            const SizedBox(height: AppSpacing.xxs),
-                            Text(
-                              strings.historyDescription,
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
+                            heading,
+                            if (recents.isNotEmpty) ...<Widget>[
+                              const SizedBox(height: AppSpacing.md),
+                              Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: clearButton,
+                              ),
+                            ],
                           ],
-                        ),
-                      ),
-                      if (recents.isNotEmpty) ...<Widget>[
-                        const SizedBox(width: AppSpacing.md),
-                        OutlinedButton.icon(
-                          onPressed: () => _confirmClear(context),
-                          icon: const Icon(Icons.delete_sweep_outlined),
-                          label: Text(strings.clearAction),
-                        ),
-                      ],
-                    ],
+                        );
+                      }
+
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: <Widget>[
+                          Expanded(child: heading),
+                          if (recents.isNotEmpty) ...<Widget>[
+                            const SizedBox(width: AppSpacing.md),
+                            clearButton,
+                          ],
+                        ],
+                      );
+                    },
                   ),
                 ),
               ),
