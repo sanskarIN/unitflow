@@ -15,6 +15,9 @@ APP_SHELL = APP_LIB / "app" / "app_shell.dart"
 CONVERTER_SCREEN = (
     APP_LIB / "features" / "converter" / "presentation" / "converter_screen.dart"
 )
+ONBOARDING_SCREEN = (
+    APP_LIB / "features" / "onboarding" / "presentation" / "onboarding_screen.dart"
+)
 ACCESSIBILITY_TEST = ROOT / "apps" / "unitflow_app" / "test" / "accessibility_smoke_test.dart"
 VERIFY_BASH = ROOT / "scripts" / "verify.sh"
 VERIFY_POWERSHELL = ROOT / "scripts" / "verify.ps1"
@@ -66,6 +69,7 @@ def validate() -> list[str]:
         APP_THEME,
         APP_SHELL,
         CONVERTER_SCREEN,
+        ONBOARDING_SCREEN,
         ACCESSIBILITY_TEST,
         VERIFY_BASH,
         VERIFY_POWERSHELL,
@@ -113,6 +117,24 @@ def validate() -> list[str]:
         errors.append("converter pin controls do not both expose semantic toggled state")
     if "Semantics(\n    container: true,\n    label: label," not in converter:
         errors.append("converter labeled dropdowns do not expose explicit semantic context")
+
+    onboarding = text(ONBOARDING_SCREEN)
+    for token, message in (
+        (
+            "MediaQuery.disableAnimationsOf(context)",
+            "onboarding does not check the reduced-motion preference",
+        ),
+        (
+            "_pageController.jumpToPage(_page + 1)",
+            "onboarding does not provide a non-animated page transition",
+        ),
+        (
+            "duration: AppMotion.routeDuration(",
+            "onboarding page indicators do not use the shared reduced-motion duration policy",
+        ),
+    ):
+        if token not in onboarding:
+            errors.append(message)
 
     test_source = text(ACCESSIBILITY_TEST)
     for token in (
