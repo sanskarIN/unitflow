@@ -33,6 +33,9 @@ jobs:
       - name: Check repository inventory
         run: python3 scripts/check_repository_inventory.py
 
+      - name: Check cross-platform support contract
+        run: python3 scripts/check_platform_support.py
+
       - name: Check Markdown links
         run: python3 scripts/check_markdown_links.py
 
