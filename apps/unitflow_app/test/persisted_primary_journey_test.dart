@@ -57,7 +57,10 @@ void main() {
     expect(restarted.state.decimalPlaces, 6);
     expect(restarted.state.useGrouping, isFalse);
     expect(restarted.state.onboardingComplete, isTrue);
-    expect(restarted.state.favoriteUnitIds, containsAll(<String>['meter', 'double_meter']));
+    expect(
+      restarted.state.favoriteUnitIds,
+      containsAll(<String>['meter', 'double_meter']),
+    );
     expect(restarted.state.pinnedPairs, hasLength(1));
     expect(restarted.state.recents, hasLength(1));
     expect(restarted.state.recents.single.input, '12.5');
@@ -69,7 +72,7 @@ void main() {
       fromUnitId: 'double_meter',
       toUnitId: 'meter',
       decimalPlaces: restarted.state.decimalPlaces,
-      roundingMode: restarted.state.roundingMode,
+      rounding: restarted.state.roundingMode,
     );
     expect(result.output, ExactDecimal.parse('6'));
   });
