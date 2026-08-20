@@ -85,7 +85,7 @@ jobs:
           (cd dist && sha256sum * > SHA256SUMS)
 
       - name: Upload verification artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: unitflow-release-${{ github.ref_name }}
           path: dist/*
