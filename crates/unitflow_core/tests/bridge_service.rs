@@ -2,7 +2,7 @@ use unitflow_core::{
     BridgeBatchConversionRequest, BridgeConversionRequest, BridgeService, RoundMode,
     BRIDGE_BACKEND_ID, BRIDGE_CAPABILITIES, BRIDGE_CAPABILITY_BATCH_CONVERT,
     BRIDGE_CAPABILITY_CANONICAL_DECIMAL_TEXT, BRIDGE_CAPABILITY_CONVERT,
-    BRIDGE_PROTOCOL_VERSION,
+    BRIDGE_MAX_BATCH_TARGETS, BRIDGE_PROTOCOL_VERSION,
 };
 
 fn request(value: &str, from: &str, to: &str) -> BridgeConversionRequest {
@@ -81,6 +81,17 @@ fn rejects_non_canonical_decimal_text() {
 }
 
 #[test]
+fn rejects_malformed_unit_identifiers_before_catalog_lookup() {
+    let service = BridgeService::with_built_in_catalog().expect("built-in bridge service");
+    let failure = service
+        .convert(request("1", "../meter", "centimeter"))
+        .expect_err("malformed unit identifier must fail");
+
+    assert_eq!(failure.code, "unknown_unit");
+    assert!(!failure.message.contains("../meter"));
+}
+
+#[test]
 fn maps_unknown_units_without_echoing_untrusted_identifiers() {
     let service = BridgeService::with_built_in_catalog().expect("built-in bridge service");
     let failure = service
@@ -126,6 +137,23 @@ fn preserves_batch_target_order() {
     assert_eq!(results[0].output, "200");
     assert_eq!(results[1].to_unit_id, "millimeter");
     assert_eq!(results[1].output, "2000");
+}
+
+#[test]
+fn rejects_oversized_batch_requests_before_conversion() {
+    let service = BridgeService::with_built_in_catalog().expect("built-in bridge service");
+    let failure = service
+        .batch_convert(BridgeBatchConversionRequest {
+            value: "2".to_owned(),
+            from_unit_id: "meter".to_owned(),
+            target_unit_ids: vec!["centimeter".to_owned(); BRIDGE_MAX_BATCH_TARGETS + 1],
+            decimal_places: None,
+            round_mode: RoundMode::NearestEven,
+        })
+        .expect_err("oversized batch must fail before conversion");
+
+    assert_eq!(failure.code, "invalid_batch");
+    assert!(!failure.message.contains("centimeter"));
 }
 
 #[test]
