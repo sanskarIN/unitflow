@@ -51,13 +51,16 @@ pub struct BridgeBatchConversionRequest {
 /// Safe bridge failure with a stable machine-readable code.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct BridgeFailure {
-    pub code: &'static str,
-    pub message: &'static str,
+    pub code: String,
+    pub message: String,
 }
 
 impl BridgeFailure {
-    const fn new(code: &'static str, message: &'static str) -> Self {
-        Self { code, message }
+    fn new(code: &str, message: &str) -> Self {
+        Self {
+            code: code.to_owned(),
+            message: message.to_owned(),
+        }
     }
 
     fn from_domain(error: UnitFlowError) -> Self {
@@ -188,7 +191,7 @@ fn canonical_decimal(value: Decimal) -> String {
     value.normalize().to_string()
 }
 
-const fn invalid_decimal() -> BridgeFailure {
+fn invalid_decimal() -> BridgeFailure {
     BridgeFailure::new(
         "invalid_decimal",
         "Decimal text must be canonical and within supported bounds.",
