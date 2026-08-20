@@ -4,9 +4,9 @@ All notable changes to UnitFlow are documented here. The format is based on Keep
 
 ## [Unreleased]
 
-No additional changes are queued beyond the `2.0.12` development snapshot documented below.
+No changes are queued beyond the active `2.0.12` development snapshot documented below.
 
-## [2.0.12] - 2026-08-19
+## [2.0.12] - 2026-08-20
 
 ### Added
 
@@ -23,6 +23,9 @@ No additional changes are queued beyond the `2.0.12` development snapshot docume
 - Structured debug logging with sensitive-key redaction and bounded metadata.
 - Rust catalog/conversion invariant tests, Flutter persistence/export/navigation tests, and deterministic exact-decimal property checks.
 - Shared Rust/Dart bridge-parity fixture coverage, including all supported rounding modes.
+- Versioned Rust bridge service source layer with canonical decimal-string DTOs, ordered batch conversion, stable protocol metadata, and safe failure-code mapping for future generated bindings.
+- Rust bridge-service regression tests covering canonical payloads, error codes, protocol metadata, batch ordering, and camelCase serialization.
+- Persisted primary-journey regression coverage across controller restart, settings, favorites, pins, history, custom units, backup/import, conversion reuse, and reset.
 - Dependency-free Rust conversion micro-benchmark.
 - CI, CodeQL, dependency-review, and verified source-release workflows.
 - Generated-scaffold compatibility builds for Android, Web, Linux, Windows, macOS, and iOS; these remain preliminary evidence rather than reviewed native release verification.
@@ -41,6 +44,7 @@ No additional changes are queued beyond the `2.0.12` development snapshot docume
 - Rust minimum supported version is aligned at `1.82` with the standard-library APIs used by the core.
 - Rust bridge rounding-mode serialization now uses the documented camelCase identifiers such as `nearestEven` and `halfAwayFromZero`.
 - Rust bridge parity tests now deserialize the same versioned fixture consumed by Dart instead of maintaining a copied vector list.
+- Bridge documentation now distinguishes the implemented Rust source-level protocol service from still-pending generated native bindings and per-platform packaging.
 - Main conversion and batch flows now use the persisted user-selected rounding strategy.
 - App navigation expanded with dedicated Batch and History workspaces and desktop shortcuts.
 - Custom-unit deletion now removes dangling favorites, pins, and history references.
@@ -81,6 +85,7 @@ No additional changes are queued beyond the `2.0.12` development snapshot docume
 - Repository hygiene now rejects nested tracked `.env` variants, common signing credentials, generated localization output, and build artifacts in addition to checking the complete critical project/documentation set.
 - Tagged release packaging now rejects a `v*` tag unless it exactly equals `v` plus the Cargo workspace package version.
 - Native bridge payload validation rejects malformed/non-canonical decimal text and invalid stable unit identifiers before accepting generated-binding data.
+- Rust bridge failures expose stable safe codes/messages rather than raw domain internals or untrusted unit identifiers.
 - Public issue intake instructs reporters to remove secrets and sensitive personal data.
 
 ## [0.1.0-alpha.1] - Historical planning baseline
