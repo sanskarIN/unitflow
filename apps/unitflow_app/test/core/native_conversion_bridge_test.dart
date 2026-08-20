@@ -2,6 +2,98 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:unitflow/core/bridge/native_conversion_bridge.dart';
 
 void main() {
+  test('bridge startup metadata accepts the supported Rust contract', () {
+    final info = NativeBridgeInfo.fromMap(
+      const <String, Object?>{
+        'protocolVersion': 1,
+        'backendId': 'rust-core',
+        'capabilities': <Object?>[
+          'convert',
+          'batchConvert',
+          'canonicalDecimalText',
+        ],
+      },
+    );
+
+    expect(nativeBridgeProtocolVersion, 1);
+    expect(info.protocolVersion, nativeBridgeProtocolVersion);
+    expect(info.backendId, 'rust-core');
+    expect(info.capabilities, nativeBridgeRequiredCapabilities);
+    expect(info.isCompatible, isTrue);
+    expect(info.requireCompatible, returnsNormally);
+  });
+
+  test('bridge startup metadata fails closed on protocol mismatch', () {
+    final info = NativeBridgeInfo.fromMap(
+      const <String, Object?>{
+        'protocolVersion': 2,
+        'backendId': 'rust-core',
+        'capabilities': <Object?>[
+          'convert',
+          'batchConvert',
+          'canonicalDecimalText',
+        ],
+      },
+    );
+
+    expect(info.isCompatible, isFalse);
+    expect(
+      info.requireCompatible,
+      throwsA(
+        isA<NativeBridgeFailure>().having(
+          (failure) => failure.code,
+          'code',
+          'protocol_mismatch',
+        ),
+      ),
+    );
+  });
+
+  test('bridge startup metadata fails closed on missing capability', () {
+    final info = NativeBridgeInfo.fromMap(
+      const <String, Object?>{
+        'protocolVersion': 1,
+        'backendId': 'rust-core',
+        'capabilities': <Object?>['convert', 'canonicalDecimalText'],
+      },
+    );
+
+    expect(info.isCompatible, isFalse);
+    expect(
+      info.requireCompatible,
+      throwsA(
+        isA<NativeBridgeFailure>().having(
+          (failure) => failure.code,
+          'code',
+          'capability_mismatch',
+        ),
+      ),
+    );
+  });
+
+  test('bridge startup metadata rejects malformed capability payloads', () {
+    expect(
+      () => NativeBridgeInfo.fromMap(
+        const <String, Object?>{
+          'protocolVersion': 1,
+          'backendId': 'Rust Core',
+          'capabilities': <Object?>['convert'],
+        },
+      ),
+      throwsFormatException,
+    );
+    expect(
+      () => NativeBridgeInfo.fromMap(
+        const <String, Object?>{
+          'protocolVersion': 1,
+          'backendId': 'rust-core',
+          'capabilities': <Object?>['convert', 'convert'],
+        },
+      ),
+      throwsFormatException,
+    );
+  });
+
   test('bridge request keeps decimal values as strings', () {
     const request = NativeBridgeConversionRequest(
       value: '1234567890.000000000123',
