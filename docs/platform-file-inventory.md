@@ -16,6 +16,7 @@ The main repository inventory validator combines this file with `docs/repository
 
 - `docs/platform-file-inventory.md` — machine-maintained inventory for committed Flutter platform scaffold files.
 - `scripts/update_platform_inventory.py` — regenerates the platform scaffold inventory from the staged/tracked Git index.
+- `scripts/check_platform_support.py` — validates the six-target generation/build contract, partial-scaffold state, and Web-safe shared Dart imports.
 - `.github/workflows/materialize-platforms.yml` — generates, validates, inventories, and commits all six Flutter platform projects using stable Flutter.
 
 ## Tracked generated platform files
