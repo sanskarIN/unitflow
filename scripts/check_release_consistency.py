@@ -83,6 +83,31 @@ def declared_bridge_capabilities() -> tuple[set[str], set[str], set[str]]:
     return rust_capabilities, flutter_capabilities, documented_capabilities
 
 
+def declared_bridge_batch_limits() -> tuple[int, int, int]:
+    rust_limit = int(
+        require(
+            r"BRIDGE_MAX_BATCH_TARGETS:\s*usize\s*=\s*(\d+)",
+            text("crates/unitflow_core/src/bridge.rs"),
+            "Rust bridge batch target limit",
+        )
+    )
+    flutter_limit = int(
+        require(
+            r"nativeBridgeMaxBatchTargets\s*=\s*(\d+)",
+            text("apps/unitflow_app/lib/core/bridge/native_conversion_bridge.dart"),
+            "Flutter bridge batch target limit",
+        )
+    )
+    documented_limit = int(
+        require(
+            r"Current maximum batch targets:\s*`(\d+)`",
+            text("docs/bridge-protocol.md"),
+            "documented bridge batch target limit",
+        )
+    )
+    return rust_limit, flutter_limit, documented_limit
+
+
 def main() -> int:
     errors: list[str] = []
     cargo = text("Cargo.toml")
@@ -210,6 +235,20 @@ def main() -> int:
             f"{sorted(documented_capabilities)!r}."
         )
 
+    rust_batch_limit, flutter_batch_limit, documented_batch_limit = (
+        declared_bridge_batch_limits()
+    )
+    if documented_batch_limit <= 0:
+        errors.append("Bridge batch target limit must be positive.")
+    if rust_batch_limit != documented_batch_limit:
+        errors.append(
+            f"Rust bridge batch limit {rust_batch_limit} does not match documentation {documented_batch_limit}."
+        )
+    if flutter_batch_limit != documented_batch_limit:
+        errors.append(
+            f"Flutter bridge batch limit {flutter_batch_limit} does not match documentation {documented_batch_limit}."
+        )
+
     if errors:
         print("Release consistency validation failed:", file=sys.stderr)
         for error in errors:
@@ -220,7 +259,8 @@ def main() -> int:
         "Release consistency validation passed: "
         f"version={cargo_version}, rust={cargo_rust_version}, "
         f"schema={dart_schema}, bridge_protocol={documented_protocol}, "
-        f"bridge_capabilities={','.join(sorted(documented_capabilities))}."
+        f"bridge_capabilities={','.join(sorted(documented_capabilities))}, "
+        f"bridge_batch_limit={documented_batch_limit}."
     )
     return 0
 
