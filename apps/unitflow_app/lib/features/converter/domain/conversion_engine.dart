@@ -2,6 +2,9 @@ import '../../../core/math/exact_decimal.dart';
 import '../data/unit_catalog.dart';
 import 'unit_models.dart';
 
+/// Maximum targets accepted by one conversion-engine batch request.
+const int maxBatchConversionTargets = 256;
+
 abstract interface class ConversionEngine {
   UnitCatalog get catalog;
 
@@ -39,9 +42,7 @@ final class ExactConversionEngine implements ConversionEngine {
     int decimalPlaces = 12,
     DecimalRoundingMode rounding = DecimalRoundingMode.nearestEven,
   }) {
-    if (decimalPlaces < 0 || decimalPlaces > 28) {
-      throw ConversionFailure('Decimal places must be between 0 and 28.');
-    }
+    _validateDecimalPlaces(decimalPlaces);
 
     final from = catalog.byId(fromUnitId);
     final to = catalog.byId(toUnitId);
@@ -73,17 +74,31 @@ final class ExactConversionEngine implements ConversionEngine {
     required Iterable<String> toUnitIds,
     int decimalPlaces = 12,
     DecimalRoundingMode rounding = DecimalRoundingMode.nearestEven,
-  }) => toUnitIds
-      .map(
-        (toUnitId) => convert(
-          value: value,
-          fromUnitId: fromUnitId,
-          toUnitId: toUnitId,
-          decimalPlaces: decimalPlaces,
-          rounding: rounding,
-        ),
-      )
-      .toList(growable: false);
+  }) {
+    _validateDecimalPlaces(decimalPlaces);
+    final targets = toUnitIds.take(maxBatchConversionTargets + 1).toList(growable: false);
+    if (targets.length > maxBatchConversionTargets) {
+      throw const ConversionFailure('Batch conversion supports at most 256 target units.');
+    }
+
+    return targets
+        .map(
+          (toUnitId) => convert(
+            value: value,
+            fromUnitId: fromUnitId,
+            toUnitId: toUnitId,
+            decimalPlaces: decimalPlaces,
+            rounding: rounding,
+          ),
+        )
+        .toList(growable: false);
+  }
+}
+
+void _validateDecimalPlaces(int decimalPlaces) {
+  if (decimalPlaces < 0 || decimalPlaces > 28) {
+    throw const ConversionFailure('Decimal places must be between 0 and 28.');
+  }
 }
 
 final class ConversionFailure implements Exception {
