@@ -124,7 +124,10 @@ final class _OnboardingScreenState extends State<OnboardingScreen> {
                         children: List<Widget>.generate(
                           pages.length,
                           (index) => AnimatedContainer(
-                            duration: const Duration(milliseconds: 180),
+                            duration: AppMotion.routeDuration(
+                              context,
+                              const Duration(milliseconds: 180),
+                            ),
                             margin: const EdgeInsets.symmetric(horizontal: AppSpacing.xxs),
                             width: index == _page ? 28 : 8,
                             height: 8,
@@ -168,6 +171,10 @@ final class _OnboardingScreenState extends State<OnboardingScreen> {
   Future<void> _next(int pageCount) async {
     if (_page == pageCount - 1) {
       await widget.appController.completeOnboarding();
+      return;
+    }
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _pageController.jumpToPage(_page + 1);
       return;
     }
     await _pageController.nextPage(
