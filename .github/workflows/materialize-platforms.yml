@@ -5,8 +5,11 @@ on:
   push:
     branches: [main]
     paths:
+      - 'apps/unitflow_app/**'
       - '.github/workflows/materialize-platforms.yml'
       - 'scripts/bootstrap_platforms.sh'
+      - 'scripts/bootstrap_platforms.ps1'
+      - 'scripts/check_platform_support.py'
       - 'scripts/update_platform_inventory.py'
 
 permissions:
@@ -91,9 +94,10 @@ jobs:
           python3 scripts/update_platform_inventory.py
           git add docs/platform-file-inventory.md
 
-      - name: Validate inventories and repository consistency
+      - name: Validate cross-platform repository state
         run: |
           python3 scripts/check_repository_inventory.py
+          python3 scripts/check_platform_support.py
           python3 scripts/check_release_consistency.py
           python3 scripts/check_repository_hygiene.py
 
