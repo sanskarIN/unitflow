@@ -28,6 +28,9 @@ repository_inventory = load_module(
 platform_inventory = load_module(
     "update_platform_inventory", "scripts/update_platform_inventory.py"
 )
+platform_support = load_module(
+    "check_platform_support", "scripts/check_platform_support.py"
+)
 
 
 class MarkdownLinkParserTests(unittest.TestCase):
@@ -112,6 +115,7 @@ class RepositoryInventoryTests(unittest.TestCase):
         self.assertIn("scripts/check_repository_inventory.py", documented)
         self.assertIn("docs/platform-file-inventory.md", documented)
         self.assertIn("scripts/update_platform_inventory.py", documented)
+        self.assertIn("scripts/check_platform_support.py", documented)
         self.assertIn(".github/workflows/materialize-platforms.yml", documented)
 
     def test_inventory_entries_are_unique(self) -> None:
@@ -131,6 +135,22 @@ class RepositoryInventoryTests(unittest.TestCase):
         for platform in ("android", "ios", "web", "windows", "linux", "macos"):
             prefix = f"apps/unitflow_app/{platform}/"
             self.assertIn(prefix, platform_inventory.PLATFORM_PREFIXES)
+
+
+class PlatformSupportTests(unittest.TestCase):
+    def test_support_contract_targets_exactly_six_platforms(self) -> None:
+        self.assertEqual(
+            platform_support.PLATFORMS,
+            ("android", "ios", "web", "windows", "linux", "macos"),
+        )
+
+    def test_each_platform_has_a_release_build_command(self) -> None:
+        self.assertEqual(set(platform_support.BUILD_COMMANDS), set(platform_support.PLATFORMS))
+        for command in platform_support.BUILD_COMMANDS.values():
+            self.assertIn("--release", command)
+
+    def test_repository_satisfies_cross_platform_contract(self) -> None:
+        self.assertEqual(platform_support.validate(), [])
 
 
 if __name__ == "__main__":
