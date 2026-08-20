@@ -46,6 +46,9 @@ try {
     Write-Host '==> Repository inventory'
     Invoke-PythonCheck -Arguments @('scripts/check_repository_inventory.py') -FailureMessage 'Repository inventory validation failed'
 
+    Write-Host '==> Cross-platform support contract'
+    Invoke-PythonCheck -Arguments @('scripts/check_platform_support.py') -FailureMessage 'Cross-platform support validation failed'
+
     Write-Host '==> Markdown links'
     Invoke-PythonCheck -Arguments @('scripts/check_markdown_links.py') -FailureMessage 'Markdown link validation failed'
 
