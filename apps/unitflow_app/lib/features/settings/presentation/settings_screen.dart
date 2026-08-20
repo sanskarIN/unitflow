@@ -331,10 +331,16 @@ final class _SectionCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Icon(icon, color: Theme.of(context).colorScheme.primary),
               const SizedBox(width: AppSpacing.xs),
-              Text(title, style: Theme.of(context).textTheme.titleLarge),
+              Expanded(
+                child: Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: AppSpacing.md),
