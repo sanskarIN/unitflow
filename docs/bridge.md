@@ -10,15 +10,17 @@ The Rust crate is the authoritative native conversion domain. Flutter currently 
 - explicit startup capabilities for single conversion, ordered batch conversion, and canonical decimal text;
 - generator-friendly `BridgeInfo` startup metadata exposed through `BridgeService::info()`;
 - generator-friendly single and ordered batch conversion DTOs;
+- a shared `256`-target ceiling for native batch requests;
+- strict bridge unit-ID bounds aligned with the Flutter DTO boundary;
 - canonical base-10 decimal strings at the boundary;
 - camelCase startup/request/response serialization compatible with the documented Flutter contract;
 - a long-lived `BridgeService` over a validated `Converter`;
-- stable, safe failure codes for invalid decimal input, unknown units, category mismatches, invalid precision, catalog failures, and conversion failures;
-- regression tests for startup metadata, capability ordering, canonical decimal enforcement, failure-code behavior, batch ordering, and serialized field names.
+- stable, safe failure codes for invalid decimal input, unknown units, category mismatches, invalid precision, oversized batches, catalog failures, and conversion failures;
+- regression tests for startup metadata, capability ordering, batch safety bounds, unit-ID validation, canonical decimal enforcement, failure-code behavior, batch ordering, and serialized field names.
 
-`apps/unitflow_app/lib/core/bridge/native_conversion_bridge.dart` now provides the matching Flutter-side negotiation contract. `NativeBridgeInfo` bounds and validates backend metadata, requires protocol version `1`, requires the documented capability set, exposes an `isCompatible` diagnostic predicate, and provides `requireCompatible()` so a future generated adapter can fail closed before native routing. Protocol and capability mismatches have stable safe failure codes.
+`apps/unitflow_app/lib/core/bridge/native_conversion_bridge.dart` provides the matching Flutter-side negotiation and conversion contract. `NativeBridgeInfo` bounds and validates backend metadata, requires protocol version `1`, requires the documented capability set, exposes an `isCompatible` diagnostic predicate, and provides `requireCompatible()` so a future generated adapter can fail closed before native routing. The interface now exposes both single conversion and ordered batch conversion, and Flutter enforces the same `256`-target batch ceiling before serialization.
 
-`scripts/check_release_consistency.py` now prevents the protocol number and capability set from drifting between Rust, Flutter, fixtures, and documentation. Repository-validator tests lock the current cross-language contract.
+`scripts/check_release_consistency.py` prevents the protocol number, capability set, and batch target ceiling from drifting between Rust, Flutter, fixtures, and documentation. Repository-validator tests lock the current cross-language contract.
 
 This source-level negotiation is an important prerequisite, **not the completed production native integration**. Generated Rust↔Flutter bindings, native library loading/packaging, actual app startup selection, generated-boundary parity execution, and per-platform release validation are still required before a native build can claim Rust bridge authority.
 
@@ -30,6 +32,7 @@ The production bridge must:
 - preserve decimal values as strings across the FFI boundary;
 - return structured errors instead of panicking across FFI;
 - negotiate protocol and required capabilities before routing conversions;
+- enforce bounded single/batch request contracts before expensive work;
 - support catalog lookup, single conversion, batch conversion, notation, and custom-unit validation;
 - produce results equivalent to the Dart fallback for the same catalog snapshot and settings;
 - require no network connection;
@@ -57,7 +60,7 @@ Additional capabilities may be introduced compatibly when existing required sema
 
 ## Boundary shape
 
-A bridge request should use plain serializable values such as:
+A bridge request uses plain serializable values such as:
 
 ```text
 value: decimal string
@@ -67,21 +70,32 @@ decimal_places: optional integer
 round_mode: stable enum/string
 ```
 
-A bridge response should return:
+An ordered batch request uses:
+
+```text
+value: decimal string
+from_unit_id: stable string
+target_unit_ids: ordered list of stable strings
+decimal_places: optional integer
+round_mode: stable enum/string
+```
+
+One native batch request may contain at most `256` targets. Request order must be preserved in the response. Oversized batches fail before conversion work with `invalid_batch`.
+
+A bridge response returns:
 
 ```text
 input: decimal string
 output: decimal string
 from_unit_id: stable string
 to_unit_id: stable string
-category: stable enum/string
 ```
 
 Passing decimal strings prevents accidental binary floating-point conversion in generated bindings.
 
 ## Error contract
 
-Bridge adapters should translate `UnitFlowError` and binding-layer failures into stable error codes plus safe human-readable messages. Unknown units, category mismatch, invalid precision, malformed custom units, division by zero, arithmetic overflow, protocol mismatch, missing capabilities, and native bridge availability must remain distinguishable for tests and diagnostics.
+Bridge adapters should translate `UnitFlowError` and binding-layer failures into stable error codes plus safe human-readable messages. Unknown units, category mismatch, invalid precision, malformed custom units, oversized batches, division by zero, arithmetic overflow, protocol mismatch, missing capabilities, and native bridge availability must remain distinguishable for tests and diagnostics.
 
 The Rust source service deliberately does not echo untrusted unit identifiers or raw internal error details in its safe bridge messages. Flutter's `NativeBridgeFailure.toString()` likewise avoids embedding arbitrary detail.
 
@@ -96,11 +110,12 @@ Before the native bridge becomes the default conversion path, automated tests sh
 - very small and large representable decimals;
 - every rounding mode supported by both sides;
 - batch conversion ordering;
+- empty, normal, maximum-size, and oversized batches;
 - custom multiplicative and affine units;
 - invalid unit IDs and category mismatches;
 - protocol mismatch, capability mismatch, and malformed startup metadata.
 
-The repository already shares versioned conversion/rounding vectors between Rust and Dart, and both sides now test the source-level negotiation contract. Those tests still do not substitute for executing the generated native binding on each supported platform.
+The repository already shares versioned conversion/rounding vectors between Rust and Dart, and both sides now test the source-level negotiation and bounded batch contracts. Those tests still do not substitute for executing the generated native binding on each supported platform.
 
 ## Failure strategy
 
@@ -108,4 +123,4 @@ The app should not silently switch calculation engines after a native calculatio
 
 ## Versioning
 
-Generated bindings and bridge DTOs are tied to a bridge protocol version. Breaking changes must update the protocol version, source declarations, documentation, and parity fixtures together. Capability declarations are also repository-validated so Rust, Flutter, and documentation cannot silently disagree.
+Generated bindings and bridge DTOs are tied to a bridge protocol version. Breaking changes must update the protocol version, source declarations, documentation, and parity fixtures together. Capability declarations and batch limits are repository-validated so Rust, Flutter, and documentation cannot silently disagree.
