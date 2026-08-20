@@ -83,7 +83,7 @@ def declared_bridge_capabilities() -> tuple[set[str], set[str], set[str]]:
     return rust_capabilities, flutter_capabilities, documented_capabilities
 
 
-def declared_bridge_batch_limits() -> tuple[int, int, int]:
+def declared_bridge_batch_limits() -> tuple[int, int, int, int]:
     rust_limit = int(
         require(
             r"BRIDGE_MAX_BATCH_TARGETS:\s*usize\s*=\s*(\d+)",
@@ -91,11 +91,20 @@ def declared_bridge_batch_limits() -> tuple[int, int, int]:
             "Rust bridge batch target limit",
         )
     )
-    flutter_limit = int(
+    flutter_bridge_limit = int(
         require(
             r"nativeBridgeMaxBatchTargets\s*=\s*(\d+)",
             text("apps/unitflow_app/lib/core/bridge/native_conversion_bridge.dart"),
             "Flutter bridge batch target limit",
+        )
+    )
+    flutter_fallback_limit = int(
+        require(
+            r"maxBatchConversionTargets\s*=\s*(\d+)",
+            text(
+                "apps/unitflow_app/lib/features/converter/domain/conversion_engine.dart"
+            ),
+            "Flutter fallback batch target limit",
         )
     )
     documented_limit = int(
@@ -105,7 +114,7 @@ def declared_bridge_batch_limits() -> tuple[int, int, int]:
             "documented bridge batch target limit",
         )
     )
-    return rust_limit, flutter_limit, documented_limit
+    return rust_limit, flutter_bridge_limit, flutter_fallback_limit, documented_limit
 
 
 def main() -> int:
@@ -235,18 +244,27 @@ def main() -> int:
             f"{sorted(documented_capabilities)!r}."
         )
 
-    rust_batch_limit, flutter_batch_limit, documented_batch_limit = (
-        declared_bridge_batch_limits()
-    )
+    (
+        rust_batch_limit,
+        flutter_bridge_batch_limit,
+        flutter_fallback_batch_limit,
+        documented_batch_limit,
+    ) = declared_bridge_batch_limits()
     if documented_batch_limit <= 0:
         errors.append("Bridge batch target limit must be positive.")
     if rust_batch_limit != documented_batch_limit:
         errors.append(
             f"Rust bridge batch limit {rust_batch_limit} does not match documentation {documented_batch_limit}."
         )
-    if flutter_batch_limit != documented_batch_limit:
+    if flutter_bridge_batch_limit != documented_batch_limit:
         errors.append(
-            f"Flutter bridge batch limit {flutter_batch_limit} does not match documentation {documented_batch_limit}."
+            "Flutter bridge batch limit "
+            f"{flutter_bridge_batch_limit} does not match documentation {documented_batch_limit}."
+        )
+    if flutter_fallback_batch_limit != documented_batch_limit:
+        errors.append(
+            "Flutter fallback batch limit "
+            f"{flutter_fallback_batch_limit} does not match documentation {documented_batch_limit}."
         )
 
     if errors:
