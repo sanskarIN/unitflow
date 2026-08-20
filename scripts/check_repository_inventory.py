@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Require every tracked file to be documented exactly once in the repository inventory."""
+"""Require every tracked file to be documented exactly once in repository inventories."""
 
 from __future__ import annotations
 
@@ -10,7 +10,10 @@ from collections import Counter
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-INVENTORY = ROOT / "docs" / "repository-inventory.md"
+INVENTORIES = (
+    ROOT / "docs" / "repository-inventory.md",
+    ROOT / "docs" / "platform-file-inventory.md",
+)
 ENTRY_RE = re.compile(r"^- `([^`]+)`\s+—\s+.+$", re.MULTILINE)
 
 
@@ -29,19 +32,32 @@ def tracked_files() -> list[str]:
 
 
 def documented_files() -> list[str]:
-    text = INVENTORY.read_text(encoding="utf-8")
-    return ENTRY_RE.findall(text)
+    documented: list[str] = []
+    for inventory in INVENTORIES:
+        if inventory.is_file():
+            documented.extend(ENTRY_RE.findall(inventory.read_text(encoding="utf-8")))
+    return documented
 
 
 def main() -> int:
-    if not INVENTORY.is_file():
-        print("Repository inventory is missing: docs/repository-inventory.md", file=sys.stderr)
+    missing_inventories = [
+        inventory.relative_to(ROOT).as_posix()
+        for inventory in INVENTORIES
+        if not inventory.is_file()
+    ]
+    if missing_inventories:
+        print("Repository inventory file(s) missing:", file=sys.stderr)
+        for path in missing_inventories:
+            print(f"- {path}", file=sys.stderr)
         return 1
 
     try:
         tracked = tracked_files()
     except (subprocess.CalledProcessError, FileNotFoundError) as error:
-        print(f"Repository inventory validation could not inspect Git files: {error}", file=sys.stderr)
+        print(
+            f"Repository inventory validation could not inspect Git files: {error}",
+            file=sys.stderr,
+        )
         return 2
 
     documented = documented_files()
@@ -68,7 +84,11 @@ def main() -> int:
                 print(f"  - {path}", file=sys.stderr)
         return 1
 
-    print(f"Repository inventory validation passed: {len(tracked)} tracked files documented exactly once.")
+    print(
+        "Repository inventory validation passed: "
+        f"{len(tracked)} tracked files documented exactly once across "
+        f"{len(INVENTORIES)} inventories."
+    )
     return 0
 
 
