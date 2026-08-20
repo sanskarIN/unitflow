@@ -91,6 +91,7 @@ final class _ConverterScreenState extends State<ConverterScreen> {
       context: context,
       showDragHandle: true,
       isScrollControlled: true,
+      sheetAnimationStyle: AppMotion.modalSurfaceStyle(context),
       builder: (context) => SafeArea(
         child: FractionallySizedBox(
           heightFactor: 0.78,
@@ -155,6 +156,8 @@ final class _ConverterCard extends StatelessWidget {
     final theme = Theme.of(context);
     final strings = AppLocalizations.of(context);
     final units = controller.categoryUnits;
+    final isPinned = controller.isCurrentPairPinned;
+    final pinTooltip = isPinned ? strings.unpinUnitPair : strings.pinUnitPair;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.lg),
@@ -178,15 +181,14 @@ final class _ConverterCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                IconButton.filledTonal(
-                  tooltip: controller.isCurrentPairPinned
-                      ? strings.unpinUnitPair
-                      : strings.pinUnitPair,
-                  onPressed: () => controller.toggleCurrentPairPinned(),
-                  icon: Icon(
-                    controller.isCurrentPairPinned
-                        ? Icons.push_pin
-                        : Icons.push_pin_outlined,
+                MergeSemantics(
+                  child: Semantics(
+                    toggled: isPinned,
+                    child: IconButton.filledTonal(
+                      tooltip: pinTooltip,
+                      onPressed: () => controller.toggleCurrentPairPinned(),
+                      icon: Icon(isPinned ? Icons.push_pin : Icons.push_pin_outlined),
+                    ),
                   ),
                 ),
               ],
@@ -286,7 +288,7 @@ final class _ConverterCard extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.lg),
             Semantics(
-              liveRegion: controller.result != null,
+              container: true,
               label: controller.result == null
                   ? strings.noConversionResult
                   : strings.conversionResultSemantics(
@@ -377,6 +379,7 @@ final class _ConverterSidePanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final strings = AppLocalizations.of(context);
+    final isPinned = controller.isCurrentPairPinned;
     return Column(
       children: <Widget>[
         Card(
@@ -418,15 +421,14 @@ final class _ConverterSidePanel extends StatelessWidget {
                   '${controller.fromUnit?.name ?? '—'} → ${controller.toUnit?.name ?? '—'}',
                 ),
                 const SizedBox(height: AppSpacing.md),
-                FilledButton.tonalIcon(
-                  onPressed: () => controller.toggleCurrentPairPinned(),
-                  icon: Icon(
-                    controller.isCurrentPairPinned
-                        ? Icons.push_pin
-                        : Icons.push_pin_outlined,
-                  ),
-                  label: Text(
-                    controller.isCurrentPairPinned ? strings.unpinPair : strings.pinPair,
+                MergeSemantics(
+                  child: Semantics(
+                    toggled: isPinned,
+                    child: FilledButton.tonalIcon(
+                      onPressed: () => controller.toggleCurrentPairPinned(),
+                      icon: Icon(isPinned ? Icons.push_pin : Icons.push_pin_outlined),
+                      label: Text(isPinned ? strings.unpinPair : strings.pinPair),
+                    ),
                   ),
                 ),
               ],
@@ -454,21 +456,26 @@ final class _LabeledDropdown<T> extends StatelessWidget {
   final ValueChanged<T?> onChanged;
 
   @override
-  Widget build(BuildContext context) => InputDecorator(
-    decoration: InputDecoration(labelText: label),
-    child: DropdownButtonHideUnderline(
-      child: DropdownButton<T>(
-        value: value,
-        isExpanded: true,
-        items: items
-            .map(
-              (item) => DropdownMenuItem<T>(
-                value: item,
-                child: Text(itemLabel(item), overflow: TextOverflow.ellipsis),
-              ),
-            )
-            .toList(growable: false),
-        onChanged: onChanged,
+  Widget build(BuildContext context) => Semantics(
+    container: true,
+    label: label,
+    value: value == null ? null : itemLabel(value as T),
+    child: InputDecorator(
+      decoration: InputDecoration(labelText: label),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<T>(
+          value: value,
+          isExpanded: true,
+          items: items
+              .map(
+                (item) => DropdownMenuItem<T>(
+                  value: item,
+                  child: Text(itemLabel(item), overflow: TextOverflow.ellipsis),
+                ),
+              )
+              .toList(growable: false),
+          onChanged: onChanged,
+        ),
       ),
     ),
   );
