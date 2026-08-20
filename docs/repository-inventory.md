@@ -91,6 +91,7 @@ This inventory documents every tracked first-party file in UnitFlow and its role
 - `apps/unitflow_app/test/custom_unit_integration_test.dart` — custom-unit creation/use/persistence integration behavior.
 - `apps/unitflow_app/test/localization_smoke_test.dart` — generated localization availability/smoke behavior.
 - `apps/unitflow_app/test/navigation_smoke_test.dart` — adaptive shell destination reachability.
+- `apps/unitflow_app/test/persisted_primary_journey_test.dart` — controller/repository restart, backup/import, custom-unit, settings, and reset persistence journey coverage.
 - `apps/unitflow_app/test/recent_validation_test.dart` — recent-history unit/category/input bounds and locale-text preservation.
 - `apps/unitflow_app/test/reset_persistence_test.dart` — local reset persistence, queued-write ordering, and safe reset-failure warning regression coverage.
 - `apps/unitflow_app/test/core/app_log_test.dart` — structured log redaction behavior.
@@ -105,6 +106,7 @@ This inventory documents every tracked first-party file in UnitFlow and its role
 
 - `crates/unitflow_core/Cargo.toml` — Rust core crate metadata and dependencies inherited from the workspace.
 - `crates/unitflow_core/src/lib.rs` — public module/re-export surface for the core crate.
+- `crates/unitflow_core/src/bridge.rs` — versioned generator-friendly Rust bridge service, canonical decimal-string DTOs, batch conversion, protocol metadata, and stable safe error mapping.
 - `crates/unitflow_core/src/model.rs` — validated Rust category/unit definitions, stable domain models, and bounded alias normalization.
 - `crates/unitflow_core/src/catalog.rs` — built-in unit catalog, lookup, category filtering, and search behavior.
 - `crates/unitflow_core/src/converter.rs` — checked exact-decimal single/batch conversion, explicit rounding strategies, and camelCase bridge serialization identifiers.
@@ -123,6 +125,7 @@ This inventory documents every tracked first-party file in UnitFlow and its role
 - `crates/unitflow_core/tests/invariants.rs` — catalog-wide identity/round-trip/domain invariants.
 - `crates/unitflow_core/tests/notation.rs` — notation-formatting behavior.
 - `crates/unitflow_core/tests/bridge_parity.rs` — Rust deserialization/execution of the shared Rust↔Dart parity fixture.
+- `crates/unitflow_core/tests/bridge_service.rs` — Rust bridge protocol metadata, canonical DTO, stable failure-code, batch ordering, and serde contract tests.
 
 ## Shared fixtures
 
