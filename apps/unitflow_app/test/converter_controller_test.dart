@@ -3,6 +3,7 @@ import 'package:unitflow/app/app_controller.dart';
 import 'package:unitflow/core/math/exact_decimal.dart';
 import 'package:unitflow/core/persistence/user_state.dart';
 import 'package:unitflow/core/persistence/user_state_repository.dart';
+import 'package:unitflow/features/converter/domain/conversion_engine.dart';
 import 'package:unitflow/features/converter/domain/unit_models.dart';
 import 'package:unitflow/features/converter/presentation/converter_controller.dart';
 
@@ -70,5 +71,41 @@ void main() {
     expect(results, isNotEmpty);
     expect(results.every((result) => result.from.category == UnitCategory.mass), isTrue);
     expect(results.every((result) => result.to.category == UnitCategory.mass), isTrue);
+  });
+
+  test('fallback batch engine accepts the documented maximum target count', () {
+    final engine = ExactConversionEngine();
+    final results = engine.batchConvert(
+      value: ExactDecimal.parse('2'),
+      fromUnitId: 'meter',
+      toUnitIds: List<String>.filled(maxBatchConversionTargets, 'centimeter'),
+    );
+
+    expect(maxBatchConversionTargets, 256);
+    expect(results, hasLength(maxBatchConversionTargets));
+    expect(results.first.output, ExactDecimal.parse('200'));
+    expect(results.last.output, ExactDecimal.parse('200'));
+  });
+
+  test('fallback batch engine rejects requests above the shared target limit', () {
+    final engine = ExactConversionEngine();
+
+    expect(
+      () => engine.batchConvert(
+        value: ExactDecimal.parse('2'),
+        fromUnitId: 'meter',
+        toUnitIds: List<String>.filled(
+          maxBatchConversionTargets + 1,
+          'centimeter',
+        ),
+      ),
+      throwsA(
+        isA<ConversionFailure>().having(
+          (failure) => failure.message,
+          'message',
+          contains('at most 256'),
+        ),
+      ),
+    );
   });
 }
