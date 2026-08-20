@@ -118,35 +118,46 @@ final class _CustomUnitDialogState extends State<_CustomUnitDialog> {
                       (value?.trim().isEmpty ?? true) ? strings.symbolRequired : null,
                 ),
                 const SizedBox(height: AppSpacing.sm),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Expanded(
-                      child: TextFormField(
-                        controller: _scaleController,
-                        decoration: InputDecoration(labelText: strings.scaleLabel),
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                          signed: true,
-                        ),
-                        validator: (value) =>
-                            (value?.trim().isEmpty ?? true) ? strings.requiredField : null,
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final scaleField = TextFormField(
+                      controller: _scaleController,
+                      decoration: InputDecoration(labelText: strings.scaleLabel),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                        signed: true,
                       ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      child: TextFormField(
-                        controller: _offsetController,
-                        decoration: InputDecoration(labelText: strings.offsetLabel),
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                          signed: true,
-                        ),
-                        validator: (value) =>
-                            (value?.trim().isEmpty ?? true) ? strings.requiredField : null,
+                      validator: (value) =>
+                          (value?.trim().isEmpty ?? true) ? strings.requiredField : null,
+                    );
+                    final offsetField = TextFormField(
+                      controller: _offsetController,
+                      decoration: InputDecoration(labelText: strings.offsetLabel),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                        signed: true,
                       ),
-                    ),
-                  ],
+                      validator: (value) =>
+                          (value?.trim().isEmpty ?? true) ? strings.requiredField : null,
+                    );
+                    if (constraints.maxWidth < 420) {
+                      return Column(
+                        children: <Widget>[
+                          scaleField,
+                          const SizedBox(height: AppSpacing.sm),
+                          offsetField,
+                        ],
+                      );
+                    }
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Expanded(child: scaleField),
+                        const SizedBox(width: AppSpacing.sm),
+                        Expanded(child: offsetField),
+                      ],
+                    );
+                  },
                 ),
                 if (_formulaError != null) ...<Widget>[
                   const SizedBox(height: AppSpacing.xs),
