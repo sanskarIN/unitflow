@@ -34,7 +34,7 @@ void main() {
     expect(routeDuration, Duration.zero);
   });
 
-  testWidgets('pin control exposes its toggled semantic state', (tester) async {
+  testWidgets('pin controls expose their toggled semantic state', (tester) async {
     final semantics = tester.ensureSemantics();
     addTearDown(semantics.dispose);
 
@@ -49,21 +49,26 @@ void main() {
     await tester.pumpWidget(UnitFlowApp(appController: controller));
     await tester.pumpAndSettle();
 
-    final unpinned = find.byTooltip('Pin unit pair');
-    expect(unpinned, findsOneWidget);
+    final unpinnedSemantics = _pinSemantics(isToggled: false);
+    expect(unpinnedSemantics, findsNWidgets(2));
     expect(
-      tester.getSemantics(unpinned),
+      tester.getSemantics(unpinnedSemantics.first),
       isSemantics(hasToggledState: true, isToggled: false),
     );
 
-    await tester.tap(unpinned);
+    await tester.tap(find.byTooltip('Pin unit pair'));
     await tester.pump();
 
-    final pinned = find.byTooltip('Unpin unit pair');
-    expect(pinned, findsOneWidget);
+    final pinnedSemantics = _pinSemantics(isToggled: true);
+    expect(pinnedSemantics, findsNWidgets(2));
     expect(
-      tester.getSemantics(pinned),
+      tester.getSemantics(pinnedSemantics.first),
       isSemantics(hasToggledState: true, isToggled: true),
     );
   });
 }
+
+Finder _pinSemantics({required bool isToggled}) => find.byWidgetPredicate(
+  (widget) => widget is Semantics && widget.properties.toggled == isToggled,
+  description: 'pin semantic state toggled=$isToggled',
+);
