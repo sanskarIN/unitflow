@@ -11,6 +11,7 @@ Future<CustomUnitData?> showCustomUnitDialog(
   UnitCategory initialCategory = UnitCategory.length,
 }) => showDialog<CustomUnitData>(
   context: context,
+  animationStyle: AppMotion.modalSurfaceStyle(context),
   builder: (context) => _CustomUnitDialog(initialCategory: initialCategory),
 );
 
