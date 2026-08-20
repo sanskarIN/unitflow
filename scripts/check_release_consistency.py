@@ -102,9 +102,21 @@ def main() -> int:
             "documented bridge protocol version",
         )
     )
+    rust_bridge_protocol = int(
+        require(
+            r"BRIDGE_PROTOCOL_VERSION:\s*u32\s*=\s*(\d+)",
+            text("crates/unitflow_core/src/bridge.rs"),
+            "Rust bridge protocol version",
+        )
+    )
     if fixture_protocol != documented_protocol:
         errors.append(
             f"Bridge fixture protocol {fixture_protocol!r} does not match documented protocol {documented_protocol}."
+        )
+    if rust_bridge_protocol != documented_protocol:
+        errors.append(
+            "Rust bridge protocol "
+            f"{rust_bridge_protocol} does not match documented protocol {documented_protocol}."
         )
 
     if errors:
