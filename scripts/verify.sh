@@ -15,6 +15,9 @@ python3 -m unittest discover -s scripts/tests -p 'test_*.py'
 echo "==> Repository inventory"
 python3 scripts/check_repository_inventory.py
 
+echo "==> Cross-platform support contract"
+python3 scripts/check_platform_support.py
+
 echo "==> Markdown links"
 python3 scripts/check_markdown_links.py
 
