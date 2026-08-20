@@ -25,6 +25,8 @@ Run from the repository root:
 ```bash
 python3 -m unittest discover -s scripts/tests -p 'test_*.py'
 python3 scripts/check_repository_inventory.py
+python3 scripts/check_platform_support.py
+python3 scripts/check_accessibility_contract.py
 python3 scripts/check_markdown_links.py
 python3 scripts/check_release_consistency.py
 python3 scripts/check_repository_hygiene.py
@@ -34,6 +36,8 @@ These checks cover:
 
 - regression tests for the dependency-free repository validators;
 - exact `git ls-files` parity with the exhaustive documented repository inventory;
+- six-platform generation/build/project-set/Web compatibility;
+- source-level reduced-motion policy, modal-surface coverage, converter semantic safeguards, accessibility smoke coverage, and verification wiring;
 - repository-local Markdown file targets;
 - Cargo/Flutter/About version consistency;
 - Cargo minimum-Rust-version versus setup-documentation parity;
@@ -121,6 +125,8 @@ Coverage priorities:
 
 `accessibility_smoke_test.dart` locks the centralized reduced-motion policy and verifies that the converter pin action exposes semantic on/off state. It is source/widget evidence only; it does not replace TalkBack, VoiceOver, keyboard/focus, contrast, touch-target, or large-text review on real release-candidate platforms.
 
+`scripts/check_accessibility_contract.py` complements widget tests without needing Flutter. It scans tracked Flutter source for modal dialog/bottom-sheet calls and requires the shared `AppMotion` policy, prevents reintroduction of a keystroke-driven converter live region, requires semantic pin/selector safeguards, and verifies that Bash, PowerShell, CI, release, platform materialization, and repository hygiene continue to enforce the accessibility contract.
+
 `persisted_primary_journey_test.dart` exercises a broader controller/repository journey: user settings, favorites, pins, history, custom units, restart persistence, backup/import, post-restart conversion, and reset. It is intentionally classified as source-level integration-style coverage rather than native end-to-end evidence.
 
 ## Shared bridge parity
@@ -186,4 +192,4 @@ A repository-structure change must update `docs/repository-inventory.md` in the 
 
 ## CI policy
 
-CI fails on repository-inventory/integrity validation, validator regression tests, formatting, lint, localization generation, analysis, or test failures. Security scanning, dependency review, cross-platform release builds, and release packaging run in their respective workflows. A skipped platform check must be explicit rather than silently treated as success.
+CI fails on repository-inventory/integrity validation, accessibility source-contract validation, validator regression tests, formatting, lint, localization generation, analysis, or test failures. Security scanning, dependency review, cross-platform release builds, and release packaging run in their respective workflows. A skipped platform check must be explicit rather than silently treated as success.
