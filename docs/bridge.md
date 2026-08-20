@@ -2,6 +2,20 @@
 
 The Rust crate is the authoritative native conversion domain. Flutter currently includes a deterministic Dart implementation so UI development, web support, and tests do not depend on generated native bindings.
 
+## Current source-level progress
+
+`crates/unitflow_core/src/bridge.rs` now implements the Rust-side application protocol layer that generated bindings can call. It provides:
+
+- protocol version `1` and a stable diagnostic backend identifier;
+- generator-friendly single and ordered batch conversion DTOs;
+- canonical base-10 decimal strings at the boundary;
+- camelCase request/response serialization compatible with the documented Flutter contract;
+- a long-lived `BridgeService` over a validated `Converter`;
+- stable, safe failure codes for invalid decimal input, unknown units, category mismatches, invalid precision, catalog failures, and conversion failures;
+- regression tests for protocol metadata, canonical decimal enforcement, failure-code behavior, batch ordering, and serialized field names.
+
+This source service is an important prerequisite, **not the completed production native integration**. Generated Rust↔Flutter bindings, native library loading/packaging, startup negotiation in the app, and per-platform release validation are still required before a native build can claim Rust bridge authority.
+
 ## Goals
 
 The production bridge must:
@@ -21,7 +35,7 @@ A bridge request should use plain serializable values such as:
 ```text
 value: decimal string
 from_unit_id: stable string
- to_unit_id: stable string
+to_unit_id: stable string
 decimal_places: optional integer
 round_mode: stable enum/string
 ```
@@ -42,6 +56,8 @@ Passing decimal strings prevents accidental binary floating-point conversion in 
 
 Bridge adapters should translate `UnitFlowError` into a stable error code plus safe human-readable message. Unknown units, category mismatch, invalid precision, malformed custom units, division by zero, and arithmetic overflow must remain distinguishable for tests and diagnostics.
 
+The Rust source service deliberately does not echo untrusted unit identifiers or raw internal error details in its safe bridge messages.
+
 ## Parity suite
 
 Before the native bridge becomes the default conversion path, automated tests should compare native and Dart results for:
@@ -55,6 +71,8 @@ Before the native bridge becomes the default conversion path, automated tests sh
 - batch conversion ordering;
 - custom multiplicative and affine units;
 - invalid unit IDs and category mismatches.
+
+The repository already shares versioned conversion/rounding vectors between Rust and Dart, and Rust now additionally tests the source-level bridge service. Those tests still do not substitute for executing the generated native binding on each supported platform.
 
 ## Failure strategy
 
