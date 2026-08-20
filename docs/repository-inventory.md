@@ -33,7 +33,8 @@ This inventory documents every tracked first-party file in UnitFlow and its role
 - `.github/workflows/ci.yml` — repository-integrity, Rust, and Flutter source quality gates.
 - `.github/workflows/codeql.yml` — CodeQL static security analysis.
 - `.github/workflows/dependency-review.yml` — pull-request dependency risk review.
-- `.github/workflows/platform-smoke.yml` — generated-scaffold build compatibility matrix for six platform targets.
+- `.github/workflows/materialize-platforms.yml` — all-or-nothing generation, validation, inventory refresh, commit, and release-build dispatch for the six Flutter platform projects.
+- `.github/workflows/platform-smoke.yml` — committed-first release-mode Android/iOS/Web/Windows/Linux/macOS build matrix with generation fallback and artifact upload.
 - `.github/workflows/release.yml` — source verification, exact tag guard, clean Rust packaging, checksums, and GitHub release creation.
 
 ## Flutter application configuration
@@ -49,7 +50,7 @@ This inventory documents every tracked first-party file in UnitFlow and its role
 - `apps/unitflow_app/lib/app/unitflow_app.dart` — top-level Material application, theme, localization, and onboarding/shell routing.
 - `apps/unitflow_app/lib/app/app_controller.dart` — application state, serialized persistence, custom-unit lifecycle, favorites/pins/history, import/reset behavior, and safe reset-failure warning state.
 - `apps/unitflow_app/lib/app/app_shell.dart` — adaptive main navigation, destination coordination, and warning banner presentation.
-- `apps/unitflow_app/lib/app/theme/app_theme.dart` — centralized light/dark theme definitions and design tokens.
+- `apps/unitflow_app/lib/app/theme/app_theme.dart` — centralized light/dark theme definitions, design tokens, and reduced-motion policy.
 
 ## Flutter core services
 
@@ -68,16 +69,16 @@ This inventory documents every tracked first-party file in UnitFlow and its role
 - `apps/unitflow_app/lib/features/converter/domain/batch_export.dart` — CSV/TSV/JSON batch serialization and escaping.
 - `apps/unitflow_app/lib/features/converter/presentation/category_localizations.dart` — localized category labels/descriptions/examples mapping.
 - `apps/unitflow_app/lib/features/converter/presentation/converter_controller.dart` — converter interaction state, locale parsing, selection, batch/history coordination.
-- `apps/unitflow_app/lib/features/converter/presentation/converter_screen.dart` — primary single-conversion user interface.
+- `apps/unitflow_app/lib/features/converter/presentation/converter_screen.dart` — primary single-conversion user interface and semantic result/control handling.
 - `apps/unitflow_app/lib/features/converter/presentation/batch_screen.dart` — multi-target batch conversion/export interface.
 
 ## Flutter supporting features
 
-- `apps/unitflow_app/lib/features/history/presentation/history_screen.dart` — local conversion history list, restore, and clear interface.
+- `apps/unitflow_app/lib/features/history/presentation/history_screen.dart` — local conversion history list, restore, clear interface, and reduced-motion confirmation dialog.
 - `apps/unitflow_app/lib/features/library/presentation/library_screen.dart` — searchable unit library, favorites, pins, and custom-unit management surface.
-- `apps/unitflow_app/lib/features/library/presentation/custom_unit_dialog.dart` — validated custom affine-unit editor.
+- `apps/unitflow_app/lib/features/library/presentation/custom_unit_dialog.dart` — validated custom affine-unit editor with reduced-motion dialog presentation.
 - `apps/unitflow_app/lib/features/onboarding/presentation/onboarding_screen.dart` — first-run offline/privacy/product onboarding.
-- `apps/unitflow_app/lib/features/settings/presentation/settings_screen.dart` — theme, notation, rounding, backup/reset, safe reset-failure handling, and related settings UI.
+- `apps/unitflow_app/lib/features/settings/presentation/settings_screen.dart` — theme, notation, rounding, backup/reset, safe reset-failure handling, reduced-motion reset dialog, and related settings UI.
 - `apps/unitflow_app/lib/features/settings/presentation/about_screen.dart` — `2.0.12` version, project links, license/support, and project-credit UI.
 
 ## Flutter tests
@@ -142,9 +143,9 @@ This inventory documents every tracked first-party file in UnitFlow and its role
 - `docs/data-format.md` — local backup schema, migration, import bounds, and reset semantics.
 - `docs/setup.md` — Git/Python/Rust 1.82+/Flutter/native setup and troubleshooting prerequisites.
 - `docs/development.md` — contributor implementation conventions and verification workflow.
-- `docs/testing.md` — repository, Rust, Flutter, bridge parity, integration, property, platform, and regression testing strategy.
+- `docs/testing.md` — repository, Rust, Flutter, bridge parity, accessibility, integration, property, platform, and regression testing strategy.
 - `docs/performance.md` — benchmark/profiling policy and measurement evidence rules.
-- `docs/accessibility.md` — semantics, keyboard, large-text/contrast/motion review requirements.
+- `docs/accessibility.md` — semantics, keyboard, large-text/contrast/motion review requirements and automated safeguard boundaries.
 - `docs/localization.md` — ARB/gen-l10n workflow and locale acceptance policy.
 - `docs/keyboard-shortcuts.md` — desktop/Web navigation shortcut behavior and accessibility expectations.
 - `docs/diagnostics.md` — privacy-preserving structured diagnostic logging contract.
@@ -152,7 +153,7 @@ This inventory documents every tracked first-party file in UnitFlow and its role
 - `docs/threat-model.md` — trust boundaries, threats, mitigations, and security assumptions.
 - `docs/platform-support.md` — target/support/release-verification terminology.
 - `docs/native-platforms.md` — required reviewed native project work and target-specific release checks.
-- `docs/platform-smoke.md` — generated-scaffold compatibility evidence and its limits.
+- `docs/platform-smoke.md` — six-platform release-build evidence and its limits.
 - `docs/release.md` — `2.0.12` version/tag/source/native release procedure.
 - `docs/release-checklist.md` — auditable release-candidate checklist.
 - `docs/github-maintenance.md` — branch protection, security settings, labels, workflows, and repository administration.
@@ -170,15 +171,17 @@ This inventory documents every tracked first-party file in UnitFlow and its role
 
 - `scripts/bootstrap_platforms.sh` — Bash helper for deliberate Flutter native-platform scaffold generation/review.
 - `scripts/bootstrap_platforms.ps1` — PowerShell equivalent for native-platform scaffold generation/review.
-- `scripts/check_accessibility_contract.py` — source-level reduced-motion, modal-surface, converter semantics, and accessibility-smoke contract validator.
+- `scripts/check_accessibility_contract.py` — source-level reduced-motion, modal-surface, converter semantics, smoke-test, and verification-wiring contract validator.
 - `scripts/check_markdown_links.py` — repository-local Markdown target validator.
-- `scripts/check_release_consistency.py` — package/version/changelog/Rust-minimum/schema/bridge-protocol declaration consistency validator.
+- `scripts/check_platform_support.py` — six-target generation/build/project-set/Web-compatibility support validator.
+- `scripts/check_release_consistency.py` — package/version/changelog/Rust-minimum/schema/bridge-protocol/capability/batch-limit declaration consistency validator.
 - `scripts/check_release_tag.py` — exact `v<workspace-version>` release tag validator.
 - `scripts/check_repository_hygiene.py` — critical-file presence and tracked secret/build/generated-artifact guard.
 - `scripts/check_repository_inventory.py` — exact tracked-file versus documented-inventory drift validator.
+- `scripts/update_platform_inventory.py` — regenerates the machine-maintained inventory for tracked Flutter-generated platform files.
 - `scripts/verify.sh` — full Bash repository/source verification entry point.
 - `scripts/verify.ps1` — full PowerShell repository/source verification entry point.
-- `scripts/tests/test_repository_validators.py` — standard-library regression tests for repository validator helpers and release-tag behavior.
+- `scripts/tests/test_repository_validators.py` — standard-library regression tests for repository validators, release-tag behavior, platform support, bridge parity, and accessibility source safeguards.
 
 ## Inventory maintenance rule
 
