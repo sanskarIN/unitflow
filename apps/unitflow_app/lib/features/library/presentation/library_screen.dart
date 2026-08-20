@@ -212,29 +212,44 @@ final class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final strings = AppLocalizations.of(context);
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
+    final heading = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(strings.libraryTitle, style: Theme.of(context).textTheme.headlineMedium),
-              const SizedBox(height: AppSpacing.xxs),
-              Text(
-                strings.libraryDescription,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: AppSpacing.md),
-        FilledButton.icon(
-          onPressed: onAddCustom,
-          icon: const Icon(Icons.add),
-          label: Text(strings.customUnitAction),
+        Text(strings.libraryTitle, style: Theme.of(context).textTheme.headlineMedium),
+        const SizedBox(height: AppSpacing.xxs),
+        Text(
+          strings.libraryDescription,
+          style: Theme.of(context).textTheme.bodyMedium,
         ),
       ],
+    );
+    final addButton = FilledButton.icon(
+      onPressed: onAddCustom,
+      icon: const Icon(Icons.add),
+      label: Text(strings.customUnitAction),
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < AppBreakpoints.compact) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              heading,
+              const SizedBox(height: AppSpacing.md),
+              Align(alignment: AlignmentDirectional.centerStart, child: addButton),
+            ],
+          );
+        }
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: <Widget>[
+            Expanded(child: heading),
+            const SizedBox(width: AppSpacing.md),
+            addButton,
+          ],
+        );
+      },
     );
   }
 }
