@@ -10,7 +10,7 @@ The roadmap is milestone-oriented. Items are checked only when repository eviden
 - [x] GitHub issue/PR templates and code ownership.
 - [x] CI, CodeQL, funding metadata, and dependency-review workflow.
 - [x] Automated Dependabot configuration for Cargo, Flutter/Dart, and GitHub Actions.
-- [x] Repository-local Markdown, release-consistency, hygiene, and release-tag validators with regression tests.
+- [x] Repository-local Markdown, release-consistency, hygiene, release-tag, inventory, and six-platform support validators with regression tests.
 
 ## Phase 1 — Conversion MVP
 
@@ -44,13 +44,16 @@ The roadmap is milestone-oriented. Items are checked only when repository eviden
 
 - [x] Versioned Rust source bridge service/DTO layer matching bridge protocol v1.
 - [ ] Rust↔Flutter production generated bindings, startup negotiation, and native packaging workflow.
-- [ ] Commit reviewed Android native Flutter project and validate a release build.
-- [ ] Commit reviewed Windows native Flutter project and validate a release build.
-- [ ] Commit reviewed Linux native Flutter project and validate a release build.
-- [ ] Commit reviewed macOS native Flutter project and validate a release build.
-- [ ] Commit reviewed Web project and validate a production Web build.
-- [ ] Commit iOS-ready native project and validate with macOS/Xcode tooling.
-- [x] Generated-scaffold smoke jobs for Android, Web, Linux, Windows, macOS, and iOS as preliminary compatibility evidence.
+- [x] Six-target Flutter generation contract for Android, iOS, Web, Windows, Linux, and macOS.
+- [x] Automated all-or-nothing platform materialization workflow with generated-file inventory support.
+- [x] Committed-first six-platform release build matrix with uploaded build artifacts and generation fallback.
+- [x] Repository validator that prevents platform-matrix drift, partial platform commits, and unconditional shared `dart:io` imports.
+- [ ] Commit reviewed Android native Flutter project and validate a release build from the committed project.
+- [ ] Commit reviewed Windows native Flutter project and validate a release build from the committed project.
+- [ ] Commit reviewed Linux native Flutter project and validate a release build from the committed project.
+- [ ] Commit reviewed macOS native Flutter project and validate a release build from the committed project.
+- [ ] Commit reviewed Web project and validate a production Web build from the committed project.
+- [ ] Commit iOS-ready native project and validate with macOS/Xcode tooling from the committed project.
 - [x] Keyboard shortcuts and adaptive desktop navigation.
 - [ ] Reduced-motion, large-text, high-contrast, and screen-reader manual review.
 - [ ] Native performance profiling and large-catalog virtualization review where measured data requires it.
@@ -67,7 +70,7 @@ The roadmap is milestone-oriented. Items are checked only when repository eviden
 - [x] Developer conversion micro-benchmark.
 - [ ] Catalog-search and batch-conversion benchmark baselines on documented hardware.
 - [x] CodeQL/dependency-review/security design hardening in source control.
-- [x] Normal CI and release workflows enforce repository-integrity validation before language/package gates.
+- [x] Normal CI and release workflows enforce repository-integrity and six-platform contract validation before language/package gates.
 - [ ] Resolve every issue surfaced by actual clean CI/platform execution.
 
 ## Phase 5 — Release engineering
@@ -84,6 +87,7 @@ The roadmap is milestone-oriented. Items are checked only when repository eviden
 
 - [ ] Clean-clone setup verification with required Python/Rust/Flutter/native toolchains installed.
 - [ ] Full CI/check matrix passes on the release commit.
+- [ ] Six-platform release-build matrix passes on the final committed platform projects.
 - [ ] Documentation-link audit result reviewed on the release commit (automated checker is implemented and wired to CI).
 - [ ] Accessibility manual review.
 - [ ] Secret scan and dependency/security findings reviewed.
@@ -91,12 +95,12 @@ The roadmap is milestone-oriented. Items are checked only when repository eviden
 
 ## Current release blockers
 
-1. Reviewed native Flutter platform directories are not yet committed and release-tested. The generated-scaffold workflow is preliminary compatibility evidence only.
-2. The versioned Rust source bridge service now exists and is regression-tested, but generated Rust↔Flutter bindings, Flutter startup negotiation, native library loading, and per-platform packaging are not yet implemented; source DTO/parity tests do not substitute for executing the production native bridge.
-3. This execution environment does not provide the Rust/Flutter/Dart/native toolchains needed to compile the current repository changes locally, so no local full verification result is claimed for this checkpoint.
-4. A successful full GitHub Actions check matrix for the final release commit has not yet been established/reviewed in this continuation.
-5. Controller/repository restart/import/reset journey coverage is now present, but full primary UI integration, native E2E journeys, accessibility review, performance baselines, and release-candidate manual checks remain open where listed above.
-6. Real release media/assets and platform-native distributable artifacts remain intentionally deferred until verified native builds exist.
+1. The repository now has deterministic six-platform generation, materialization automation, release-build jobs, artifact upload, and cross-platform contract validation. However, the generated Android/iOS/Web/Windows/Linux/macOS directories are not yet present on the currently inspected `main` HEAD, so committed-project build evidence is still required before calling the native projects release-verified.
+2. The versioned Rust source bridge service exists and is regression-tested, but generated Rust↔Flutter bindings, Flutter startup negotiation, native library loading, and per-platform packaging are not yet implemented; source DTO/parity tests do not substitute for executing the production native bridge.
+3. This execution environment does not provide the Rust/Flutter/Dart/native toolchains needed to compile the current repository changes locally, and direct GitHub cloning is unavailable because external DNS is blocked in the execution container. No local full verification result is claimed for this checkpoint.
+4. A successful full GitHub Actions and six-platform release-build matrix for the final candidate commit has not yet been established/reviewed in this continuation.
+5. Controller/repository restart/import/reset journey coverage is present, but full primary UI integration, native E2E journeys, accessibility review, performance baselines, and release-candidate manual checks remain open where listed above.
+6. Real release media/assets, production signing/notarization, and store-ready distributable artifacts remain intentionally deferred until verified native builds exist.
 
 ## Post-1.0 ideas
 
