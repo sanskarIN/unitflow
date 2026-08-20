@@ -95,6 +95,16 @@ class ReleaseConsistencyHelperTests(unittest.TestCase):
         self.assertEqual(rust_source, documented)
         self.assertEqual(flutter_source, documented)
 
+    def test_bridge_capabilities_match_docs_rust_and_flutter(self) -> None:
+        rust, flutter, documented = release_consistency.declared_bridge_capabilities()
+        expected = {"convert", "batchConvert", "canonicalDecimalText"}
+        self.assertEqual(rust, expected)
+        self.assertEqual(flutter, expected)
+        self.assertEqual(documented, expected)
+
+    def test_release_consistency_accepts_current_tree(self) -> None:
+        self.assertEqual(release_consistency.main(), 0)
+
 
 class ReleaseTagTests(unittest.TestCase):
     def test_workspace_version_is_semver_style(self) -> None:
