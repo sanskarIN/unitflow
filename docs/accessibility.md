@@ -20,15 +20,17 @@ UnitFlow targets WCAG-oriented accessible behavior across mobile, desktop, and w
 The current source includes several accessibility-oriented defaults that are covered by regression tests where practical:
 
 - converter pin/unpin controls expose a semantic toggled state in addition to their visible icon/label;
-- source, target, and category dropdowns expose explicit semantic labels and selected values;
+- converter source, target, and category dropdowns expose explicit semantic labels and selected values;
+- batch category and source-unit dropdowns expose the same semantic label/selected-value contract instead of relying only on visible field decoration;
 - conversion output remains selectable and has a stable semantic description without being configured as a live region on every keystroke;
 - icon-only controls such as swap, copy, search, and the converter pin action have tooltips/accessibility names;
 - desktop navigation retains keyboard shortcuts and a visible focus path through Flutter's standard focus system;
 - modal batch surfaces use `MediaQuery.disableAnimations` through the centralized `AppMotion` policy and disable sheet animation when the platform requests reduced motion;
 - About navigation removes transition duration when reduced motion is requested;
-- adaptive list/rail navigation avoids requiring pointer-only interaction.
+- adaptive list/rail navigation avoids requiring pointer-only interaction;
+- representative compact-width widget tests run at 200% text scaling across Converter, Batch, Library, History, Settings, Onboarding, About, and the custom-unit dialog and fail on surfaced layout exceptions.
 
-`apps/unitflow_app/test/accessibility_smoke_test.dart` currently locks the reduced-motion policy and converter pin semantic-state contract.
+`apps/unitflow_app/test/accessibility_smoke_test.dart` currently locks the reduced-motion policy, converter pin semantic-state contract, batch selector semantic context, and representative compact 200% text-layout coverage.
 
 ## Converter screen review
 
@@ -43,15 +45,28 @@ Verify:
 7. tab order follows visual/logical order;
 8. keyboard submit/escape behavior is predictable.
 
+## Batch screen review
+
+Verify:
+
+1. category and source-unit selectors announce both their field label and selected value;
+2. the numeric input exposes validation errors;
+3. copy CSV/TSV/JSON actions are named and remain reachable without pointer-only input;
+4. wide result tables remain horizontally reachable rather than clipping content;
+5. batch result values remain selectable;
+6. compact and enlarged-text layouts do not hide the export controls or selected input state.
+
 ## Responsive review widths
 
 Manually review representative compact, medium, and expanded widths rather than designing to one phone size.
 
-Automated widget coverage is not evidence that large-text rendering is correct on every real platform. Before release, review at least one compact phone layout and one desktop/Web layout with enlarged system text.
+Automated compact 200% widget coverage is a regression gate for obvious layout exceptions; it is not evidence that large-text rendering is correct on every real platform. Before release, review at least one compact phone layout and one desktop/Web layout with enlarged system text.
 
 ## Text and locale
 
 Do not hard-code layouts that assume short English labels. UI strings must be localization-ready and allow larger text. Symbols should not be the only accessible name for a unit.
+
+The current automated large-text checks use the English localization as a deterministic baseline. Future locale additions should add representative longest-label coverage rather than assuming English is the worst case.
 
 ## Motion
 
@@ -66,9 +81,11 @@ Widget tests should validate critical semantics and absence of obvious layout ex
 Current automated coverage includes:
 
 - semantic on/off state for the converter pin action;
-- zero-duration route and modal-surface policy under reduced-motion media settings.
+- semantic label and selected-value context for batch selectors;
+- zero-duration route and modal-surface policy under reduced-motion media settings;
+- compact 390×844 layout smoke coverage at 200% text scaling for Converter, Batch, Library, History, Settings, Onboarding, About, and the custom-unit dialog.
 
-Future release-candidate coverage should add representative large-text widget runs and target-specific semantics checks as native projects become executable.
+Future release-candidate coverage should add target-specific semantics checks, keyboard/focus traversal tests where stable in Flutter test infrastructure, and representative long-localization text runs as native projects become executable.
 
 ## Manual release checklist
 
