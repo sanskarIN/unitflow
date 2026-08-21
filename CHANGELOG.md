@@ -30,6 +30,7 @@ No changes are queued beyond the active `2.0.12` development snapshot documented
 - Rust bridge-service regression tests covering canonical payloads, error codes, protocol/capability metadata, bounded batches, unit-ID validation, batch ordering, and camelCase serialization.
 - Flutter regression tests covering bridge metadata compatibility, malformed startup payloads, bounded batch requests, and fallback batch-limit parity.
 - Accessibility smoke coverage for reduced-motion policy, converter pin semantic-state behavior, batch selector semantic context, compact 200% text scaling across primary screens/dialogs, and the converter batch-results modal.
+- Navigation widget regression coverage for Ctrl/Cmd primary-destination shortcuts, Converter↔Batch visible input synchronization, and History-to-Converter input restoration.
 - Persisted primary-journey regression coverage across controller restart, settings, favorites, pins, history, custom units, backup/import, conversion reuse, and reset.
 - Dependency-free Rust conversion micro-benchmark.
 - CI, CodeQL, dependency-review, and verified source-release workflows.
@@ -61,6 +62,7 @@ No changes are queued beyond the active `2.0.12` development snapshot documented
 - App modal surfaces, onboarding page movement/indicators, and About navigation now honor the platform reduced-animation preference through the centralized `AppMotion` policy.
 - Converter pin actions now expose semantic toggled state; converter category/source/target selectors and batch category/source selectors expose explicit semantic label/value context.
 - Converter modal batch-result rows now switch to a stacked unit/value presentation on compact widths or enlarged text instead of reserving a narrow trailing value column.
+- Converter and Batch rendered input fields now listen to the shared `ConverterController` so external state changes, cross-workspace edits, and restored History values stay visually synchronized.
 - Custom-unit deletion now removes dangling favorites, pins, and history references.
 - Rust and Dart custom-unit boundaries enforce a maximum of 32 aliases.
 - Backup/custom-unit error surfaces now avoid displaying raw internal exception text.
@@ -70,6 +72,7 @@ No changes are queued beyond the active `2.0.12` development snapshot documented
 - Plain decimal display grouping now follows locale decimal-pattern primary/secondary grouping sizes while preserving exact decimal strings.
 - The historical generated-platform smoke workflow is now a committed-first six-platform **release build matrix** with generation fallback and artifact upload instead of debug-only compatibility checks.
 - Normal Bash/PowerShell verification, CI, platform materialization, and release packaging now execute the cross-platform support and accessibility source-contract validators in addition to repository-integrity validators.
+- Accessibility source validation now locks reduced-motion handling, converter/batch semantic context, adaptive large-text modal behavior, representative large-text widget coverage, and both Ctrl/Cmd primary-navigation binding families plus their smoke tests.
 - Repository hygiene treats the platform materializer, generated platform inventory, platform-support validator, and accessibility validator as required project infrastructure.
 - Flutter CI/release verification runs localization generation explicitly.
 - Dart formatting uses an explicit repository-wide 120-column page width while retaining strict analyzer/lint rules.
@@ -97,6 +100,7 @@ No changes are queued beyond the active `2.0.12` development snapshot documented
 - Fixed native-versus-fallback batch behavior divergence by applying the same documented target ceiling to both paths.
 - Fixed conversion output being configured as a live region on every keystroke, reducing unnecessary screen-reader announcements while preserving a semantic result description.
 - Fixed several compact large-text layout pressure points in the custom-unit form, Library/History headers, Settings section headers, converter education header, and converter modal batch result rows.
+- Fixed stale visible numeric input when switching between Converter and Batch or reopening a saved History conversion after the shared controller input had changed.
 
 ### Security
 
