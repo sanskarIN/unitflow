@@ -120,13 +120,10 @@ final class _ConverterScreenState extends State<ConverterScreen> {
                     separatorBuilder: (_, _) => const Divider(height: 1),
                     itemBuilder: (context, index) {
                       final result = results[index];
-                      return ListTile(
-                        title: Text(result.to.name),
-                        subtitle: Text(result.to.symbol),
-                        trailing: SelectableText(
-                          widget.controller.formatBatchValue(result.output),
-                          textAlign: TextAlign.end,
-                        ),
+                      return _BatchResultListItem(
+                        unitName: result.to.name,
+                        symbol: result.to.symbol,
+                        formattedValue: widget.controller.formatBatchValue(result.output),
                       );
                     },
                   ),
@@ -138,6 +135,58 @@ final class _ConverterScreenState extends State<ConverterScreen> {
       ),
     );
   }
+}
+
+final class _BatchResultListItem extends StatelessWidget {
+  const _BatchResultListItem({
+    required this.unitName,
+    required this.symbol,
+    required this.formattedValue,
+  });
+
+  final String unitName;
+  final String symbol;
+  final String formattedValue;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+    child: LayoutBuilder(
+      builder: (context, constraints) {
+        final unit = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(unitName, style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: AppSpacing.xxs),
+            Text(symbol, style: Theme.of(context).textTheme.bodyMedium),
+          ],
+        );
+        final value = SelectableText(
+          formattedValue,
+          textAlign: TextAlign.end,
+        );
+        final largeText = MediaQuery.textScalerOf(context).scale(16) >= 24;
+        if (constraints.maxWidth < 420 || largeText) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              unit,
+              const SizedBox(height: AppSpacing.xs),
+              Align(alignment: AlignmentDirectional.centerEnd, child: value),
+            ],
+          );
+        }
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Expanded(child: unit),
+            const SizedBox(width: AppSpacing.md),
+            Flexible(child: value),
+          ],
+        );
+      },
+    ),
+  );
 }
 
 final class _ConverterCard extends StatelessWidget {
@@ -392,7 +441,7 @@ final class _ConverterSidePanel extends StatelessWidget {
                   children: <Widget>[
                     Icon(Icons.school_outlined, color: theme.colorScheme.primary),
                     const SizedBox(width: AppSpacing.xs),
-                    Text(strings.learnTitle, style: theme.textTheme.titleLarge),
+                    Expanded(child: Text(strings.learnTitle, style: theme.textTheme.titleLarge)),
                   ],
                 ),
                 const SizedBox(height: AppSpacing.md),
