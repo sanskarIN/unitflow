@@ -37,7 +37,7 @@ These checks cover:
 - regression tests for the dependency-free repository validators;
 - exact `git ls-files` parity with the exhaustive documented repository inventory;
 - six-platform generation/build/project-set/Web compatibility;
-- source-level reduced-motion policy, modal-surface coverage, converter semantic safeguards, accessibility smoke coverage, and verification wiring;
+- source-level reduced-motion policy, modal-surface coverage, converter/batch semantic safeguards, large-text smoke coverage, and verification wiring;
 - repository-local Markdown file targets;
 - Cargo/Flutter/About version consistency;
 - Cargo minimum-Rust-version versus setup-documentation parity;
@@ -105,8 +105,9 @@ Coverage priorities:
 - theme switching;
 - favorites/pin/history state behavior;
 - settings and About page content;
-- semantics for major controls and toggle state;
+- semantics for major controls, toggle state, and labeled selector context;
 - reduced-motion policy for modal/route transitions;
+- representative compact 200% text scaling across primary screens/dialogs/modal results;
 - custom-unit validation;
 - import/export failure states and consistent import bounds across repositories;
 - persistence ordering for reset/save operations and safe reset-failure reporting;
@@ -123,9 +124,9 @@ Coverage priorities:
 
 `navigation_smoke_test.dart` checks that the main Convert, Batch, Library, History, and Settings destinations remain reachable through the adaptive shell.
 
-`accessibility_smoke_test.dart` locks the centralized reduced-motion policy and verifies that the converter pin action exposes semantic on/off state. It is source/widget evidence only; it does not replace TalkBack, VoiceOver, keyboard/focus, contrast, touch-target, or large-text review on real release-candidate platforms.
+`accessibility_smoke_test.dart` locks the centralized reduced-motion policy, converter pin semantic on/off state, batch selector semantic label/selected-value context, and representative compact 390×844 rendering at 200% text scaling. The large-text coverage currently exercises Converter, Batch, Library, History, Settings, Onboarding, About, the custom-unit dialog, and opening/rendering the converter batch-results modal. This remains source/widget evidence only; it does not replace TalkBack, VoiceOver, keyboard/focus, contrast, touch-target, localization-expansion, or real-device large-text review on release-candidate platforms.
 
-`scripts/check_accessibility_contract.py` complements widget tests without needing Flutter. It scans tracked Flutter source for modal dialog/bottom-sheet calls and requires the shared `AppMotion` policy, prevents reintroduction of a keystroke-driven converter live region, requires semantic pin/selector safeguards, and verifies that Bash, PowerShell, CI, release, platform materialization, and repository hygiene continue to enforce the accessibility contract.
+`scripts/check_accessibility_contract.py` complements widget tests without needing Flutter. It scans tracked Flutter source for modal dialog/bottom-sheet calls and requires the shared `AppMotion` policy, prevents reintroduction of a keystroke-driven converter live region, requires converter/batch semantic safeguards, requires the adaptive large-text batch-modal result-row boundary and representative large-text test tokens, and verifies that Bash, PowerShell, CI, release, platform materialization, and repository hygiene continue to enforce the accessibility contract.
 
 `persisted_primary_journey_test.dart` exercises a broader controller/repository journey: user settings, favorites, pins, history, custom units, restart persistence, backup/import, post-restart conversion, and reset. It is intentionally classified as source-level integration-style coverage rather than native end-to-end evidence.
 
