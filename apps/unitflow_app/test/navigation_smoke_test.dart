@@ -51,19 +51,47 @@ void main() {
     await tester.pumpWidget(UnitFlowApp(appController: controller));
     await tester.pumpAndSettle();
 
-    await _sendControlShortcut(tester, LogicalKeyboardKey.digit2);
+    await _sendShortcut(tester, LogicalKeyboardKey.controlLeft, LogicalKeyboardKey.digit2);
     expect(find.text('Batch conversion'), findsOneWidget);
 
-    await _sendControlShortcut(tester, LogicalKeyboardKey.digit3);
+    await _sendShortcut(tester, LogicalKeyboardKey.controlLeft, LogicalKeyboardKey.digit3);
     expect(find.text('Unit library'), findsOneWidget);
 
-    await _sendControlShortcut(tester, LogicalKeyboardKey.digit4);
+    await _sendShortcut(tester, LogicalKeyboardKey.controlLeft, LogicalKeyboardKey.digit4);
     expect(find.text('No recent conversions'), findsOneWidget);
 
-    await _sendControlShortcut(tester, LogicalKeyboardKey.comma);
+    await _sendShortcut(tester, LogicalKeyboardKey.controlLeft, LogicalKeyboardKey.comma);
     expect(find.text('Conversion and formatting'), findsOneWidget);
 
-    await _sendControlShortcut(tester, LogicalKeyboardKey.digit1);
+    await _sendShortcut(tester, LogicalKeyboardKey.controlLeft, LogicalKeyboardKey.digit1);
+    expect(find.text('Convert units'), findsOneWidget);
+  });
+
+  testWidgets('macOS command shortcuts switch primary destinations', (tester) async {
+    final controller = AppController(
+      repository: MemoryUserStateRepository(
+        UserState(onboardingComplete: true),
+      ),
+    );
+    addTearDown(controller.dispose);
+    await controller.initialize();
+
+    await tester.pumpWidget(UnitFlowApp(appController: controller));
+    await tester.pumpAndSettle();
+
+    await _sendShortcut(tester, LogicalKeyboardKey.metaLeft, LogicalKeyboardKey.digit2);
+    expect(find.text('Batch conversion'), findsOneWidget);
+
+    await _sendShortcut(tester, LogicalKeyboardKey.metaLeft, LogicalKeyboardKey.digit3);
+    expect(find.text('Unit library'), findsOneWidget);
+
+    await _sendShortcut(tester, LogicalKeyboardKey.metaLeft, LogicalKeyboardKey.digit4);
+    expect(find.text('No recent conversions'), findsOneWidget);
+
+    await _sendShortcut(tester, LogicalKeyboardKey.metaLeft, LogicalKeyboardKey.comma);
+    expect(find.text('Conversion and formatting'), findsOneWidget);
+
+    await _sendShortcut(tester, LogicalKeyboardKey.metaLeft, LogicalKeyboardKey.digit1);
     expect(find.text('Convert units'), findsOneWidget);
   });
 
@@ -87,12 +115,13 @@ void main() {
   });
 }
 
-Future<void> _sendControlShortcut(
+Future<void> _sendShortcut(
   WidgetTester tester,
+  LogicalKeyboardKey modifier,
   LogicalKeyboardKey key,
 ) async {
-  await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+  await tester.sendKeyDownEvent(modifier);
   await tester.sendKeyEvent(key);
-  await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+  await tester.sendKeyUpEvent(modifier);
   await tester.pumpAndSettle();
 }
