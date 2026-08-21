@@ -12,6 +12,7 @@ void main() {
         UserState(onboardingComplete: true),
       ),
     );
+    addTearDown(controller.dispose);
     await controller.initialize();
 
     await tester.pumpWidget(UnitFlowApp(appController: controller));
@@ -43,6 +44,7 @@ void main() {
         UserState(onboardingComplete: true),
       ),
     );
+    addTearDown(controller.dispose);
     await controller.initialize();
 
     await tester.pumpWidget(UnitFlowApp(appController: controller));
