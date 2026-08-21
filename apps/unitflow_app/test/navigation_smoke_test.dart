@@ -66,6 +66,32 @@ void main() {
     expect(tester.widget<TextField>(find.byType(TextField)).controller?.text, '42');
   });
 
+  testWidgets('opening history restores the visible converter input', (tester) async {
+    final controller = AppController(
+      repository: MemoryUserStateRepository(
+        UserState(onboardingComplete: true),
+      ),
+    );
+    addTearDown(controller.dispose);
+    await controller.initialize();
+    await controller.recordRecent(
+      input: '17.25',
+      fromUnitId: 'meter',
+      toUnitId: 'kilometer',
+    );
+
+    await tester.pumpWidget(UnitFlowApp(appController: controller));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('History').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.textContaining('17.25').first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Convert units'), findsOneWidget);
+    expect(tester.widget<TextField>(find.byType(TextField)).controller?.text, '17.25');
+  });
+
   testWidgets('desktop control shortcuts switch primary destinations', (tester) async {
     final controller = AppController(
       repository: MemoryUserStateRepository(
