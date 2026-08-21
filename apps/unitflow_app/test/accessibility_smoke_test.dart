@@ -170,7 +170,7 @@ void main() {
       _localizedApp(ConverterScreen(controller: converterController)),
     );
     await tester.pumpAndSettle();
-    expect(find.text('Convert'), findsOneWidget);
+    expect(find.text('Convert units'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
     await tester.pumpWidget(
