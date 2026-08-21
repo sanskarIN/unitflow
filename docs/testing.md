@@ -37,7 +37,7 @@ These checks cover:
 - regression tests for the dependency-free repository validators;
 - exact `git ls-files` parity with the exhaustive documented repository inventory;
 - six-platform generation/build/project-set/Web compatibility;
-- source-level reduced-motion policy, modal-surface coverage, converter/batch semantic safeguards, large-text smoke coverage, and verification wiring;
+- source-level reduced-motion policy, modal-surface coverage, converter/batch semantic safeguards, large-text smoke coverage, Ctrl/Cmd navigation bindings, and verification wiring;
 - repository-local Markdown file targets;
 - Cargo/Flutter/About version consistency;
 - Cargo minimum-Rust-version versus setup-documentation parity;
@@ -102,6 +102,8 @@ Coverage priorities:
 - converter input validation;
 - source/target selection and swap;
 - responsive/adaptive navigation;
+- Ctrl/Cmd primary-destination keyboard shortcuts;
+- visible input synchronization across Converter, Batch, and restored History entries;
 - theme switching;
 - favorites/pin/history state behavior;
 - settings and About page content;
@@ -122,11 +124,11 @@ Coverage priorities:
 
 `exact_decimal_properties_test.dart` uses deterministic generated inputs to exercise canonical round trips, comparison antisymmetry, rounding idempotence, and malformed-input bounds without adding a fuzzing dependency to the normal test suite.
 
-`navigation_smoke_test.dart` checks that the main Convert, Batch, Library, History, and Settings destinations remain reachable through the adaptive shell.
+`navigation_smoke_test.dart` checks that the main Convert, Batch, Library, History, and Settings destinations remain reachable through the adaptive shell. It also exercises Ctrl+1/2/3/4/comma, Cmd+1/2/3/4/comma, visible Converter↔Batch input synchronization, and History-to-Converter input restoration so the rendered text fields cannot silently diverge from the shared controller state.
 
 `accessibility_smoke_test.dart` locks the centralized reduced-motion policy, converter pin semantic on/off state, batch selector semantic label/selected-value context, and representative compact 390×844 rendering at 200% text scaling. The large-text coverage currently exercises Converter, Batch, Library, History, Settings, Onboarding, About, the custom-unit dialog, and opening/rendering the converter batch-results modal. This remains source/widget evidence only; it does not replace TalkBack, VoiceOver, keyboard/focus, contrast, touch-target, localization-expansion, or real-device large-text review on release-candidate platforms.
 
-`scripts/check_accessibility_contract.py` complements widget tests without needing Flutter. It scans tracked Flutter source for modal dialog/bottom-sheet calls and requires the shared `AppMotion` policy, prevents reintroduction of a keystroke-driven converter live region, requires converter/batch semantic safeguards, requires the adaptive large-text batch-modal result-row boundary and representative large-text test tokens, and verifies that Bash, PowerShell, CI, release, platform materialization, and repository hygiene continue to enforce the accessibility contract.
+`scripts/check_accessibility_contract.py` complements widget tests without needing Flutter. It scans tracked Flutter source for modal dialog/bottom-sheet calls and requires the shared `AppMotion` policy, prevents reintroduction of a keystroke-driven converter live region, requires converter/batch semantic safeguards, requires the adaptive large-text batch-modal result-row boundary and representative large-text test tokens, locks the Ctrl/Cmd primary-navigation bindings and corresponding navigation smoke coverage, and verifies that Bash, PowerShell, CI, release, platform materialization, and repository hygiene continue to enforce the accessibility contract.
 
 `persisted_primary_journey_test.dart` exercises a broader controller/repository journey: user settings, favorites, pins, history, custom units, restart persistence, backup/import, post-restart conversion, and reset. It is intentionally classified as source-level integration-style coverage rather than native end-to-end evidence.
 
@@ -155,7 +157,7 @@ Primary journeys should eventually cover:
 11. copy a batch table and verify its delimiter/escaping;
 12. restore a recent conversion from History.
 
-Controller/repository coverage now proves several persistence-focused parts of this journey at source-test level. Full UI integration still needs interactions through rendered screens/widgets, and native end-to-end automation should be added after reviewed platform scaffolding and generated bindings are committed. Source-level and widget tests must not be described as proof that native release builds pass.
+Controller/repository coverage now proves several persistence-focused parts of this journey at source-test level, while navigation smoke coverage renders the shared input restoration/synchronization path. Full native end-to-end automation should still be added after reviewed platform scaffolding and generated bindings are committed. Source-level and widget tests must not be described as proof that native release builds pass.
 
 ## Cross-platform release builds
 
