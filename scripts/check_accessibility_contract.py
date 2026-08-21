@@ -20,6 +20,7 @@ ONBOARDING_SCREEN = (
     APP_LIB / "features" / "onboarding" / "presentation" / "onboarding_screen.dart"
 )
 ACCESSIBILITY_TEST = ROOT / "apps" / "unitflow_app" / "test" / "accessibility_smoke_test.dart"
+NAVIGATION_TEST = ROOT / "apps" / "unitflow_app" / "test" / "navigation_smoke_test.dart"
 VERIFY_BASH = ROOT / "scripts" / "verify.sh"
 VERIFY_POWERSHELL = ROOT / "scripts" / "verify.ps1"
 CI_WORKFLOW = ROOT / ".github" / "workflows" / "ci.yml"
@@ -73,6 +74,7 @@ def validate() -> list[str]:
         BATCH_SCREEN,
         ONBOARDING_SCREEN,
         ACCESSIBILITY_TEST,
+        NAVIGATION_TEST,
         VERIFY_BASH,
         VERIFY_POWERSHELL,
         CI_WORKFLOW,
@@ -111,6 +113,13 @@ def validate() -> list[str]:
         errors.append("AppShell custom navigation does not check the reduced-motion preference")
     if "AppMotion.routeDuration" not in shell:
         errors.append("AppShell custom navigation does not use the shared route-duration policy")
+    for modifier in ("control", "meta"):
+        for key in ("digit1", "digit2", "digit3", "digit4", "comma"):
+            token = f"SingleActivator(LogicalKeyboardKey.{key}, {modifier}: true)"
+            if token not in shell:
+                errors.append(
+                    f"AppShell is missing the {modifier} keyboard navigation binding for {key}"
+                )
 
     converter = text(CONVERTER_SCREEN)
     if "liveRegion: true" in converter:
@@ -166,6 +175,17 @@ def validate() -> list[str]:
     ):
         if token not in test_source:
             errors.append(f"accessibility smoke coverage is missing expected assertion token: {token}")
+
+    navigation_test = text(NAVIGATION_TEST)
+    for token in (
+        "desktop control shortcuts switch primary destinations",
+        "macOS command shortcuts switch primary destinations",
+        "LogicalKeyboardKey.controlLeft",
+        "LogicalKeyboardKey.metaLeft",
+        "LogicalKeyboardKey.comma",
+    ):
+        if token not in navigation_test:
+            errors.append(f"navigation shortcut coverage is missing expected token: {token}")
 
     for path in (VERIFY_BASH, VERIFY_POWERSHELL, CI_WORKFLOW, RELEASE_WORKFLOW, MATERIALIZE_WORKFLOW):
         if VALIDATOR_TOKEN not in text(path):
