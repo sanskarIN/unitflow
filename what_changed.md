@@ -2,7 +2,7 @@
 
 This file is the primary continuation checkpoint for future UnitFlow development sessions so chat responses can stay short while repository work remains fully traceable.
 
-Last updated: **2026-08-20**
+Last updated: **2026-08-21**
 
 Repository: `https://github.com/sanskarIN/unitflow`
 
@@ -12,7 +12,7 @@ Current source version: **`2.0.12`**
 
 Flutter build number: **`12`**
 
-Latest inspected pre-handoff commit: **`3087fe93f992e634f36b62fe2b5a76b5af8cd3fe`** (`docs: align testing strategy with accessibility and platform builds`)
+Latest inspected pre-handoff commit: **`1494ec56d614dc9a0649272b658f004e9c8f46c0`** (`docs: record navigation state synchronization fix`)
 
 ## Current release state
 
@@ -27,119 +27,150 @@ UnitFlow remains an enforced six-target Flutter project for:
 
 The repository retains deterministic six-platform generation, all-or-nothing platform materialization automation, release-mode build jobs for all six targets, build artifact upload definitions, generated-platform inventory support, and repository validators that prevent target drift or partial committed platform sets.
 
-The previous continuation hardened the Rust↔Flutter bridge contract with protocol/capability negotiation, fail-closed compatibility, real single/batch source APIs, stable unit-ID validation, a shared 256-target batch ceiling, fallback/native behavior parity, and cross-language release-consistency checks.
+The Rust↔Flutter source bridge contract remains hardened with protocol/capability negotiation, fail-closed compatibility, real single/batch source APIs, stable unit-ID validation, a shared 256-target batch ceiling, fallback/native behavior parity, and cross-language release-consistency checks.
 
-This continuation hardened accessibility behavior that can be implemented safely before native platform execution is available.
+The accessibility source contract is now materially stronger than the previous handoff: reduced motion, converter and batch selector semantics, adaptive compact/large-text behavior, representative 200% widget coverage, and both Ctrl/Cmd primary-navigation shortcut families are guarded by tests and source validation.
 
-**Do not call `v2.0.12` a fully verified native/store release yet.** The latest inspected live `main` tree still does not contain the generated Android/iOS/Web/Windows/Linux/macOS project directories. Generated Rust↔Flutter bindings, runtime native-engine selection, native library packaging/loading, generated-boundary parity execution, native E2E evidence, full accessibility/performance review, signing/notarization, and final release-candidate verification remain open.
+This continuation also fixed a functional shared-state UI defect: Converter and Batch previously owned independent `TextEditingController` values that could visibly diverge from the shared `ConverterController`. Both screens now synchronize externally changed input, and widget coverage locks Converter↔Batch synchronization plus History-to-Converter restoration.
 
-No `v2.0.12` tag was created.
+**Do not call `v2.0.12` a fully verified native/store release yet.** The latest inspected live `main` tree still does not contain the generated Android/iOS/Web/Windows/Linux/macOS project directories. Generated Rust↔Flutter bindings, runtime native-engine selection, native library packaging/loading, generated-boundary parity execution, native E2E evidence, full real-platform accessibility/performance review, signing/notarization, and final release-candidate verification remain open.
 
-## Accessibility hardening completed in this continuation
+No `v2.0.12` tag was created in this continuation.
 
-### 1. Central reduced-motion policy
+## Work completed in this continuation
 
-`apps/unitflow_app/lib/app/theme/app_theme.dart` now contains `AppMotion` alongside the existing spacing/radius/breakpoint/theme tokens.
+### 1. Batch selectors now expose semantic label and selected value
 
-The policy provides:
+`apps/unitflow_app/lib/features/converter/presentation/batch_screen.dart` now gives its reusable category/source dropdown wrapper the same semantic context already used by the main converter:
 
-- `modalSurfaceStyle(BuildContext)` — returns `AnimationStyle.noAnimation` when `MediaQuery.disableAnimations` is active;
-- `routeDuration(BuildContext, Duration)` — returns zero duration when reduced motion is requested.
+- field label;
+- selected display value;
+- interactive dropdown subtree.
 
-This gives future modal/custom-transition code one shared accessibility policy instead of duplicating platform checks in individual screens.
+This closes a screen-reader context mismatch between Converter and Batch.
 
-### 2. About navigation now respects reduced motion
+### 2. Compact 200% text coverage expanded across remaining primary surfaces
 
-`apps/unitflow_app/lib/app/app_shell.dart` no longer always relies on the default animated Material route for the About page.
+`apps/unitflow_app/test/accessibility_smoke_test.dart` now includes representative compact `390×844` rendering with a `2.0` text scale for:
 
-When the platform requests disabled animations:
+- Converter;
+- Batch;
+- Library;
+- History;
+- Settings;
+- Onboarding;
+- About;
+- the custom-unit dialog;
+- the converter batch-results modal.
 
-- the route uses a zero-duration `PageRouteBuilder`;
-- forward and reverse transition durations both resolve through `AppMotion`;
-- normal Material navigation remains unchanged otherwise.
+The tests assert that no surfaced layout exception is produced in those deterministic widget configurations. They remain source/widget evidence and do not replace real-device review.
 
-### 3. Batch modal now respects reduced motion
+### 3. Converter modal batch rows are large-text resilient
 
-`apps/unitflow_app/lib/features/converter/presentation/converter_screen.dart` now supplies the shared motion policy to `showModalBottomSheet` through `sheetAnimationStyle`.
+The converter's modal batch-results sheet no longer relies on a `ListTile.trailing` value column.
 
-When reduced motion is active, the batch-results modal does not force the normal sheet entrance/exit animation.
+A dedicated adaptive `_BatchResultListItem` now:
 
-### 4. Converter pin state is semantic, not icon-only
+- uses a normal unit/value row when space and text scale permit;
+- stacks unit metadata above the result when width is below `420` or enlarged text reaches the configured threshold;
+- keeps result text selectable;
+- uses directional end alignment for the stacked result value.
 
-The converter's pin/unpin controls now expose an explicit semantic toggled state in addition to visible icons/labels.
+The converter education-row heading was also given flexible width so the icon/title row is less fragile under enlargement.
 
-Both the compact action and current-pair action are wrapped with merged semantics so assistive technology can distinguish the on/off state rather than receiving only a generic button name.
+### 4. The accessibility repository gate now protects the new behavior
 
-### 5. Converter selectors expose semantic context
+`scripts/check_accessibility_contract.py` now additionally requires:
 
-The reusable converter dropdown wrapper now exposes:
+- the Batch screen accessibility boundary;
+- semantic label/selected-value context for Batch dropdowns;
+- the converter adaptive batch-result row boundary;
+- a large-text adaptation check in that boundary;
+- the compact 200% batch-modal regression test;
+- every Ctrl+1/2/3/4/comma AppShell binding;
+- every Cmd+1/2/3/4/comma AppShell binding;
+- corresponding Ctrl and Command navigation smoke coverage.
 
-- the field label;
-- the currently selected display value;
-- the existing interactive dropdown subtree.
+The validator remains wired into the existing Bash/PowerShell verification, CI, release, materialization, and repository-hygiene paths.
 
-This improves the source/category/target context available to screen readers without changing conversion behavior.
+### 5. Ctrl and Command navigation shortcuts now have widget regressions
 
-### 6. Conversion result is no longer a keystroke live region
+`apps/unitflow_app/test/navigation_smoke_test.dart` now exercises both modifier families implemented by `AppShell`:
 
-The result panel previously set `liveRegion: true` whenever a conversion result existed.
+- Ctrl+1 → Convert;
+- Ctrl+2 → Batch;
+- Ctrl+3 → Library;
+- Ctrl+4 → History;
+- Ctrl+, → Settings;
+- Cmd+1 → Convert;
+- Cmd+2 → Batch;
+- Cmd+3 → Library;
+- Cmd+4 → History;
+- Cmd+, → Settings.
 
-Because UnitFlow recalculates while the user types, that could cause repeated screen-reader announcements on every keystroke and contradicted the accessibility documentation's conservative-announcement policy.
+The existing navigation-test controllers are also disposed through test teardown so the smoke tests do not leave controller lifecycle noise behind.
 
-The result remains a semantic container with a stable result description and selectable/copyable output, but is no longer configured as a continuously updating live region.
+### 6. Fixed stale visible input across Converter and Batch
 
-### 7. Accessibility regression test added
+The main Converter and Batch widgets share one `ConverterController`, but each previously initialized its own `TextEditingController` once and never synchronized that field again.
 
-New tracked test:
+This meant the underlying conversion state could be correct while the visible text field showed an older value after editing the other workspace or restoring History.
 
-- `apps/unitflow_app/test/accessibility_smoke_test.dart`
+Both `ConverterScreen` and `BatchScreen` now:
 
-It covers:
+- initialize their text controller in `initState`;
+- listen to the shared `ConverterController`;
+- update the visible field only when its text differs from shared input;
+- collapse selection to the end after an external update;
+- detach/re-attach correctly if the supplied controller instance changes;
+- remove the listener during `dispose`.
 
-- reduced-motion modal style resolving to zero animation duration;
-- reduced-motion route duration resolving to zero;
-- converter pin control exposing semantic toggle state;
-- semantic state changing from unpinned to pinned after interaction.
+Programmatic synchronization does not call the field's `onChanged`, so it does not feed the value back recursively through the shared controller.
 
-This is automated source/widget evidence only. It does not replace real TalkBack/VoiceOver, keyboard/focus, contrast, touch-target, or large-text review.
+### 7. Rendered cross-workspace and History restoration tests added
 
-### 8. Repository inventory updated
+`navigation_smoke_test.dart` now verifies two important UI-state journeys:
 
-`docs/repository-inventory.md` now includes the new accessibility smoke test so exact tracked-file inventory validation remains synchronized.
+1. enter a value in Converter → navigate to Batch → Batch displays the same value → edit it in Batch → navigate back → Converter displays the new value;
+2. pre-record a valid recent conversion → navigate to History → open that recent entry → Converter becomes active and visibly displays the saved original input.
 
-### 9. Accessibility documentation expanded
+These tests protect the actual rendered text-controller synchronization path rather than only checking domain/controller state.
 
-`docs/accessibility.md` now documents:
+### 8. Accessibility/testing/release documentation synchronized
 
-- implemented source-level safeguards;
-- the centralized reduced-motion policy;
-- semantic pin state;
-- semantic selector context;
-- conservative conversion-result announcements;
-- automated coverage boundaries;
-- manual release review requirements;
-- explicit warning that widget/source tests are not a completed accessibility audit.
+Updated documentation now reflects the implemented source and widget evidence:
 
-### 10. Testing documentation corrected and expanded
+- `docs/accessibility.md` documents batch selector semantics, adaptive batch-modal rows, compact 200% coverage, and Ctrl/Cmd shortcut regression coverage;
+- `docs/testing.md` documents navigation shortcut tests, Converter↔Batch input synchronization, History restoration, and the stronger accessibility source gate;
+- `ROADMAP.md` records automated reduced-motion, semantic, and large-text hardening while keeping real-platform accessibility review open;
+- `CHANGELOG.md` records the expanded accessibility coverage, keyboard navigation tests, adaptive modal behavior, and stale-input synchronization fix.
 
-`docs/testing.md` now includes accessibility safeguards in the project quality strategy and documents `accessibility_smoke_test.dart`.
+## Important accessibility work already present before this continuation
 
-It also fixes stale platform-workflow wording: `.github/workflows/platform-smoke.yml` retains its historical name but is now documented correctly as a committed-first six-platform **release-mode build matrix** with transition-time generation fallback and artifact upload, not merely temporary debug scaffold smoke testing.
+The live branch entered this continuation with additional accessibility hardening beyond the older handoff, including:
 
-### 11. Roadmap and changelog updated
+- onboarding reduced-motion page transitions and indicator duration handling;
+- repository enforcement for onboarding reduced-motion behavior;
+- large-text-resilient custom-unit form actions;
+- compact-layout-resilient Library and History headers;
+- text-scale-resilient Settings section headers;
+- initial compact large-text widget smoke coverage.
 
-`ROADMAP.md` now marks source-level reduced-motion/semantic safeguards and widget smoke coverage complete while keeping the real manual accessibility audit open.
+Representative immediately preceding commits included:
 
-`CHANGELOG.md` records:
+- `bf2756f2` — `app: respect reduced motion during onboarding`
+- `fb9772da` — `build: enforce onboarding reduced-motion contract`
+- `ef7a15ba` — `app: make custom unit form large-text resilient`
+- `50e11b6f` — `app: make library header compact-layout resilient`
+- `8c2afc1f` — `app: make history header compact-layout resilient`
+- `c8eb2880` — `app: make settings section headers text-scale resilient`
+- `948a3fc5` — `test: add compact large-text layout coverage`
 
-- accessibility smoke coverage;
-- shared reduced-motion behavior;
-- semantic pin/selector improvements;
-- removal of excessive live-region announcements.
+Future continuations must inspect live `main` first because this handoff can become stale as soon as another session commits.
 
-## Bridge hardening retained from the previous continuation
+## Bridge hardening retained
 
-The current tree still includes all source-level bridge hardening completed immediately before this accessibility pass:
+The current tree still includes the source-level bridge hardening completed in earlier continuations:
 
 - bridge protocol version `1`;
 - backend metadata;
@@ -154,14 +185,14 @@ The current tree still includes all source-level bridge hardening completed imme
 - Rust ordered batch conversion;
 - shared 256-target batch ceiling across Rust bridge, Flutter bridge DTO, and Dart fallback;
 - bounded lazy-iterable consumption in the fallback;
-- Rust/Flutter regression coverage;
+- Rust/Flutter source regression coverage;
 - repository release-consistency checks that lock protocol/capabilities/batch ceiling across code/docs/fixture/fallback.
 
 Generated bindings and production runtime native-engine selection still do not exist and must not be implied from these source contracts.
 
 ## Live platform-tree inspection
 
-The live `apps/unitflow_app` directory was re-inspected after this accessibility continuation.
+The live `apps/unitflow_app` directory was re-inspected on **2026-08-21** after the source changes above.
 
 It currently contains only:
 
@@ -192,26 +223,22 @@ Do not claim all six generated platform projects are committed until live `main`
 
 ### Connected GitHub evidence
 
-All changes in this continuation were written directly to live `main` through the connected GitHub integration.
+All commits listed in this continuation were written directly to live `main` through the connected GitHub integration and then re-read through the same integration.
 
-The live branch was re-read after the work. Before this handoff update, `main` pointed to:
-
-```text
-3087fe93f992e634f36b62fe2b5a76b5af8cd3fe
-```
-
-with the requested commit identity visible as:
+Immediately before this handoff-file update, the latest inspected commit was:
 
 ```text
-Sanskar <sanskarin@outlook.in>
+1494ec56d614dc9a0649272b658f004e9c8f46c0
 ```
 
-The repository's generated platform directories remained absent on that inspected tree.
+The GitHub connector's recent-commit result does not expose author-email metadata for these commits, so this checkpoint does not claim that the requested commit email was independently re-verified from commit metadata. The requested identity remains documented below for environments that expose `git config`/author controls.
 
 ### Local execution limitation
 
-This continuation does not claim local output for:
+This continuation does not claim successful local output for:
 
+- `python3 scripts/check_accessibility_contract.py` against a local clone;
+- repository validator unit tests against a local clone;
 - `dart format`;
 - `flutter analyze`;
 - `flutter test`;
@@ -220,23 +247,26 @@ This continuation does not claim local output for:
 - `cargo test`;
 - Android/iOS/Web/Windows/Linux/macOS release builds.
 
-The connected environment used for repository writes does not provide trustworthy local Flutter/Rust/native build execution for this repository. Source changes, tests, workflow definitions, and documentation are implementation evidence, not proof that those commands passed.
+A direct clone attempt from the available execution container could not resolve `github.com`, and the connected GitHub integration is a repository API rather than a full local Flutter/Rust/native build environment. Therefore source changes, committed tests, validator definitions, and documentation are implementation evidence, not proof that those commands passed.
+
+### GitHub Actions evidence boundary
+
+A successful final-candidate full CI/release-build matrix was not established in this continuation. Do not infer green GitHub Actions merely because workflow definitions and source validators are present.
 
 ### Accessibility evidence boundary
 
-The new widget tests and source changes prove the intended source contract only.
-
-They do **not** prove:
+The source contracts and widget tests do **not** prove:
 
 - TalkBack behavior on Android;
 - VoiceOver behavior on iOS/macOS;
 - Windows Narrator behavior;
 - Linux screen-reader behavior;
 - browser assistive-technology behavior;
-- keyboard/focus traversal on every desktop target;
+- complete keyboard focus traversal and visible-focus quality on every desktop target;
 - contrast compliance under every rendered theme state;
-- large-text behavior on real devices;
-- touch-target behavior on native builds.
+- large-text behavior on real devices and every locale;
+- touch-target behavior on native builds;
+- modal focus trapping/restoration on real assistive-technology stacks.
 
 Those remain release-candidate evidence requirements.
 
@@ -250,8 +280,8 @@ Those remain release-candidate evidence requirements.
 6. Reconcile the current synchronous presentation-facing conversion engine with the future generated native bridge without stale-result races or silent mid-session fallback.
 7. Package/load the Rust native library on Android/iOS/Windows/Linux/macOS where Rust authority is claimed.
 8. Execute Rust-vs-Dart parity through the generated binding boundary.
-9. Add rendered primary UI integration tests and native E2E journeys.
-10. Perform real screen-reader, keyboard/focus, large-text, contrast, reduced-motion, and touch-target review.
+9. Add native end-to-end primary journeys after reviewed platform projects/bindings exist.
+10. Perform real screen-reader, full keyboard/focus, large-text, contrast, reduced-motion, modal-focus, and touch-target review.
 11. Record performance/search/batch/native profiling baselines where release decisions need them.
 12. Produce final icons/splash/screenshots/demo media from verified builds.
 13. Validate Android production signing and Apple signing/provisioning/notarization without committing credentials.
@@ -261,47 +291,53 @@ Those remain release-candidate evidence requirements.
 
 ## Exact next continuation priority
 
-1. Inspect live `main` for the six generated platform directories and any new GitHub Actions evidence first.
-2. If platform projects remain absent, execute the materialization workflow from an Actions-capable context or run the bootstrap scripts with Flutter installed; commit all six generated targets together and regenerate the platform inventory.
-3. Fix every actual cross-platform build failure surfaced by execution.
+1. Inspect live `main` for new commits, all six generated platform directories, and any final-candidate GitHub Actions evidence before trusting this checkpoint.
+2. If platform projects remain absent, execute `.github/workflows/materialize-platforms.yml` from an Actions-capable context or run the repository bootstrap scripts with Flutter installed; commit all six generated targets plus `.metadata` together and regenerate `docs/platform-file-inventory.md`.
+3. Run the repository validators, Flutter quality gates, Rust quality gates, and six-platform release builds against that committed tree; fix every real failure surfaced by execution.
 4. Integrate a reviewed Rust↔Flutter binding generator around `BridgeService::info()`, `convert()`, and `batch_convert()`.
 5. Implement one-time startup engine selection that fails closed on bridge incompatibility and never silently changes engines midway through a calculation/session.
 6. Execute generated-boundary parity including malformed metadata, exact 256-target behavior, rounding ties, affine temperature conversions, and safe failures.
-7. Add representative large-text widget coverage and continue native accessibility review once platform builds are executable.
-8. Continue native E2E/performance/release-candidate evidence.
+7. Continue rendered UI integration coverage around persistence/import/custom-unit journeys once the native execution environment is available.
+8. Perform native accessibility/performance/release-candidate evidence and only then prepare the exact release tag.
 
-## Commits created in this accessibility continuation
+## Commits created in this continuation
 
-- `21a73ad4` — `app: centralize reduced-motion policy`
-- `d965d501` — `app: respect reduced motion for about navigation`
-- `77be7951` — `app: harden converter accessibility semantics`
-- `411f6828` — `test: add accessibility and reduced-motion smoke coverage`
-- `a41d3e72` — `docs: inventory accessibility smoke coverage`
-- `5384eab0` — `docs: record automated accessibility safeguards`
-- `390bccb4` — `docs: advance accessibility hardening roadmap`
-- `0812395c` — `docs: record accessibility hardening`
-- `3087fe93` — `docs: align testing strategy with accessibility and platform builds`
+- `46e1676b` — `app: expose batch selector semantics`
+- `c3b39e6d` — `test: cover batch semantics and remaining large-text screens`
+- `9f40db61` — `test: target localized converter heading`
+- `5a2534b1` — `docs: record expanded accessibility regression coverage`
+- `7b3ec99c` — `build: enforce batch accessibility and large-text coverage`
+- `5162a045` — `docs: advance automated accessibility hardening roadmap`
+- `ed1142b0` — `app: harden converter batch results for large text`
+- `c5fc84cb` — `test: cover large-text converter batch modal`
+- `6c83cc6e` — `build: require batch-modal large-text regression`
+- `38182124` — `docs: document large-text batch modal behavior`
+- `dcab78cb` — `docs: align testing strategy with large-text coverage`
+- `3ae53ed6` — `docs: record expanded accessibility hardening`
+- `ee2ff235` — `test: dispose navigation smoke controllers`
+- `69d73127` — `test: cover desktop navigation shortcuts`
+- `db891e96` — `test: cover macOS navigation shortcuts`
+- `59451d29` — `build: enforce keyboard navigation coverage`
+- `84d6b00a` — `docs: record keyboard shortcut regression coverage`
+- `ef70c575` — `fix: synchronize converter input from shared state`
+- `9c987a1c` — `fix: synchronize batch input from shared state`
+- `466f05d1` — `test: cover converter batch input synchronization`
+- `5915ffc6` — `test: cover history input restoration`
+- `95a7e513` — `docs: record navigation and input-sync regressions`
+- `1494ec56` — `docs: record navigation state synchronization fix`
 
 This handoff update follows those commits.
 
-## Previous bridge-hardening continuation
+## Requested commit identity
 
-The immediately preceding continuation ended with:
-
-- `96f52f10` — `docs: record bridge hardening continuation`
-
-and contains the protocol/capability/batch-bound bridge hardening summarized above.
-
-## Commit identity note
-
-Requested identity remains:
+For environments that expose local Git author configuration, the requested identity remains:
 
 ```bash
 git config user.name "Sanskar"
 git config user.email "sanskarin@outlook.in"
 ```
 
-The live branch metadata for the inspected commits shows that identity.
+Do not claim this was reconfigured through the GitHub connector unless the connector exposes author controls or commit metadata that proves it.
 
 ## Handoff rules
 
@@ -315,7 +351,10 @@ For future continuation work:
 6. preserve bridge protocol/capability/batch-limit parity across Rust, Flutter bridge, deterministic fallback, fixtures, and docs;
 7. never silently switch calculation engines after startup selection;
 8. preserve reduced-motion behavior for new modal/custom transitions;
-9. do not treat automated accessibility tests as a manual accessibility audit;
-10. keep production signing credentials out of source control;
-11. update this file after meaningful work;
-12. do not tag or call `v2.0.12` release-verified while evidence blockers remain open.
+9. preserve semantic label/value context for new selector abstractions;
+10. preserve visible text-field synchronization whenever shared controller state can be changed externally;
+11. keep Ctrl and Cmd primary-navigation behavior synchronized when destinations change;
+12. do not treat automated accessibility tests as a manual accessibility audit;
+13. keep production signing credentials out of source control;
+14. update this file after meaningful work;
+15. do not tag or call `v2.0.12` release-verified while evidence blockers remain open.
