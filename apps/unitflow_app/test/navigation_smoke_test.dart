@@ -39,6 +39,33 @@ void main() {
     expect(find.text('Conversion and formatting'), findsOneWidget);
   });
 
+  testWidgets('converter and batch input fields stay synchronized', (tester) async {
+    final controller = AppController(
+      repository: MemoryUserStateRepository(
+        UserState(onboardingComplete: true),
+      ),
+    );
+    addTearDown(controller.dispose);
+    await controller.initialize();
+
+    await tester.pumpWidget(UnitFlowApp(appController: controller));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), '123.5');
+    await tester.pump();
+
+    await tester.tap(find.text('Batch').first);
+    await tester.pumpAndSettle();
+    expect(tester.widget<TextField>(find.byType(TextField)).controller?.text, '123.5');
+
+    await tester.enterText(find.byType(TextField), '42');
+    await tester.pump();
+
+    await tester.tap(find.text('Convert').first);
+    await tester.pumpAndSettle();
+    expect(tester.widget<TextField>(find.byType(TextField)).controller?.text, '42');
+  });
+
   testWidgets('desktop control shortcuts switch primary destinations', (tester) async {
     final controller = AppController(
       repository: MemoryUserStateRepository(
