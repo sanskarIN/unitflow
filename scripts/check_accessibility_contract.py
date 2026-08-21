@@ -119,6 +119,10 @@ def validate() -> list[str]:
         errors.append("converter pin controls do not both expose semantic toggled state")
     if "Semantics(\n    container: true,\n    label: label," not in converter:
         errors.append("converter labeled dropdowns do not expose explicit semantic context")
+    if "class _BatchResultListItem" not in converter:
+        errors.append("converter batch modal is missing its adaptive result-row boundary")
+    if "MediaQuery.textScalerOf(context).scale(16) >= 24" not in converter:
+        errors.append("converter batch modal does not adapt its result rows for large text")
 
     batch = text(BATCH_SCREEN)
     if "class _BatchField<T>" not in batch:
@@ -156,6 +160,7 @@ def validate() -> list[str]:
         "textScaleFactorTestValue = 2.0",
         "ConverterScreen(controller: converterController)",
         "BatchScreen(controller: converterController)",
+        "converter batch modal survives compact 200% text",
         "OnboardingScreen(appController: controller)",
         "const AboutScreen()",
     ):
