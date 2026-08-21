@@ -29,7 +29,7 @@ No changes are queued beyond the active `2.0.12` development snapshot documented
 - Shared 256-target native/fallback batch-conversion ceiling with Rust bridge input bounds, Flutter bridge DTO bounds, and deterministic Dart fallback enforcement.
 - Rust bridge-service regression tests covering canonical payloads, error codes, protocol/capability metadata, bounded batches, unit-ID validation, batch ordering, and camelCase serialization.
 - Flutter regression tests covering bridge metadata compatibility, malformed startup payloads, bounded batch requests, and fallback batch-limit parity.
-- Accessibility smoke coverage for reduced-motion policy and converter pin semantic-state behavior.
+- Accessibility smoke coverage for reduced-motion policy, converter pin semantic-state behavior, batch selector semantic context, compact 200% text scaling across primary screens/dialogs, and the converter batch-results modal.
 - Persisted primary-journey regression coverage across controller restart, settings, favorites, pins, history, custom units, backup/import, conversion reuse, and reset.
 - Dependency-free Rust conversion micro-benchmark.
 - CI, CodeQL, dependency-review, and verified source-release workflows.
@@ -39,12 +39,12 @@ No changes are queued beyond the active `2.0.12` development snapshot documented
 - `scripts/check_platform_support.py`, enforcing the six-target build/generation contract, rejecting partial committed platform sets, and guarding shared Flutter libraries from unconditional `dart:io` imports that would break Web.
 - `docs/platform-file-inventory.md` plus `scripts/update_platform_inventory.py` so generated platform trees can remain exhaustively inventoried without hand-maintaining hundreds of repetitive entries.
 - Dependabot update discovery for Cargo, Flutter/Dart, and GitHub Actions dependencies.
-- Dependency-free Python validators for repository-local Markdown targets, release/version/schema/protocol consistency, tracked-file hygiene, exact release-tag/version matching, exhaustive tracked-file documentation inventory parity, and cross-platform support.
+- Dependency-free Python validators for repository-local Markdown targets, release/version/schema/protocol consistency, tracked-file hygiene, exact release-tag/version matching, exhaustive tracked-file documentation inventory parity, cross-platform support, and source-level accessibility safeguards.
 - `docs/repository-inventory.md`, documenting first-party repository files and combined with the generated platform inventory for exact `git ls-files` enforcement.
-- Standard-library regression tests for the repository validators, including six-platform support, generated-inventory behavior, bridge protocol/capability parity, and shared batch bounds.
+- Standard-library regression tests for the repository validators, including six-platform support, generated-inventory behavior, bridge protocol/capability parity, shared batch bounds, and accessibility-source validation.
 - Structured bug/feature issue templates, pull-request quality checklist, CODEOWNERS, funding metadata, and security/support issue routing.
 - Cross-platform verification scripts for Bash and PowerShell.
-- Documentation for architecture decisions, bridge contract, data schema, unit model, threat model, platform support, native platform completion, generated platform builds, dependency maintenance, localization, keyboard shortcuts, testing, performance, releases, and GitHub maintenance.
+- Documentation for architecture decisions, bridge contract, data schema, unit model, threat model, platform support, native platform completion, generated platform builds, dependency maintenance, localization, keyboard shortcuts, testing, performance, releases, accessibility, and GitHub maintenance.
 - `.env.example` documenting that core UnitFlow features require no secrets or online configuration.
 
 ### Changed
@@ -58,8 +58,9 @@ No changes are queued beyond the active `2.0.12` development snapshot documented
 - Deterministic Dart batch conversion now bounds iterable consumption to one item beyond the documented limit before rejecting oversized work, preventing an unbounded iterable from being fully materialized.
 - Main conversion and batch flows now use the persisted user-selected rounding strategy.
 - App navigation expanded with dedicated Batch and History workspaces and desktop shortcuts.
-- App modal surfaces and About navigation now honor the platform reduced-animation preference through a centralized `AppMotion` policy.
-- Converter pin actions now expose semantic toggled state, and category/source/target selectors expose explicit semantic label/value context.
+- App modal surfaces, onboarding page movement/indicators, and About navigation now honor the platform reduced-animation preference through the centralized `AppMotion` policy.
+- Converter pin actions now expose semantic toggled state; converter category/source/target selectors and batch category/source selectors expose explicit semantic label/value context.
+- Converter modal batch-result rows now switch to a stacked unit/value presentation on compact widths or enlarged text instead of reserving a narrow trailing value column.
 - Custom-unit deletion now removes dangling favorites, pins, and history references.
 - Rust and Dart custom-unit boundaries enforce a maximum of 32 aliases.
 - Backup/custom-unit error surfaces now avoid displaying raw internal exception text.
@@ -68,8 +69,8 @@ No changes are queued beyond the active `2.0.12` development snapshot documented
 - Native bridge request/response DTO validation now enforces canonical decimal strings, stable unit-ID syntax, supported precision, startup metadata bounds, and batch target limits before data crosses the future generated binding boundary.
 - Plain decimal display grouping now follows locale decimal-pattern primary/secondary grouping sizes while preserving exact decimal strings.
 - The historical generated-platform smoke workflow is now a committed-first six-platform **release build matrix** with generation fallback and artifact upload instead of debug-only compatibility checks.
-- Normal Bash/PowerShell verification, CI, platform materialization, and release packaging now execute the cross-platform support validator in addition to repository-integrity validators.
-- Repository hygiene treats the platform materializer, generated platform inventory, and platform-support validator as required project infrastructure.
+- Normal Bash/PowerShell verification, CI, platform materialization, and release packaging now execute the cross-platform support and accessibility source-contract validators in addition to repository-integrity validators.
+- Repository hygiene treats the platform materializer, generated platform inventory, platform-support validator, and accessibility validator as required project infrastructure.
 - Flutter CI/release verification runs localization generation explicitly.
 - Dart formatting uses an explicit repository-wide 120-column page width while retaining strict analyzer/lint rules.
 - Rust release packaging no longer permits a dirty working tree.
@@ -95,6 +96,7 @@ No changes are queued beyond the active `2.0.12` development snapshot documented
 - Fixed the source-level batch capability mismatch where Flutter required `batchConvert` during negotiation without exposing a corresponding bridge batch method.
 - Fixed native-versus-fallback batch behavior divergence by applying the same documented target ceiling to both paths.
 - Fixed conversion output being configured as a live region on every keystroke, reducing unnecessary screen-reader announcements while preserving a semantic result description.
+- Fixed several compact large-text layout pressure points in the custom-unit form, Library/History headers, Settings section headers, converter education header, and converter modal batch result rows.
 
 ### Security
 
