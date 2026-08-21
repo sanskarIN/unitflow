@@ -24,14 +24,14 @@ The current source includes several accessibility-oriented defaults that are cov
 - batch category and source-unit dropdowns expose the same semantic label/selected-value contract instead of relying only on visible field decoration;
 - conversion output remains selectable and has a stable semantic description without being configured as a live region on every keystroke;
 - icon-only controls such as swap, copy, search, and the converter pin action have tooltips/accessibility names;
-- desktop navigation retains keyboard shortcuts and a visible focus path through Flutter's standard focus system;
+- desktop navigation exposes both Ctrl-based and macOS Command-based shortcuts for Convert, Batch, Library, History, and Settings, with widget regression coverage for both modifier families;
 - modal batch surfaces use `MediaQuery.disableAnimations` through the centralized `AppMotion` policy and disable sheet animation when the platform requests reduced motion;
 - converter modal batch-result rows stack the unit metadata above the selectable result on compact widths or enlarged text instead of forcing the result into a narrow trailing column;
 - About navigation removes transition duration when reduced motion is requested;
 - adaptive list/rail navigation avoids requiring pointer-only interaction;
 - representative compact-width widget tests run at 200% text scaling across Converter, Batch, Library, History, Settings, Onboarding, About, the custom-unit dialog, and the converter batch-results modal and fail on surfaced layout exceptions.
 
-`apps/unitflow_app/test/accessibility_smoke_test.dart` currently locks the reduced-motion policy, converter pin semantic-state contract, batch selector semantic context, representative compact 200% text-layout coverage, and the converter batch-results modal at that same text scale.
+`apps/unitflow_app/test/accessibility_smoke_test.dart` currently locks the reduced-motion policy, converter pin semantic-state contract, batch selector semantic context, representative compact 200% text-layout coverage, and the converter batch-results modal at that same text scale. `navigation_smoke_test.dart` separately exercises pointer navigation plus Ctrl/Cmd primary-destination shortcuts.
 
 ## Converter screen review
 
@@ -86,9 +86,10 @@ Current automated coverage includes:
 - semantic label and selected-value context for batch selectors;
 - zero-duration route and modal-surface policy under reduced-motion media settings;
 - compact 390×844 layout smoke coverage at 200% text scaling for Converter, Batch, Library, History, Settings, Onboarding, About, and the custom-unit dialog;
-- opening and rendering the converter batch-results modal at the same compact 200% text configuration.
+- opening and rendering the converter batch-results modal at the same compact 200% text configuration;
+- Ctrl+1/2/3/4/comma and Cmd+1/2/3/4/comma navigation across the five primary destinations.
 
-Future release-candidate coverage should add target-specific semantics checks, keyboard/focus traversal tests where stable in Flutter test infrastructure, and representative long-localization text runs as native projects become executable.
+Future release-candidate coverage should add target-specific semantics checks, full keyboard focus traversal tests where stable in Flutter test infrastructure, and representative long-localization text runs as native projects become executable.
 
 ## Manual release checklist
 
