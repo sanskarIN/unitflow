@@ -17,9 +17,25 @@ final class ConverterScreen extends StatefulWidget {
 }
 
 final class _ConverterScreenState extends State<ConverterScreen> {
-  late final TextEditingController _inputController = TextEditingController(
-    text: widget.controller.input,
-  );
+  late final TextEditingController _inputController;
+
+  @override
+  void initState() {
+    super.initState();
+    _inputController = TextEditingController(text: widget.controller.input);
+    widget.controller.addListener(_syncInputFromController);
+  }
+
+  @override
+  void didUpdateWidget(covariant ConverterScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller == widget.controller) {
+      return;
+    }
+    oldWidget.controller.removeListener(_syncInputFromController);
+    widget.controller.addListener(_syncInputFromController);
+    _syncInputFromController();
+  }
 
   @override
   void didChangeDependencies() {
@@ -27,8 +43,20 @@ final class _ConverterScreenState extends State<ConverterScreen> {
     widget.controller.setLocale(Localizations.localeOf(context).toLanguageTag());
   }
 
+  void _syncInputFromController() {
+    final input = widget.controller.input;
+    if (_inputController.text == input) {
+      return;
+    }
+    _inputController.value = TextEditingValue(
+      text: input,
+      selection: TextSelection.collapsed(offset: input.length),
+    );
+  }
+
   @override
   void dispose() {
+    widget.controller.removeListener(_syncInputFromController);
     _inputController.dispose();
     super.dispose();
   }
