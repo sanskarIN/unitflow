@@ -15,6 +15,7 @@ APP_SHELL = APP_LIB / "app" / "app_shell.dart"
 CONVERTER_SCREEN = (
     APP_LIB / "features" / "converter" / "presentation" / "converter_screen.dart"
 )
+BATCH_SCREEN = APP_LIB / "features" / "converter" / "presentation" / "batch_screen.dart"
 ONBOARDING_SCREEN = (
     APP_LIB / "features" / "onboarding" / "presentation" / "onboarding_screen.dart"
 )
@@ -69,6 +70,7 @@ def validate() -> list[str]:
         APP_THEME,
         APP_SHELL,
         CONVERTER_SCREEN,
+        BATCH_SCREEN,
         ONBOARDING_SCREEN,
         ACCESSIBILITY_TEST,
         VERIFY_BASH,
@@ -118,6 +120,14 @@ def validate() -> list[str]:
     if "Semantics(\n    container: true,\n    label: label," not in converter:
         errors.append("converter labeled dropdowns do not expose explicit semantic context")
 
+    batch = text(BATCH_SCREEN)
+    if "class _BatchField<T>" not in batch:
+        errors.append("batch field accessibility boundary is missing")
+    if "Semantics(\n    container: true,\n    label: label," not in batch:
+        errors.append("batch labeled dropdowns do not expose explicit semantic context")
+    if "value: value == null ? null : labelFor(value as T)," not in batch:
+        errors.append("batch labeled dropdowns do not expose their selected semantic value")
+
     onboarding = text(ONBOARDING_SCREEN)
     for token, message in (
         (
@@ -142,6 +152,12 @@ def validate() -> list[str]:
         "hasToggledState: true",
         "isToggled: false",
         "isToggled: true",
+        "widget.properties.value == 'Length'",
+        "textScaleFactorTestValue = 2.0",
+        "ConverterScreen(controller: converterController)",
+        "BatchScreen(controller: converterController)",
+        "OnboardingScreen(appController: controller)",
+        "const AboutScreen()",
     ):
         if token not in test_source:
             errors.append(f"accessibility smoke coverage is missing expected assertion token: {token}")
