@@ -181,6 +181,33 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('converter batch modal survives compact 200% text', (tester) async {
+    await _useCompactLargeText(tester);
+    final appController = await _controller();
+    final converterController = ConverterController(appController: appController);
+    addTearDown(converterController.dispose);
+    addTearDown(appController.dispose);
+
+    await tester.pumpWidget(
+      _localizedApp(ConverterScreen(controller: converterController)),
+    );
+    await tester.pumpAndSettle();
+
+    final batchButton = find.text('View batch table');
+    expect(batchButton, findsOneWidget);
+    await tester.ensureVisible(batchButton);
+    await tester.pumpAndSettle();
+    await tester.tap(batchButton);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Batch conversion'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    await tester.tapAt(const Offset(8, 8));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('onboarding and about survive compact 200% text', (tester) async {
     await _useCompactLargeText(tester);
     final controller = await _controller(onboardingComplete: false);
