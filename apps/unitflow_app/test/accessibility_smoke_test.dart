@@ -5,8 +5,13 @@ import 'package:unitflow/app/theme/app_theme.dart';
 import 'package:unitflow/app/unitflow_app.dart';
 import 'package:unitflow/core/persistence/user_state.dart';
 import 'package:unitflow/core/persistence/user_state_repository.dart';
+import 'package:unitflow/features/converter/presentation/batch_screen.dart';
+import 'package:unitflow/features/converter/presentation/converter_controller.dart';
+import 'package:unitflow/features/converter/presentation/converter_screen.dart';
 import 'package:unitflow/features/history/presentation/history_screen.dart';
 import 'package:unitflow/features/library/presentation/library_screen.dart';
+import 'package:unitflow/features/onboarding/presentation/onboarding_screen.dart';
+import 'package:unitflow/features/settings/presentation/about_screen.dart';
 import 'package:unitflow/features/settings/presentation/settings_screen.dart';
 import 'package:unitflow/l10n/generated/app_localizations.dart';
 
@@ -71,6 +76,33 @@ void main() {
     );
   });
 
+  testWidgets('batch selectors expose label and selected value semantics', (tester) async {
+    final semantics = tester.ensureSemantics();
+    addTearDown(semantics.dispose);
+    final appController = await _controller();
+    final converterController = ConverterController(appController: appController);
+    addTearDown(converterController.dispose);
+    addTearDown(appController.dispose);
+
+    await tester.pumpWidget(
+      _localizedApp(BatchScreen(controller: converterController)),
+    );
+    await tester.pumpAndSettle();
+
+    final category = find.byWidgetPredicate(
+      (widget) =>
+          widget is Semantics &&
+          widget.properties.label == 'Category' &&
+          widget.properties.value == 'Length',
+      description: 'batch category semantic label and value',
+    );
+    expect(category, findsOneWidget);
+    expect(
+      tester.getSemantics(category),
+      isSemantics(label: 'Category', value: 'Length'),
+    );
+  });
+
   testWidgets('library and custom-unit dialog survive compact 200% text', (tester) async {
     await _useCompactLargeText(tester);
     final controller = await _controller();
@@ -126,6 +158,46 @@ void main() {
     expect(find.text('No recent conversions'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('converter and batch survive compact 200% text', (tester) async {
+    await _useCompactLargeText(tester);
+    final appController = await _controller();
+    final converterController = ConverterController(appController: appController);
+    addTearDown(converterController.dispose);
+    addTearDown(appController.dispose);
+
+    await tester.pumpWidget(
+      _localizedApp(ConverterScreen(controller: converterController)),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Convert'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(
+      _localizedApp(BatchScreen(controller: converterController)),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Batch conversion'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('onboarding and about survive compact 200% text', (tester) async {
+    await _useCompactLargeText(tester);
+    final controller = await _controller(onboardingComplete: false);
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      _localizedApp(OnboardingScreen(appController: controller)),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Skip'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(_localizedApp(const AboutScreen()));
+    await tester.pumpAndSettle();
+    expect(find.text('UnitFlow'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }
 
 Finder _pinSemantics({required bool isToggled}) => find.byWidgetPredicate(
@@ -133,10 +205,10 @@ Finder _pinSemantics({required bool isToggled}) => find.byWidgetPredicate(
   description: 'pin semantic state toggled=$isToggled',
 );
 
-Future<AppController> _controller() async {
+Future<AppController> _controller({bool onboardingComplete = true}) async {
   final controller = AppController(
     repository: MemoryUserStateRepository(
-      UserState(onboardingComplete: true),
+      UserState(onboardingComplete: onboardingComplete),
     ),
   );
   await controller.initialize();
