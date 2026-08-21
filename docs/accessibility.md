@@ -26,11 +26,12 @@ The current source includes several accessibility-oriented defaults that are cov
 - icon-only controls such as swap, copy, search, and the converter pin action have tooltips/accessibility names;
 - desktop navigation retains keyboard shortcuts and a visible focus path through Flutter's standard focus system;
 - modal batch surfaces use `MediaQuery.disableAnimations` through the centralized `AppMotion` policy and disable sheet animation when the platform requests reduced motion;
+- converter modal batch-result rows stack the unit metadata above the selectable result on compact widths or enlarged text instead of forcing the result into a narrow trailing column;
 - About navigation removes transition duration when reduced motion is requested;
 - adaptive list/rail navigation avoids requiring pointer-only interaction;
-- representative compact-width widget tests run at 200% text scaling across Converter, Batch, Library, History, Settings, Onboarding, About, and the custom-unit dialog and fail on surfaced layout exceptions.
+- representative compact-width widget tests run at 200% text scaling across Converter, Batch, Library, History, Settings, Onboarding, About, the custom-unit dialog, and the converter batch-results modal and fail on surfaced layout exceptions.
 
-`apps/unitflow_app/test/accessibility_smoke_test.dart` currently locks the reduced-motion policy, converter pin semantic-state contract, batch selector semantic context, and representative compact 200% text-layout coverage.
+`apps/unitflow_app/test/accessibility_smoke_test.dart` currently locks the reduced-motion policy, converter pin semantic-state contract, batch selector semantic context, representative compact 200% text-layout coverage, and the converter batch-results modal at that same text scale.
 
 ## Converter screen review
 
@@ -54,7 +55,8 @@ Verify:
 3. copy CSV/TSV/JSON actions are named and remain reachable without pointer-only input;
 4. wide result tables remain horizontally reachable rather than clipping content;
 5. batch result values remain selectable;
-6. compact and enlarged-text layouts do not hide the export controls or selected input state.
+6. compact and enlarged-text layouts do not hide the export controls or selected input state;
+7. converter modal batch rows remain readable and selectable when their unit metadata and value stack under compact/enlarged-text conditions.
 
 ## Responsive review widths
 
@@ -83,7 +85,8 @@ Current automated coverage includes:
 - semantic on/off state for the converter pin action;
 - semantic label and selected-value context for batch selectors;
 - zero-duration route and modal-surface policy under reduced-motion media settings;
-- compact 390×844 layout smoke coverage at 200% text scaling for Converter, Batch, Library, History, Settings, Onboarding, About, and the custom-unit dialog.
+- compact 390×844 layout smoke coverage at 200% text scaling for Converter, Batch, Library, History, Settings, Onboarding, About, and the custom-unit dialog;
+- opening and rendering the converter batch-results modal at the same compact 200% text configuration.
 
 Future release-candidate coverage should add target-specific semantics checks, keyboard/focus traversal tests where stable in Flutter test infrastructure, and representative long-localization text runs as native projects become executable.
 
