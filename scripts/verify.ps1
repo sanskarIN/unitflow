@@ -52,6 +52,9 @@ try {
     Write-Host '==> Accessibility source contract'
     Invoke-PythonCheck -Arguments @('scripts/check_accessibility_contract.py') -FailureMessage 'Accessibility source-contract validation failed'
 
+    Write-Host '==> Conversion session source contract'
+    Invoke-PythonCheck -Arguments @('scripts/check_conversion_session_contract.py') -FailureMessage 'Conversion-session source-contract validation failed'
+
     Write-Host '==> Markdown links'
     Invoke-PythonCheck -Arguments @('scripts/check_markdown_links.py') -FailureMessage 'Markdown link validation failed'
 
