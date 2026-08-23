@@ -21,6 +21,9 @@ python3 scripts/check_platform_support.py
 echo "==> Accessibility source contract"
 python3 scripts/check_accessibility_contract.py
 
+echo "==> Conversion session source contract"
+python3 scripts/check_conversion_session_contract.py
+
 echo "==> Markdown links"
 python3 scripts/check_markdown_links.py
 
