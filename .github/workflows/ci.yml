@@ -39,6 +39,9 @@ jobs:
       - name: Check accessibility source contract
         run: python3 scripts/check_accessibility_contract.py
 
+      - name: Check conversion session source contract
+        run: python3 scripts/check_conversion_session_contract.py
+
       - name: Check Markdown links
         run: python3 scripts/check_markdown_links.py
 
