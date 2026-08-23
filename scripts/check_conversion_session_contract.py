@@ -53,9 +53,11 @@ def main() -> int:
         ("final String backendId;", "stable selected backend identifier"),
         ("final String? fallbackReasonCode;", "stable fallback reason code"),
         ("request.toMap();", "request boundary validation"),
-        ("_validatedResponse(await bridge.convert(request))", "single-response validation"),
+        ("_requireValidResponse(rawResponse)", "single-response structural validation"),
+        ("rawResponses.map(_requireValidResponse)", "batch response structural validation"),
         ("_requireMatchingResponse(response, request);", "single-response identity validation"),
         ("responses.length != targets.length", "batch response cardinality validation"),
+        ("code: 'invalid_response'", "stable invalid-response failure"),
         ("code: 'response_mismatch'", "stable response mismatch failure"),
         ("on NativeBridgeFailure {\n      rethrow;", "native runtime failure propagation"),
     )
@@ -93,6 +95,8 @@ def main() -> int:
         "incompatible startup metadata fails closed to Dart fallback",
         "direct malformed startup metadata is structurally revalidated",
         "native runtime failure never silently changes the selected backend",
+        "malformed native payload is classified as invalid response",
+        "unexpected native exception is classified as backend failure",
         "session rejects native response metadata that does not match request",
         "native batch preserves target order and reconstructs typed results",
         "native batch rejects reordered response metadata",
@@ -140,8 +144,8 @@ def main() -> int:
 
     print(
         "Conversion-session contract validation passed: sticky startup routing, "
-        "structural metadata validation, fail-closed negotiation, response identity "
-        "checks, batch ordering, runtime no-fallback behavior, and latest-request "
+        "structural metadata/response validation, fail-closed negotiation, response "
+        "identity checks, batch ordering, runtime no-fallback behavior, and latest-request "
         "race suppression are guarded."
     )
     return 0
