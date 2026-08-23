@@ -70,6 +70,21 @@ final class NativeBridgeInfo {
     );
   }
 
+  /// Serializes startup metadata through the same bounded shape accepted from
+  /// generated/native bindings. Capability ordering is deterministic.
+  Map<String, Object?> toMap() {
+    final sortedCapabilities = capabilities.toList()..sort();
+    return <String, Object?>{
+      'protocolVersion': protocolVersion,
+      'backendId': backendId,
+      'capabilities': List<String>.unmodifiable(sortedCapabilities),
+    };
+  }
+
+  /// Re-runs all structural validation even when a bridge implementation
+  /// supplied a directly constructed [NativeBridgeInfo].
+  NativeBridgeInfo validatedCopy() => NativeBridgeInfo.fromMap(toMap());
+
   bool get isCompatible {
     if (protocolVersion != nativeBridgeProtocolVersion) {
       return false;
