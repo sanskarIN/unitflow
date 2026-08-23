@@ -1,0 +1,106 @@
+#!/usr/bin/env python3
+"""Validate sticky conversion-session routing safeguards."""
+
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+SOURCE_PATH = ROOT / "apps/unitflow_app/lib/features/converter/domain/conversion_session.dart"
+TEST_PATH = ROOT / "apps/unitflow_app/test/core/conversion_session_test.dart"
+
+
+def require_contains(source: str, needle: str, label: str, errors: list[str]) -> None:
+    if needle not in source:
+        errors.append(f"Missing {label}: {needle!r}")
+
+
+def main() -> int:
+    errors: list[str] = []
+
+    if not SOURCE_PATH.is_file():
+        errors.append(f"Missing conversion-session source: {SOURCE_PATH.relative_to(ROOT)}")
+        source = ""
+    else:
+        source = SOURCE_PATH.read_text(encoding="utf-8")
+
+    if not TEST_PATH.is_file():
+        errors.append(f"Missing conversion-session regression test: {TEST_PATH.relative_to(ROOT)}")
+        tests = ""
+    else:
+        tests = TEST_PATH.read_text(encoding="utf-8")
+
+    source_requirements = (
+        ("factory ConversionSession.select", "one-time backend selection factory"),
+        ("info.requireCompatible();", "fail-closed startup compatibility check"),
+        ("ConversionSessionBackend.dartFallback", "Dart fallback backend"),
+        ("ConversionSessionBackend.rustNative", "Rust native backend"),
+        ("final NativeConversionBridge? _nativeBridge;", "immutable selected native bridge"),
+        ("final ConversionSessionBackend backend;", "immutable backend selection"),
+        ("final String backendId;", "stable selected backend identifier"),
+        ("final String? fallbackReasonCode;", "stable fallback reason code"),
+        ("request.toMap();", "request boundary validation"),
+        ("_validatedResponse(await bridge.convert(request))", "single-response validation"),
+        ("_requireMatchingResponse(response, request);", "single-response identity validation"),
+        ("responses.length != targets.length", "batch response cardinality validation"),
+        ("code: 'response_mismatch'", "stable response mismatch failure"),
+        ("on NativeBridgeFailure {\n      rethrow;", "native runtime failure propagation"),
+    )
+    for needle, label in source_requirements:
+        require_contains(source, needle, label, errors)
+
+    if source.count("on NativeBridgeFailure {\n      rethrow;") < 2:
+        errors.append(
+            "ConversionSession must propagate native failures for both single and batch routes."
+        )
+
+    if source.count("_nativeBridge = nativeBridge") != 1:
+        errors.append(
+            "ConversionSession native bridge must be assigned only during construction."
+        )
+
+    for mode in (
+        "nearestEven",
+        "halfAwayFromZero",
+        "towardZero",
+        "awayFromZero",
+        "floor",
+        "ceiling",
+    ):
+        require_contains(
+            source,
+            f"DecimalRoundingMode.{mode} => NativeBridgeRoundMode.{mode}",
+            f"rounding-mode mapping for {mode}",
+            errors,
+        )
+
+    test_requirements = (
+        "session selects deterministic fallback when native bridge is absent",
+        "session selects compatible Rust bridge and forwards exact request data",
+        "incompatible startup metadata fails closed to Dart fallback",
+        "native runtime failure never silently changes the selected backend",
+        "session rejects native response metadata that does not match request",
+        "native batch preserves target order and reconstructs typed results",
+        "native batch rejects reordered response metadata",
+        "session enforces shared batch ceiling before invoking native bridge",
+    )
+    for name in test_requirements:
+        require_contains(tests, name, f"regression test {name}", errors)
+
+    if errors:
+        print("Conversion-session contract validation failed:", file=sys.stderr)
+        for error in errors:
+            print(f"- {error}", file=sys.stderr)
+        return 1
+
+    print(
+        "Conversion-session contract validation passed: sticky startup routing, "
+        "fail-closed negotiation, response identity checks, batch ordering, and "
+        "runtime no-fallback behavior are guarded."
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
