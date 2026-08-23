@@ -83,6 +83,33 @@ void main() {
     expect(bridge.convertCalls, 0);
   });
 
+  test('direct malformed startup metadata is structurally revalidated', () async {
+    final bridge = _FakeNativeBridge(
+      info: const NativeBridgeInfo(
+        protocolVersion: nativeBridgeProtocolVersion,
+        backendId: 'Rust Core',
+        capabilities: <String>{
+          'convert',
+          'batchConvert',
+          'canonicalDecimalText',
+        },
+      ),
+    );
+    final session = ConversionSession.select(nativeBridge: bridge);
+
+    expect(session.backend, ConversionSessionBackend.dartFallback);
+    expect(session.backendId, 'dart-fallback');
+    expect(session.fallbackReasonCode, 'metadata_invalid');
+
+    final result = await session.convert(
+      value: ExactDecimal.parse('1000'),
+      fromUnitId: 'meter',
+      toUnitId: 'kilometer',
+    );
+    expect(result.output.toCanonicalString(), '1');
+    expect(bridge.convertCalls, 0);
+  });
+
   test('native runtime failure never silently changes the selected backend', () async {
     final fallback = _CountingFallbackEngine();
     final bridge = _FakeNativeBridge(throwOnConvert: true);
