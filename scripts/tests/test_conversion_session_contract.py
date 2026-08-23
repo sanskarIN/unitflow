@@ -44,6 +44,22 @@ class ConversionSessionContractTests(unittest.TestCase):
         )
         self.assertIn("expect(fallback.convertCalls, 0);", tests)
 
+    def test_latest_request_source_rejects_stale_generations(self) -> None:
+        source = validator.LATEST_SOURCE_PATH.read_text(encoding="utf-8")
+        self.assertIn("final requestGeneration = ++_generation;", source)
+        self.assertGreaterEqual(source.count("requestGeneration != _generation"), 2)
+        self.assertIn("void invalidate()", source)
+        self.assertIn("void dispose()", source)
+
+    def test_latest_request_tests_cover_stale_success_and_failure(self) -> None:
+        tests = validator.LATEST_TEST_PATH.read_text(encoding="utf-8")
+        self.assertIn("newer request prevents older success from publishing", tests)
+        self.assertIn("stale failure is ignored after a newer request starts", tests)
+        self.assertIn(
+            "success callback failures are not relabeled as operation failures",
+            tests,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
