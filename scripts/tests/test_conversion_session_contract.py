@@ -29,12 +29,25 @@ class ConversionSessionContractTests(unittest.TestCase):
         self.assertEqual(source.count("_nativeBridge = nativeBridge"), 1)
         self.assertIn("final NativeConversionBridge? _nativeBridge;", source)
 
+    def test_bootstrap_loads_native_bridge_only_once(self) -> None:
+        source = validator.SOURCE_PATH.read_text(encoding="utf-8")
+        self.assertEqual(source.count("await loadNativeBridge()"), 1)
+        self.assertIn("reasonCode: 'native_load_failed'", source)
+        tests = validator.TEST_PATH.read_text(encoding="utf-8")
+        self.assertIn("bootstrap load failure falls back once without later retry", tests)
+
     def test_single_and_batch_native_failures_are_rethrown(self) -> None:
         source = validator.SOURCE_PATH.read_text(encoding="utf-8")
         self.assertGreaterEqual(
             source.count("on NativeBridgeFailure {\n      rethrow;"),
             2,
         )
+
+    def test_native_payload_failures_are_classified_separately(self) -> None:
+        source = validator.SOURCE_PATH.read_text(encoding="utf-8")
+        self.assertIn("code: 'invalid_response'", source)
+        self.assertIn("code: 'response_mismatch'", source)
+        self.assertIn("code: 'backend_failure'", source)
 
     def test_regression_suite_covers_no_mid_session_fallback(self) -> None:
         tests = validator.TEST_PATH.read_text(encoding="utf-8")
