@@ -27,6 +27,7 @@ python3 -m unittest discover -s scripts/tests -p 'test_*.py'
 python3 scripts/check_repository_inventory.py
 python3 scripts/check_platform_support.py
 python3 scripts/check_accessibility_contract.py
+python3 scripts/check_conversion_session_contract.py
 python3 scripts/check_markdown_links.py
 python3 scripts/check_release_consistency.py
 python3 scripts/check_repository_hygiene.py
@@ -38,6 +39,7 @@ These checks cover:
 - exact `git ls-files` parity with the exhaustive documented repository inventory;
 - six-platform generation/build/project-set/Web compatibility;
 - source-level reduced-motion policy, modal-surface coverage, converter/batch semantic safeguards, large-text smoke coverage, Ctrl/Cmd navigation bindings, and verification wiring;
+- sticky one-shot conversion-backend selection, structural native metadata/response validation, stable failure classification, batch response identity/order checks, no mid-session fallback, and stale asynchronous request suppression;
 - repository-local Markdown file targets;
 - Cargo/Flutter/About version consistency;
 - Cargo minimum-Rust-version versus setup-documentation parity;
@@ -115,6 +117,12 @@ Coverage priorities:
 - persistence ordering for reset/save operations and safe reset-failure reporting;
 - recent-history reference/category/input bounds while retaining locale-formatted original text;
 - canonical native-bridge decimal/unit/precision DTO validation;
+- deterministic native startup metadata serialization and direct-object structural revalidation;
+- one-shot native bridge loading with fail-closed pre-session fallback;
+- sticky native-versus-Dart session selection with no runtime engine switching after native failures;
+- separate `invalid_response`, `response_mismatch`, and `backend_failure` native failure paths;
+- single/batch native response structural validation and ordered response identity checks;
+- generation-token suppression of stale asynchronous conversion successes and failures;
 - startup bridge protocol/capability negotiation and batch bounds;
 - execution of the shared bridge parity fixture across every supported rounding mode;
 - CSV/TSV batch export escaping;
@@ -124,11 +132,17 @@ Coverage priorities:
 
 `exact_decimal_properties_test.dart` uses deterministic generated inputs to exercise canonical round trips, comparison antisymmetry, rounding idempotence, and malformed-input bounds without adding a fuzzing dependency to the normal test suite.
 
+`conversion_session_test.dart` exercises the Flutter runtime-routing seam without claiming a generated binding exists. It covers compatible native selection, missing/incompatible/malformed metadata fallback, one-shot loader success/failure, exact request forwarding, native failure propagation, malformed response classification, response identity checks, ordered batch reconstruction, and the shared batch target ceiling. A selected native backend never silently switches to Dart after a conversion failure.
+
+`latest_conversion_request_test.dart` exercises the async presentation-safety gate independently of Flutter widgets. It proves that slower stale successes and failures cannot overwrite newer work, invalidation/disposal suppress pending publication, generation tokens advance monotonically, and callback exceptions are not mislabeled as conversion-operation failures.
+
 `navigation_smoke_test.dart` checks that the main Convert, Batch, Library, History, and Settings destinations remain reachable through the adaptive shell. It also exercises Ctrl+1/2/3/4/comma, Cmd+1/2/3/4/comma, visible Converter↔Batch input synchronization, and History-to-Converter input restoration so the rendered text fields cannot silently diverge from the shared controller state.
 
 `accessibility_smoke_test.dart` locks the centralized reduced-motion policy, converter pin semantic on/off state, batch selector semantic label/selected-value context, and representative compact 390×844 rendering at 200% text scaling. The large-text coverage currently exercises Converter, Batch, Library, History, Settings, Onboarding, About, the custom-unit dialog, and opening/rendering the converter batch-results modal. This remains source/widget evidence only; it does not replace TalkBack, VoiceOver, keyboard/focus, contrast, touch-target, localization-expansion, or real-device large-text review on release-candidate platforms.
 
 `scripts/check_accessibility_contract.py` complements widget tests without needing Flutter. It scans tracked Flutter source for modal dialog/bottom-sheet calls and requires the shared `AppMotion` policy, prevents reintroduction of a keystroke-driven converter live region, requires converter/batch semantic safeguards, requires the adaptive large-text batch-modal result-row boundary and representative large-text test tokens, locks the Ctrl/Cmd primary-navigation bindings and corresponding navigation smoke coverage, and verifies that Bash, PowerShell, CI, release, platform materialization, and repository hygiene continue to enforce the accessibility contract.
+
+`scripts/check_conversion_session_contract.py` provides the corresponding dependency-free routing safeguard. It locks one-shot native loading, structural metadata validation, fail-closed startup negotiation, immutable selected backend/bridge state, explicit rounding-mode mapping, request validation, native response structural/identity/order checks, stable failure categories, no runtime fallback after native failure, and the latest-request stale-result gate plus its regression tests. Bash, PowerShell, CI, release, and platform materialization all invoke this validator.
 
 `persisted_primary_journey_test.dart` exercises a broader controller/repository journey: user settings, favorites, pins, history, custom units, restart persistence, backup/import, post-restart conversion, and reset. It is intentionally classified as source-level integration-style coverage rather than native end-to-end evidence.
 
@@ -195,4 +209,4 @@ A repository-structure change must update `docs/repository-inventory.md` in the 
 
 ## CI policy
 
-CI fails on repository-inventory/integrity validation, accessibility source-contract validation, validator regression tests, formatting, lint, localization generation, analysis, or test failures. Security scanning, dependency review, cross-platform release builds, and release packaging run in their respective workflows. A skipped platform check must be explicit rather than silently treated as success.
+CI fails on repository-inventory/integrity validation, accessibility and conversion-session source-contract validation, validator regression tests, formatting, lint, localization generation, analysis, or test failures. Security scanning, dependency review, cross-platform release builds, and release packaging run in their respective workflows. A skipped platform check must be explicit rather than silently treated as success.
