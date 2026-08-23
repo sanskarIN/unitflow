@@ -74,6 +74,35 @@ void main() {
     expect(publishedStack, isNotNull);
   });
 
+  test('success callback failures are not relabeled as operation failures', () async {
+    final coordinator = LatestConversionRequest();
+    var failureCallbackCalled = false;
+
+    await expectLater(
+      coordinator.run<String>(
+        operation: () async => 'value',
+        onSuccess: (value) => throw StateError('presentation failure'),
+        onFailure: (error, stackTrace) => failureCallbackCalled = true,
+      ),
+      throwsA(isA<StateError>()),
+    );
+
+    expect(failureCallbackCalled, isFalse);
+  });
+
+  test('failure callback exceptions propagate to the caller', () async {
+    final coordinator = LatestConversionRequest();
+
+    await expectLater(
+      coordinator.run<String>(
+        operation: () async => throw ArgumentError('conversion failure'),
+        onSuccess: (value) => fail('Unexpected success: $value'),
+        onFailure: (error, stackTrace) => throw StateError('presentation failure'),
+      ),
+      throwsA(isA<StateError>()),
+    );
+  });
+
   test('invalidate drops an in-flight result without disposing coordinator', () async {
     final coordinator = LatestConversionRequest();
     final pending = Completer<int>();
@@ -112,8 +141,8 @@ void main() {
 
     expect(coordinator.isDisposed, isTrue);
     expect(callbackCount, 0);
-    expect(
-      () => coordinator.run<int>(
+    await expectLater(
+      coordinator.run<int>(
         operation: () async => 2,
         onSuccess: (value) {},
         onFailure: (error, stackTrace) {},
