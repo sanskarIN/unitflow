@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate sticky conversion-session routing safeguards."""
+"""Validate sticky conversion-session routing and async publication safeguards."""
 
 from __future__ import annotations
 
@@ -9,6 +9,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE_PATH = ROOT / "apps/unitflow_app/lib/features/converter/domain/conversion_session.dart"
 TEST_PATH = ROOT / "apps/unitflow_app/test/core/conversion_session_test.dart"
+LATEST_SOURCE_PATH = (
+    ROOT / "apps/unitflow_app/lib/features/converter/domain/latest_conversion_request.dart"
+)
+LATEST_TEST_PATH = ROOT / "apps/unitflow_app/test/core/latest_conversion_request_test.dart"
 
 
 def require_contains(source: str, needle: str, label: str, errors: list[str]) -> None:
@@ -16,20 +20,27 @@ def require_contains(source: str, needle: str, label: str, errors: list[str]) ->
         errors.append(f"Missing {label}: {needle!r}")
 
 
+def read_required(path: Path, label: str, errors: list[str]) -> str:
+    if not path.is_file():
+        errors.append(f"Missing {label}: {path.relative_to(ROOT)}")
+        return ""
+    return path.read_text(encoding="utf-8")
+
+
 def main() -> int:
     errors: list[str] = []
-
-    if not SOURCE_PATH.is_file():
-        errors.append(f"Missing conversion-session source: {SOURCE_PATH.relative_to(ROOT)}")
-        source = ""
-    else:
-        source = SOURCE_PATH.read_text(encoding="utf-8")
-
-    if not TEST_PATH.is_file():
-        errors.append(f"Missing conversion-session regression test: {TEST_PATH.relative_to(ROOT)}")
-        tests = ""
-    else:
-        tests = TEST_PATH.read_text(encoding="utf-8")
+    source = read_required(SOURCE_PATH, "conversion-session source", errors)
+    tests = read_required(TEST_PATH, "conversion-session regression test", errors)
+    latest_source = read_required(
+        LATEST_SOURCE_PATH,
+        "latest-conversion request source",
+        errors,
+    )
+    latest_tests = read_required(
+        LATEST_TEST_PATH,
+        "latest-conversion request regression test",
+        errors,
+    )
 
     source_requirements = (
         ("factory ConversionSession.select", "one-time backend selection factory"),
@@ -88,6 +99,37 @@ def main() -> int:
     for name in test_requirements:
         require_contains(tests, name, f"regression test {name}", errors)
 
+    latest_source_requirements = (
+        ("final class LatestConversionRequest", "latest-request coordinator"),
+        ("final requestGeneration = ++_generation;", "monotonic request generation"),
+        ("requestGeneration != _generation", "stale request rejection"),
+        ("void invalidate()", "explicit in-flight invalidation"),
+        ("void dispose()", "lifecycle invalidation"),
+        ("if (_disposed)", "disposed-state guard"),
+        ("onFailure(error, stackTrace);\n      return;", "operation failure publication boundary"),
+        ("onSuccess(value);", "success publication boundary"),
+    )
+    for needle, label in latest_source_requirements:
+        require_contains(latest_source, needle, label, errors)
+
+    latest_test_requirements = (
+        "newer request prevents older success from publishing",
+        "stale failure is ignored after a newer request starts",
+        "current failure is delivered with its stack trace",
+        "success callback failures are not relabeled as operation failures",
+        "failure callback exceptions propagate to the caller",
+        "invalidate drops an in-flight result without disposing coordinator",
+        "dispose drops pending work and rejects future requests",
+        "generation increases monotonically for request and invalidation events",
+    )
+    for name in latest_test_requirements:
+        require_contains(
+            latest_tests,
+            name,
+            f"latest-request regression test {name}",
+            errors,
+        )
+
     if errors:
         print("Conversion-session contract validation failed:", file=sys.stderr)
         for error in errors:
@@ -96,8 +138,8 @@ def main() -> int:
 
     print(
         "Conversion-session contract validation passed: sticky startup routing, "
-        "fail-closed negotiation, response identity checks, batch ordering, and "
-        "runtime no-fallback behavior are guarded."
+        "fail-closed negotiation, response identity checks, batch ordering, "
+        "runtime no-fallback behavior, and latest-request race suppression are guarded."
     )
     return 0
 
