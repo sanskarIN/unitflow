@@ -44,6 +44,7 @@ def main() -> int:
 
     source_requirements = (
         ("factory ConversionSession.select", "one-time backend selection factory"),
+        ("nativeBridge.info.validatedCopy()", "startup metadata structural revalidation"),
         ("info.requireCompatible();", "fail-closed startup compatibility check"),
         ("ConversionSessionBackend.dartFallback", "Dart fallback backend"),
         ("ConversionSessionBackend.rustNative", "Rust native backend"),
@@ -90,6 +91,7 @@ def main() -> int:
         "session selects deterministic fallback when native bridge is absent",
         "session selects compatible Rust bridge and forwards exact request data",
         "incompatible startup metadata fails closed to Dart fallback",
+        "direct malformed startup metadata is structurally revalidated",
         "native runtime failure never silently changes the selected backend",
         "session rejects native response metadata that does not match request",
         "native batch preserves target order and reconstructs typed results",
@@ -138,8 +140,9 @@ def main() -> int:
 
     print(
         "Conversion-session contract validation passed: sticky startup routing, "
-        "fail-closed negotiation, response identity checks, batch ordering, "
-        "runtime no-fallback behavior, and latest-request race suppression are guarded."
+        "structural metadata validation, fail-closed negotiation, response identity "
+        "checks, batch ordering, runtime no-fallback behavior, and latest-request "
+        "race suppression are guarded."
     )
     return 0
 
