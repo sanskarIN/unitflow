@@ -138,6 +138,62 @@ void main() {
     expect(fallback.convertCalls, 0);
   });
 
+  test('malformed native payload is classified as invalid response', () async {
+    final fallback = _CountingFallbackEngine();
+    final bridge = _FakeNativeBridge(
+      convertHandler: (request) => NativeBridgeConversionResponse(
+        input: request.value,
+        output: '01.0',
+        fromUnitId: request.fromUnitId,
+        toUnitId: request.toUnitId,
+      ),
+    );
+    final session = ConversionSession.select(
+      nativeBridge: bridge,
+      fallbackEngine: fallback,
+    );
+
+    await expectLater(
+      session.convert(
+        value: ExactDecimal.parse('1'),
+        fromUnitId: 'meter',
+        toUnitId: 'kilometer',
+      ),
+      throwsA(
+        isA<NativeBridgeFailure>().having(
+          (failure) => failure.code,
+          'code',
+          'invalid_response',
+        ),
+      ),
+    );
+
+    expect(session.backend, ConversionSessionBackend.rustNative);
+    expect(fallback.convertCalls, 0);
+  });
+
+  test('unexpected native exception is classified as backend failure', () async {
+    final bridge = _FakeNativeBridge(
+      convertHandler: (request) => throw StateError('synthetic adapter failure'),
+    );
+    final session = ConversionSession.select(nativeBridge: bridge);
+
+    await expectLater(
+      session.convert(
+        value: ExactDecimal.parse('1'),
+        fromUnitId: 'meter',
+        toUnitId: 'kilometer',
+      ),
+      throwsA(
+        isA<NativeBridgeFailure>().having(
+          (failure) => failure.code,
+          'code',
+          'backend_failure',
+        ),
+      ),
+    );
+  });
+
   test('session rejects native response metadata that does not match request', () async {
     final bridge = _FakeNativeBridge(
       convertHandler: (request) => NativeBridgeConversionResponse(
