@@ -36,6 +36,14 @@ class ConversionSessionContractTests(unittest.TestCase):
         tests = validator.TEST_PATH.read_text(encoding="utf-8")
         self.assertIn("bootstrap load failure falls back once without later retry", tests)
 
+    def test_adapter_errors_are_contained_at_all_native_boundaries(self) -> None:
+        source = validator.SOURCE_PATH.read_text(encoding="utf-8")
+        self.assertGreaterEqual(source.count("on Object {"), 4)
+        tests = validator.ERROR_BOUNDARY_TEST_PATH.read_text(encoding="utf-8")
+        self.assertIn("startup adapter error fails closed before native selection", tests)
+        self.assertIn("single adapter Error is classified as backend failure", tests)
+        self.assertIn("batch adapter Error is classified as backend failure", tests)
+
     def test_single_and_batch_native_failures_are_rethrown(self) -> None:
         source = validator.SOURCE_PATH.read_text(encoding="utf-8")
         self.assertGreaterEqual(
@@ -72,6 +80,19 @@ class ConversionSessionContractTests(unittest.TestCase):
             "success callback failures are not relabeled as operation failures",
             tests,
         )
+
+    def test_validator_is_wired_into_all_required_verification_surfaces(self) -> None:
+        for relative in (
+            "scripts/verify.sh",
+            "scripts/verify.ps1",
+            ".github/workflows/ci.yml",
+            ".github/workflows/release.yml",
+            ".github/workflows/materialize-platforms.yml",
+            "scripts/check_repository_hygiene.py",
+        ):
+            with self.subTest(path=relative):
+                source = (ROOT / relative).read_text(encoding="utf-8")
+                self.assertIn(validator.VALIDATOR_COMMAND, source)
 
 
 if __name__ == "__main__":
