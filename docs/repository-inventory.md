@@ -54,7 +54,7 @@ This inventory documents every tracked first-party file in UnitFlow and its role
 
 ## Flutter core services
 
-- `apps/unitflow_app/lib/core/bridge/native_conversion_bridge.dart` — native-conversion bridge contract plus canonical decimal/unit-ID/precision validation boundary.
+- `apps/unitflow_app/lib/core/bridge/native_conversion_bridge.dart` — native-conversion bridge contract plus canonical decimal/unit-ID/precision validation boundary and structurally revalidated startup metadata.
 - `apps/unitflow_app/lib/core/format/decimal_format.dart` — locale-aware exact-decimal input parsing and locale-pattern-aware presentation grouping/formatting.
 - `apps/unitflow_app/lib/core/logging/app_log.dart` — bounded structured diagnostic logging with sensitive-key redaction.
 - `apps/unitflow_app/lib/core/math/exact_decimal.dart` — deterministic exact base-10 decimal value, parsing, arithmetic, comparison, and rounding logic.
@@ -66,7 +66,7 @@ This inventory documents every tracked first-party file in UnitFlow and its role
 - `apps/unitflow_app/lib/features/converter/data/unit_catalog.dart` — deterministic Dart compatibility catalog used until native bridge authority is complete.
 - `apps/unitflow_app/lib/features/converter/domain/unit_models.dart` — Dart category/unit/pin/conversion domain models.
 - `apps/unitflow_app/lib/features/converter/domain/conversion_engine.dart` — exact Dart compatibility conversion/search/batch engine.
-- `apps/unitflow_app/lib/features/converter/domain/conversion_session.dart` — sticky one-time Rust-versus-Dart conversion-session router with fail-closed startup negotiation and native response validation.
+- `apps/unitflow_app/lib/features/converter/domain/conversion_session.dart` — sticky Rust-versus-Dart conversion-session router with one-shot native loading, fail-closed startup negotiation, adapter-error containment, and native response validation.
 - `apps/unitflow_app/lib/features/converter/domain/latest_conversion_request.dart` — generation-token gate that suppresses stale asynchronous conversion success/failure publication and invalidates pending work on lifecycle changes.
 - `apps/unitflow_app/lib/features/converter/domain/batch_export.dart` — CSV/TSV/JSON batch serialization and escaping.
 - `apps/unitflow_app/lib/features/converter/presentation/category_localizations.dart` — localized category labels/descriptions/examples mapping.
@@ -99,11 +99,12 @@ This inventory documents every tracked first-party file in UnitFlow and its role
 - `apps/unitflow_app/test/recent_validation_test.dart` — recent-history unit/category/input bounds and locale-text preservation.
 - `apps/unitflow_app/test/reset_persistence_test.dart` — local reset persistence, queued-write ordering, and safe reset-failure warning regression coverage.
 - `apps/unitflow_app/test/core/app_log_test.dart` — structured log redaction behavior.
-- `apps/unitflow_app/test/core/conversion_session_test.dart` — sticky backend selection, exact request forwarding, no mid-session fallback, native response identity, batch ordering, and shared batch-limit coverage.
+- `apps/unitflow_app/test/core/conversion_session_error_boundary_test.dart` — startup, single-conversion, and batch-conversion adapter `Error` containment regression coverage.
+- `apps/unitflow_app/test/core/conversion_session_test.dart` — sticky backend selection, one-shot loading, exact request forwarding, no mid-session fallback, native response classification/identity, batch ordering, and shared batch-limit coverage.
 - `apps/unitflow_app/test/core/latest_conversion_request_test.dart` — deterministic stale-success/stale-failure suppression, callback-boundary, invalidation, disposal, and generation-token coverage.
 - `apps/unitflow_app/test/core/exact_decimal_properties_test.dart` — deterministic generated/property-style exact-decimal invariants.
 - `apps/unitflow_app/test/core/exact_decimal_test.dart` — exact-decimal parser/arithmetic/rounding plus locale-specific grouping/parsing examples and edge cases.
-- `apps/unitflow_app/test/core/native_conversion_bridge_test.dart` — canonical bridge request/response boundary validation and safe failure behavior.
+- `apps/unitflow_app/test/core/native_conversion_bridge_test.dart` — canonical bridge request/response boundary validation, deterministic startup metadata serialization, and safe failure behavior.
 - `apps/unitflow_app/test/core/user_state_reference_bounds_test.dart` — persisted identifier/history boundary validation.
 - `apps/unitflow_app/test/core/user_state_test.dart` — state schema migration, round-trip, import ceilings, and custom-unit validation.
 - `apps/unitflow_app/test/features/conversion_engine_test.dart` — Dart compatibility conversion engine correctness.
@@ -176,7 +177,7 @@ This inventory documents every tracked first-party file in UnitFlow and its role
 - `scripts/bootstrap_platforms.sh` — Bash helper for deliberate Flutter native-platform scaffold generation/review.
 - `scripts/bootstrap_platforms.ps1` — PowerShell equivalent for native-platform scaffold generation/review.
 - `scripts/check_accessibility_contract.py` — source-level reduced-motion, modal-surface, converter semantics, smoke-test, and verification-wiring contract validator.
-- `scripts/check_conversion_session_contract.py` — source-level sticky backend selection, fail-closed negotiation, response identity/order, runtime no-fallback, and asynchronous stale-result suppression contract validator.
+- `scripts/check_conversion_session_contract.py` — source-level one-shot native loading, sticky backend selection, adapter-error containment, response identity/order, runtime no-fallback, and asynchronous stale-result suppression contract validator.
 - `scripts/check_markdown_links.py` — repository-local Markdown target validator.
 - `scripts/check_platform_support.py` — six-target generation/build/project-set/Web-compatibility support validator.
 - `scripts/check_release_consistency.py` — package/version/changelog/Rust-minimum/schema/bridge-protocol/capability/batch-limit declaration consistency validator.
@@ -186,7 +187,7 @@ This inventory documents every tracked first-party file in UnitFlow and its role
 - `scripts/update_platform_inventory.py` — regenerates the machine-maintained inventory for tracked Flutter-generated platform files.
 - `scripts/verify.sh` — full Bash repository/source verification entry point.
 - `scripts/verify.ps1` — full PowerShell repository/source verification entry point.
-- `scripts/tests/test_conversion_session_contract.py` — standard-library regression checks for sticky native bridge assignment, runtime failure propagation, latest-request race suppression, and validator acceptance.
+- `scripts/tests/test_conversion_session_contract.py` — standard-library regression checks for one-shot loading, sticky native bridge assignment, adapter-error/failure classification, latest-request race suppression, and validator acceptance.
 - `scripts/tests/test_repository_validators.py` — standard-library regression tests for repository validators, release-tag behavior, platform support, bridge parity, and accessibility source safeguards.
 
 ## Inventory maintenance rule
