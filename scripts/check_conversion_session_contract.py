@@ -16,6 +16,7 @@ LATEST_SOURCE_PATH = (
     ROOT / "apps/unitflow_app/lib/features/converter/domain/latest_conversion_request.dart"
 )
 LATEST_TEST_PATH = ROOT / "apps/unitflow_app/test/core/latest_conversion_request_test.dart"
+VALIDATOR_COMMAND = "check_conversion_session_contract.py"
 
 
 def require_contains(source: str, needle: str, label: str, errors: list[str]) -> None:
@@ -173,6 +174,23 @@ def main() -> int:
             errors,
         )
 
+    verification_wiring = (
+        ("scripts/verify.sh", "Bash verification"),
+        ("scripts/verify.ps1", "PowerShell verification"),
+        (".github/workflows/ci.yml", "CI workflow"),
+        (".github/workflows/release.yml", "release workflow"),
+        (".github/workflows/materialize-platforms.yml", "platform materialization workflow"),
+        ("scripts/check_repository_hygiene.py", "repository hygiene required-file contract"),
+    )
+    for relative, label in verification_wiring:
+        wiring_source = read_required(ROOT / relative, label, errors)
+        require_contains(
+            wiring_source,
+            VALIDATOR_COMMAND,
+            f"{label} conversion-session validator wiring",
+            errors,
+        )
+
     if errors:
         print("Conversion-session contract validation failed:", file=sys.stderr)
         for error in errors:
@@ -183,7 +201,8 @@ def main() -> int:
         "Conversion-session contract validation passed: one-shot native loading, sticky "
         "startup routing, contained adapter Errors, structural metadata/response validation, "
         "fail-closed negotiation, response identity checks, batch ordering, runtime "
-        "no-fallback behavior, and latest-request race suppression are guarded."
+        "no-fallback behavior, latest-request race suppression, and verification wiring "
+        "are guarded."
     )
     return 0
 
