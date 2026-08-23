@@ -3,6 +3,8 @@ import '../../../core/math/exact_decimal.dart';
 import 'conversion_engine.dart';
 import 'unit_models.dart';
 
+typedef NativeConversionBridgeLoader = Future<NativeConversionBridge?> Function();
+
 /// Backend selected once for a conversion session.
 enum ConversionSessionBackend { dartFallback, rustNative }
 
@@ -22,18 +24,37 @@ final class ConversionSession {
   }) : _fallbackEngine = fallbackEngine,
        _nativeBridge = nativeBridge;
 
+  /// Loads a candidate native bridge exactly once, then performs the same
+  /// fail-closed selection as [select]. Native library/binding load failures
+  /// are converted into a deterministic Dart fallback before a session starts.
+  static Future<ConversionSession> bootstrap({
+    required NativeConversionBridgeLoader loadNativeBridge,
+    ConversionEngine? fallbackEngine,
+  }) async {
+    final fallback = fallbackEngine ?? ExactConversionEngine();
+    try {
+      final bridge = await loadNativeBridge();
+      return ConversionSession.select(
+        nativeBridge: bridge,
+        fallbackEngine: fallback,
+      );
+    } on Object {
+      return ConversionSession._fallback(
+        fallbackEngine: fallback,
+        reasonCode: 'native_load_failed',
+      );
+    }
+  }
+
   factory ConversionSession.select({
     NativeConversionBridge? nativeBridge,
     ConversionEngine? fallbackEngine,
   }) {
     final fallback = fallbackEngine ?? ExactConversionEngine();
     if (nativeBridge == null) {
-      return ConversionSession._(
+      return ConversionSession._fallback(
         fallbackEngine: fallback,
-        nativeBridge: null,
-        backend: ConversionSessionBackend.dartFallback,
-        backendId: 'dart-fallback',
-        fallbackReasonCode: 'native_unavailable',
+        reasonCode: 'native_unavailable',
       );
     }
 
@@ -48,31 +69,33 @@ final class ConversionSession {
         fallbackReasonCode: null,
       );
     } on NativeBridgeFailure catch (failure) {
-      return ConversionSession._(
+      return ConversionSession._fallback(
         fallbackEngine: fallback,
-        nativeBridge: null,
-        backend: ConversionSessionBackend.dartFallback,
-        backendId: 'dart-fallback',
-        fallbackReasonCode: failure.code,
+        reasonCode: failure.code,
       );
     } on FormatException {
-      return ConversionSession._(
+      return ConversionSession._fallback(
         fallbackEngine: fallback,
-        nativeBridge: null,
-        backend: ConversionSessionBackend.dartFallback,
-        backendId: 'dart-fallback',
-        fallbackReasonCode: 'metadata_invalid',
+        reasonCode: 'metadata_invalid',
       );
     } on Exception {
-      return ConversionSession._(
+      return ConversionSession._fallback(
         fallbackEngine: fallback,
-        nativeBridge: null,
-        backend: ConversionSessionBackend.dartFallback,
-        backendId: 'dart-fallback',
-        fallbackReasonCode: 'startup_failed',
+        reasonCode: 'startup_failed',
       );
     }
   }
+
+  factory ConversionSession._fallback({
+    required ConversionEngine fallbackEngine,
+    required String reasonCode,
+  }) => ConversionSession._(
+    fallbackEngine: fallbackEngine,
+    nativeBridge: null,
+    backend: ConversionSessionBackend.dartFallback,
+    backendId: 'dart-fallback',
+    fallbackReasonCode: reasonCode,
+  );
 
   final ConversionEngine _fallbackEngine;
   final NativeConversionBridge? _nativeBridge;
