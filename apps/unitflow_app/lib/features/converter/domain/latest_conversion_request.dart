@@ -14,6 +14,10 @@ final class LatestConversionRequest {
 
   /// Runs one asynchronous operation and publishes callbacks only when this
   /// request is still the newest live request when the operation completes.
+  ///
+  /// Only failures from [operation] are delivered to [onFailure]. Exceptions
+  /// thrown by either publication callback remain programming errors and are
+  /// allowed to propagate instead of being relabeled as conversion failures.
   Future<void> run<T>({
     required Future<T> Function() operation,
     required void Function(T value) onSuccess,
@@ -24,18 +28,21 @@ final class LatestConversionRequest {
     }
 
     final requestGeneration = ++_generation;
+    late final T value;
     try {
-      final value = await operation();
-      if (_disposed || requestGeneration != _generation) {
-        return;
-      }
-      onSuccess(value);
+      value = await operation();
     } on Object catch (error, stackTrace) {
       if (_disposed || requestGeneration != _generation) {
         return;
       }
       onFailure(error, stackTrace);
+      return;
     }
+
+    if (_disposed || requestGeneration != _generation) {
+      return;
+    }
+    onSuccess(value);
   }
 
   /// Invalidates any in-flight request without starting replacement work.
