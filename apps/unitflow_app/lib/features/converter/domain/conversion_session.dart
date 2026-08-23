@@ -112,9 +112,9 @@ final class ConversionSession {
     );
     request.toMap();
 
-    final NativeBridgeConversionResponse response;
+    final NativeBridgeConversionResponse rawResponse;
     try {
-      response = _validatedResponse(await bridge.convert(request));
+      rawResponse = await bridge.convert(request);
     } on NativeBridgeFailure {
       rethrow;
     } on Exception {
@@ -124,6 +124,7 @@ final class ConversionSession {
       );
     }
 
+    final response = _requireValidResponse(rawResponse);
     _requireMatchingResponse(response, request);
     return ConversionResult(
       input: ExactDecimal.parse(response.input),
@@ -167,11 +168,9 @@ final class ConversionSession {
     );
     request.toMap();
 
-    final List<NativeBridgeConversionResponse> responses;
+    final List<NativeBridgeConversionResponse> rawResponses;
     try {
-      responses = (await bridge.batchConvert(request))
-          .map(_validatedResponse)
-          .toList(growable: false);
+      rawResponses = await bridge.batchConvert(request);
     } on NativeBridgeFailure {
       rethrow;
     } on Exception {
@@ -181,6 +180,7 @@ final class ConversionSession {
       );
     }
 
+    final responses = rawResponses.map(_requireValidResponse).toList(growable: false);
     if (responses.length != targets.length) {
       throw const NativeBridgeFailure(
         code: 'response_mismatch',
@@ -225,13 +225,23 @@ final class ConversionSession {
   }
 }
 
-NativeBridgeConversionResponse _validatedResponse(NativeBridgeConversionResponse response) =>
-    NativeBridgeConversionResponse.fromMap(<String, Object?>{
+NativeBridgeConversionResponse _requireValidResponse(
+  NativeBridgeConversionResponse response,
+) {
+  try {
+    return NativeBridgeConversionResponse.fromMap(<String, Object?>{
       'input': response.input,
       'output': response.output,
       'fromUnitId': response.fromUnitId,
       'toUnitId': response.toUnitId,
     });
+  } on FormatException {
+    throw const NativeBridgeFailure(
+      code: 'invalid_response',
+      message: 'The native conversion backend returned an invalid response.',
+    );
+  }
+}
 
 void _requireMatchingResponse(
   NativeBridgeConversionResponse response,
