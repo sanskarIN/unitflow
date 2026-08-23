@@ -94,6 +94,40 @@ void main() {
     );
   });
 
+  test('bridge startup metadata serialization is deterministic and revalidated', () {
+    const direct = NativeBridgeInfo(
+      protocolVersion: nativeBridgeProtocolVersion,
+      backendId: 'rust-core',
+      capabilities: <String>{
+        'convert',
+        'canonicalDecimalText',
+        'batchConvert',
+      },
+    );
+
+    final encoded = direct.toMap();
+    final validated = direct.validatedCopy();
+
+    expect(encoded['protocolVersion'], nativeBridgeProtocolVersion);
+    expect(encoded['backendId'], 'rust-core');
+    expect(
+      encoded['capabilities'],
+      <String>['batchConvert', 'canonicalDecimalText', 'convert'],
+    );
+    expect(validated.capabilities, nativeBridgeRequiredCapabilities);
+    expect(validated.requireCompatible, returnsNormally);
+  });
+
+  test('direct malformed startup metadata is rejected by validated copy', () {
+    const malformed = NativeBridgeInfo(
+      protocolVersion: nativeBridgeProtocolVersion,
+      backendId: 'Rust Core',
+      capabilities: <String>{'convert'},
+    );
+
+    expect(malformed.validatedCopy, throwsFormatException);
+  });
+
   test('bridge request keeps decimal values as strings', () {
     const request = NativeBridgeConversionRequest(
       value: '1234567890.000000000123',
