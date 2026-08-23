@@ -9,6 +9,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE_PATH = ROOT / "apps/unitflow_app/lib/features/converter/domain/conversion_session.dart"
 TEST_PATH = ROOT / "apps/unitflow_app/test/core/conversion_session_test.dart"
+ERROR_BOUNDARY_TEST_PATH = (
+    ROOT / "apps/unitflow_app/test/core/conversion_session_error_boundary_test.dart"
+)
 LATEST_SOURCE_PATH = (
     ROOT / "apps/unitflow_app/lib/features/converter/domain/latest_conversion_request.dart"
 )
@@ -31,6 +34,11 @@ def main() -> int:
     errors: list[str] = []
     source = read_required(SOURCE_PATH, "conversion-session source", errors)
     tests = read_required(TEST_PATH, "conversion-session regression test", errors)
+    error_boundary_tests = read_required(
+        ERROR_BOUNDARY_TEST_PATH,
+        "conversion-session adapter error-boundary regression test",
+        errors,
+    )
     latest_source = read_required(
         LATEST_SOURCE_PATH,
         "latest-conversion request source",
@@ -63,6 +71,7 @@ def main() -> int:
         ("responses.length != targets.length", "batch response cardinality validation"),
         ("code: 'invalid_response'", "stable invalid-response failure"),
         ("code: 'response_mismatch'", "stable response mismatch failure"),
+        ("code: 'backend_failure'", "stable backend-failure classification"),
         ("on NativeBridgeFailure {\n      rethrow;", "native runtime failure propagation"),
     )
     for needle, label in source_requirements:
@@ -71,6 +80,11 @@ def main() -> int:
     if source.count("on NativeBridgeFailure {\n      rethrow;") < 2:
         errors.append(
             "ConversionSession must propagate native failures for both single and batch routes."
+        )
+
+    if source.count("on Object {") < 4:
+        errors.append(
+            "ConversionSession must contain loader, startup-adapter, single-route, and batch-route Error objects at the native boundary."
         )
 
     if source.count("_nativeBridge = nativeBridge") != 1:
@@ -115,6 +129,19 @@ def main() -> int:
     for name in test_requirements:
         require_contains(tests, name, f"regression test {name}", errors)
 
+    error_boundary_test_requirements = (
+        "startup adapter error fails closed before native selection",
+        "single adapter Error is classified as backend failure",
+        "batch adapter Error is classified as backend failure",
+    )
+    for name in error_boundary_test_requirements:
+        require_contains(
+            error_boundary_tests,
+            name,
+            f"adapter error-boundary regression test {name}",
+            errors,
+        )
+
     latest_source_requirements = (
         ("final class LatestConversionRequest", "latest-request coordinator"),
         ("final requestGeneration = ++_generation;", "monotonic request generation"),
@@ -154,9 +181,9 @@ def main() -> int:
 
     print(
         "Conversion-session contract validation passed: one-shot native loading, sticky "
-        "startup routing, structural metadata/response validation, fail-closed negotiation, "
-        "response identity checks, batch ordering, runtime no-fallback behavior, and "
-        "latest-request race suppression are guarded."
+        "startup routing, contained adapter Errors, structural metadata/response validation, "
+        "fail-closed negotiation, response identity checks, batch ordering, runtime "
+        "no-fallback behavior, and latest-request race suppression are guarded."
     )
     return 0
 
