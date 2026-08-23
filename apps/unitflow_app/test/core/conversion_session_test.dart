@@ -23,6 +23,81 @@ void main() {
     expect(result.output.toCanonicalString(), '1');
   });
 
+  test('bootstrap loads a compatible native bridge exactly once', () async {
+    var loadCalls = 0;
+    final bridge = _FakeNativeBridge(
+      convertHandler: (request) => NativeBridgeConversionResponse(
+        input: request.value,
+        output: '0.001',
+        fromUnitId: request.fromUnitId,
+        toUnitId: request.toUnitId,
+      ),
+    );
+
+    final session = await ConversionSession.bootstrap(
+      loadNativeBridge: () async {
+        loadCalls += 1;
+        return bridge;
+      },
+    );
+
+    expect(loadCalls, 1);
+    expect(session.backend, ConversionSessionBackend.rustNative);
+    expect(session.backendId, 'rust-core');
+
+    final result = await session.convert(
+      value: ExactDecimal.parse('1'),
+      fromUnitId: 'meter',
+      toUnitId: 'kilometer',
+    );
+    expect(result.output.toCanonicalString(), '0.001');
+    expect(loadCalls, 1);
+  });
+
+  test('bootstrap treats a missing loaded bridge as native unavailable', () async {
+    var loadCalls = 0;
+    final session = await ConversionSession.bootstrap(
+      loadNativeBridge: () async {
+        loadCalls += 1;
+        return null;
+      },
+    );
+
+    expect(loadCalls, 1);
+    expect(session.backend, ConversionSessionBackend.dartFallback);
+    expect(session.fallbackReasonCode, 'native_unavailable');
+  });
+
+  test('bootstrap load failure falls back once without later retry', () async {
+    final fallback = _CountingFallbackEngine();
+    var loadCalls = 0;
+    final session = await ConversionSession.bootstrap(
+      loadNativeBridge: () async {
+        loadCalls += 1;
+        throw StateError('synthetic native library load failure');
+      },
+      fallbackEngine: fallback,
+    );
+
+    expect(loadCalls, 1);
+    expect(session.backend, ConversionSessionBackend.dartFallback);
+    expect(session.fallbackReasonCode, 'native_load_failed');
+
+    await session.convert(
+      value: ExactDecimal.parse('1000'),
+      fromUnitId: 'meter',
+      toUnitId: 'kilometer',
+    );
+    await session.convert(
+      value: ExactDecimal.parse('2000'),
+      fromUnitId: 'meter',
+      toUnitId: 'kilometer',
+    );
+
+    expect(loadCalls, 1);
+    expect(fallback.convertCalls, 2);
+  });
+
   test('session selects compatible Rust bridge and forwards exact request data', () async {
     final bridge = _FakeNativeBridge(
       convertHandler: (request) => NativeBridgeConversionResponse(
