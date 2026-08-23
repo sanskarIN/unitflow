@@ -10,7 +10,7 @@ The roadmap is milestone-oriented. Items are checked only when repository eviden
 - [x] GitHub issue/PR templates and code ownership.
 - [x] CI, CodeQL, funding metadata, and dependency-review workflow.
 - [x] Automated Dependabot configuration for Cargo, Flutter/Dart, and GitHub Actions.
-- [x] Repository-local Markdown, release-consistency, hygiene, release-tag, inventory, and six-platform support validators with regression tests.
+- [x] Repository-local Markdown, release-consistency, hygiene, release-tag, inventory, six-platform support, accessibility, and conversion-session source validators with regression tests.
 
 ## Phase 1 — Conversion MVP
 
@@ -45,7 +45,12 @@ The roadmap is milestone-oriented. Items are checked only when repository eviden
 - [x] Versioned Rust source bridge service/DTO layer matching bridge protocol v1.
 - [x] Source-level Rust/Flutter startup protocol + capability negotiation contract with fail-closed compatibility checks.
 - [x] Source-level bounded native batch bridge contract with a shared 256-target limit and stable unit-ID validation.
-- [ ] Rust↔Flutter production generated bindings, runtime engine selection, native library loading, and native packaging workflow.
+- [x] Source-level one-shot native loader/session-selection seam with immutable backend choice, adapter-error containment, response validation, and no mid-session fallback.
+- [x] Source-level stale asynchronous conversion result suppression gate for future controller/native wiring.
+- [ ] Generate and commit the production Rust↔Flutter binding adapter implementing `NativeConversionBridge`.
+- [ ] Implement real platform native-library loading/packaging and connect it to `ConversionSession.bootstrap()`.
+- [ ] Migrate Converter and Batch presentation/controller flows to the selected asynchronous `ConversionSession` without breaking synchronous state semantics or custom-unit catalog authority.
+- [ ] Define and implement native custom-unit/catalog snapshot synchronization so Rust and Flutter cannot diverge after user catalog changes.
 - [x] Six-target Flutter generation contract for Android, iOS, Web, Windows, Linux, and macOS.
 - [x] Automated all-or-nothing platform materialization workflow with generated-file inventory support.
 - [x] Committed-first six-platform release build matrix with uploaded build artifacts and generation fallback.
@@ -67,7 +72,9 @@ The roadmap is milestone-oriented. Items are checked only when repository eviden
 - [x] Persistence race/reference/import-bound regression tests for identified state defects.
 - [x] Controller/repository persisted-journey coverage across restart, settings, favorites, pins, history, custom units, backup/import, conversion reuse, and reset.
 - [x] Repository validation locks bridge protocol, required capabilities, and native batch bounds across docs/Rust/Flutter.
+- [x] Repository validation locks one-shot native loading, sticky backend selection, adapter-error containment, response validation/identity/order, no runtime fallback, stale async result suppression, and verification wiring.
 - [x] Repository validation locks reduced-motion, converter/batch semantic context, and representative large-text accessibility smoke coverage.
+- [ ] Generated-boundary Rust↔Dart parity tests through the production adapter, including startup failures and stale async completion behavior.
 - [ ] Full integration tests for persisted primary UI journeys.
 - [ ] Native end-to-end primary journeys.
 - [x] Deterministic property-style tests for exact-decimal behavior plus catalog-wide Rust invariants.
@@ -101,7 +108,7 @@ The roadmap is milestone-oriented. Items are checked only when repository eviden
 ## Current release blockers
 
 1. The repository has deterministic six-platform generation, materialization automation, release-build jobs, artifact upload, and cross-platform contract validation. However, the generated Android/iOS/Web/Windows/Linux/macOS directories are not yet present on the currently inspected `main` tree, so committed-project build evidence is still required before calling the native projects release-verified.
-2. Rust and Flutter now share a source-level startup negotiation contract: protocol version, required capabilities, bounded metadata, fail-closed compatibility checks, single/batch APIs, stable unit-ID validation, and a shared 256-target batch limit. Generated bindings, actual runtime engine selection, native library loading, generated-boundary parity execution, and per-platform packaging are still not implemented; source DTO/tests do not substitute for executing the production native bridge.
+2. Rust and Flutter now share protocol/capability/batch contracts plus a Flutter source-level one-shot loader, sticky `ConversionSession`, structural metadata/response validation, adapter-error containment, explicit failure classification, and stale async completion gate. Production generated bindings, a real `NativeConversionBridge` adapter, native library loading/packaging, `main.dart`/controller integration, custom-unit catalog synchronization, generated-boundary parity execution, and per-platform packaging are still not implemented; source seams/tests do not substitute for executing the production native bridge.
 3. This execution environment does not provide the Rust/Flutter/Dart/native toolchains needed to compile the current repository changes locally, and direct GitHub cloning is unavailable because external DNS is blocked in the execution container. No local full verification result is claimed for this checkpoint.
 4. A successful full GitHub Actions and six-platform release-build matrix for the final candidate commit has not yet been established/reviewed in this continuation.
 5. Automated source/widget accessibility safeguards now cover reduced motion, converter pin state, converter and batch selector semantic context, and representative compact 200% text-scaling smoke checks. Real-platform large-text rendering, contrast, screen-reader behavior, keyboard/focus traversal, touch targets, and modal focus/dismissal still require manual release-candidate review.
