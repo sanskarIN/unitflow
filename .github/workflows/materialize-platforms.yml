@@ -11,6 +11,7 @@ on:
       - 'scripts/bootstrap_platforms.ps1'
       - 'scripts/check_platform_support.py'
       - 'scripts/check_accessibility_contract.py'
+      - 'scripts/check_conversion_session_contract.py'
       - 'scripts/update_platform_inventory.py'
 
 permissions:
@@ -100,6 +101,7 @@ jobs:
           python3 scripts/check_repository_inventory.py
           python3 scripts/check_platform_support.py
           python3 scripts/check_accessibility_contract.py
+          python3 scripts/check_conversion_session_contract.py
           python3 scripts/check_release_consistency.py
           python3 scripts/check_repository_hygiene.py
 
