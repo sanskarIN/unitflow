@@ -43,7 +43,11 @@ def main() -> int:
     )
 
     source_requirements = (
+        ("static Future<ConversionSession> bootstrap", "one-shot native bridge bootstrap"),
+        ("final bridge = await loadNativeBridge();", "single native bridge load attempt"),
+        ("reasonCode: 'native_load_failed'", "stable native load failure reason"),
         ("factory ConversionSession.select", "one-time backend selection factory"),
+        ("factory ConversionSession._fallback", "centralized fallback construction"),
         ("nativeBridge.info.validatedCopy()", "startup metadata structural revalidation"),
         ("info.requireCompatible();", "fail-closed startup compatibility check"),
         ("ConversionSessionBackend.dartFallback", "Dart fallback backend"),
@@ -74,6 +78,9 @@ def main() -> int:
             "ConversionSession native bridge must be assigned only during construction."
         )
 
+    if source.count("await loadNativeBridge()") != 1:
+        errors.append("ConversionSession bootstrap must load the native bridge exactly once.")
+
     for mode in (
         "nearestEven",
         "halfAwayFromZero",
@@ -91,6 +98,9 @@ def main() -> int:
 
     test_requirements = (
         "session selects deterministic fallback when native bridge is absent",
+        "bootstrap loads a compatible native bridge exactly once",
+        "bootstrap treats a missing loaded bridge as native unavailable",
+        "bootstrap load failure falls back once without later retry",
         "session selects compatible Rust bridge and forwards exact request data",
         "incompatible startup metadata fails closed to Dart fallback",
         "direct malformed startup metadata is structurally revalidated",
@@ -143,10 +153,10 @@ def main() -> int:
         return 1
 
     print(
-        "Conversion-session contract validation passed: sticky startup routing, "
-        "structural metadata/response validation, fail-closed negotiation, response "
-        "identity checks, batch ordering, runtime no-fallback behavior, and latest-request "
-        "race suppression are guarded."
+        "Conversion-session contract validation passed: one-shot native loading, sticky "
+        "startup routing, structural metadata/response validation, fail-closed negotiation, "
+        "response identity checks, batch ordering, runtime no-fallback behavior, and "
+        "latest-request race suppression are guarded."
     )
     return 0
 
