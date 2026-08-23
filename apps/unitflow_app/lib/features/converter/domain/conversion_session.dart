@@ -78,7 +78,7 @@ final class ConversionSession {
         fallbackEngine: fallback,
         reasonCode: 'metadata_invalid',
       );
-    } on Exception {
+    } on Object {
       return ConversionSession._fallback(
         fallbackEngine: fallback,
         reasonCode: 'startup_failed',
@@ -140,7 +140,7 @@ final class ConversionSession {
       rawResponse = await bridge.convert(request);
     } on NativeBridgeFailure {
       rethrow;
-    } on Exception {
+    } on Object {
       throw const NativeBridgeFailure(
         code: 'backend_failure',
         message: 'The native conversion backend failed during conversion.',
@@ -196,7 +196,7 @@ final class ConversionSession {
       rawResponses = await bridge.batchConvert(request);
     } on NativeBridgeFailure {
       rethrow;
-    } on Exception {
+    } on Object {
       throw const NativeBridgeFailure(
         code: 'backend_failure',
         message: 'The native conversion backend failed during batch conversion.',
