@@ -38,7 +38,7 @@ final class ConversionSession {
     }
 
     try {
-      final info = nativeBridge.info;
+      final info = nativeBridge.info.validatedCopy();
       info.requireCompatible();
       return ConversionSession._(
         fallbackEngine: fallback,
