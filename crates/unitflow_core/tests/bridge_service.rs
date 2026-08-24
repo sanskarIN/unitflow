@@ -1,8 +1,9 @@
 use unitflow_core::{
-    BridgeBatchConversionRequest, BridgeConversionRequest, BridgeService, RoundMode,
-    BRIDGE_BACKEND_ID, BRIDGE_CAPABILITIES, BRIDGE_CAPABILITY_BATCH_CONVERT,
-    BRIDGE_CAPABILITY_CANONICAL_DECIMAL_TEXT, BRIDGE_CAPABILITY_CONVERT,
-    BRIDGE_MAX_BATCH_TARGETS, BRIDGE_PROTOCOL_VERSION,
+    BridgeBatchConversionRequest, BridgeConversionRequest, BridgeCustomUnit, BridgeService,
+    Category, RoundMode, BRIDGE_BACKEND_ID, BRIDGE_CAPABILITIES,
+    BRIDGE_CAPABILITY_BATCH_CONVERT, BRIDGE_CAPABILITY_CANONICAL_DECIMAL_TEXT,
+    BRIDGE_CAPABILITY_CONVERT, BRIDGE_MAX_BATCH_TARGETS, BRIDGE_MAX_CUSTOM_UNITS,
+    BRIDGE_PROTOCOL_VERSION,
 };
 
 fn request(value: &str, from: &str, to: &str) -> BridgeConversionRequest {
@@ -12,6 +13,19 @@ fn request(value: &str, from: &str, to: &str) -> BridgeConversionRequest {
         to_unit_id: to.to_owned(),
         decimal_places: None,
         round_mode: RoundMode::NearestEven,
+    }
+}
+
+fn custom_unit(id: &str, scale: &str) -> BridgeCustomUnit {
+    BridgeCustomUnit {
+        id: id.to_owned(),
+        category: Category::Length,
+        name: "Custom Length".to_owned(),
+        symbol: "cl".to_owned(),
+        aliases: vec!["custom length".to_owned()],
+        description: "Synthetic bridge catalog fixture.".to_owned(),
+        scale: scale.to_owned(),
+        offset: "0".to_owned(),
     }
 }
 
@@ -165,4 +179,80 @@ fn bridge_dtos_use_documented_camel_case_rounding_identifiers() {
     assert_eq!(encoded["toUnitId"].as_str(), Some("centimeter"));
     assert_eq!(encoded["roundMode"].as_str(), Some("nearestEven"));
     assert!(encoded.get("from_unit_id").is_none());
+}
+
+#[test]
+fn replaces_custom_catalog_snapshot_and_converts_with_new_unit() {
+    let mut service = BridgeService::with_built_in_catalog().expect("built-in bridge service");
+    service
+        .replace_custom_units(vec![custom_unit("double_meter", "2")])
+        .expect("custom catalog snapshot should validate");
+
+    let result = service
+        .convert(request("3", "double_meter", "meter"))
+        .expect("custom unit should be active");
+    assert_eq!(result.output, "6");
+}
+
+#[test]
+fn replacing_snapshot_removes_units_not_present_in_new_snapshot() {
+    let mut service = BridgeService::with_built_in_catalog().expect("built-in bridge service");
+    service
+        .replace_custom_units(vec![custom_unit("first_custom", "2")])
+        .expect("first snapshot");
+    service
+        .replace_custom_units(vec![custom_unit("second_custom", "3")])
+        .expect("second snapshot");
+
+    let stale = service
+        .convert(request("1", "first_custom", "meter"))
+        .expect_err("removed custom unit must not remain active");
+    assert_eq!(stale.code, "unknown_unit");
+
+    let current = service
+        .convert(request("2", "second_custom", "meter"))
+        .expect("replacement unit should be active");
+    assert_eq!(current.output, "6");
+}
+
+#[test]
+fn invalid_snapshot_does_not_replace_previous_valid_catalog() {
+    let mut service = BridgeService::with_built_in_catalog().expect("built-in bridge service");
+    service
+        .replace_custom_units(vec![custom_unit("stable_custom", "2")])
+        .expect("initial snapshot");
+
+    let failure = service
+        .replace_custom_units(vec![custom_unit("bad_custom", "1.0")])
+        .expect_err("non-canonical scale must fail");
+    assert_eq!(failure.code, "invalid_decimal");
+
+    let result = service
+        .convert(request("4", "stable_custom", "meter"))
+        .expect("previous catalog must remain active after rejected snapshot");
+    assert_eq!(result.output, "8");
+}
+
+#[test]
+fn rejects_oversized_custom_catalog_snapshot() {
+    let mut service = BridgeService::with_built_in_catalog().expect("built-in bridge service");
+    let units = (0..=BRIDGE_MAX_CUSTOM_UNITS)
+        .map(|index| custom_unit(&format!("custom_{index}"), "2"))
+        .collect();
+
+    let failure = service
+        .replace_custom_units(units)
+        .expect_err("oversized custom catalog must be rejected");
+    assert_eq!(failure.code, "invalid_catalog_snapshot");
+}
+
+#[test]
+fn custom_unit_bridge_dto_uses_canonical_string_fields() {
+    let encoded = serde_json::to_value(custom_unit("double_meter", "2"))
+        .expect("custom unit serializes");
+
+    assert_eq!(encoded["id"].as_str(), Some("double_meter"));
+    assert_eq!(encoded["category"].as_str(), Some("length"));
+    assert_eq!(encoded["scale"].as_str(), Some("2"));
+    assert_eq!(encoded["offset"].as_str(), Some("0"));
 }
