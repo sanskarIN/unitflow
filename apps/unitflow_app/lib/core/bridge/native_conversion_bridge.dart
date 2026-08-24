@@ -16,6 +16,9 @@ const Set<String> nativeBridgeRequiredCapabilities = <String>{
 /// Maximum target count accepted by a native batch request.
 const int nativeBridgeMaxBatchTargets = 256;
 
+/// Maximum user-defined units accepted by one native catalog snapshot.
+const int nativeBridgeMaxCustomUnits = 200;
+
 /// Stable Flutter-side contract for a future native Rust bridge.
 ///
 /// Decimal values cross this boundary as text so generated bindings never need
@@ -186,6 +189,66 @@ final class NativeBridgeBatchConversionRequest {
   }
 }
 
+/// Generator-friendly custom-unit payload for replacing the Rust session's
+/// user-defined catalog snapshot.
+final class NativeBridgeCustomUnit {
+  const NativeBridgeCustomUnit({
+    required this.id,
+    required this.categoryId,
+    required this.name,
+    required this.symbol,
+    required this.scale,
+    required this.offset,
+    required this.aliases,
+    required this.description,
+  });
+
+  final String id;
+  final String categoryId;
+  final String name;
+  final String symbol;
+  final String scale;
+  final String offset;
+  final List<String> aliases;
+  final String description;
+
+  Map<String, Object?> toMap() {
+    _requireUnitId(id, field: 'id');
+    if (!RegExp(r'^[a-z][a-z0-9_]{0,31}$').hasMatch(categoryId)) {
+      throw const FormatException('Invalid native bridge category identifier.');
+    }
+    if (name.trim().isEmpty || name.length > 128) {
+      throw const FormatException('Invalid native bridge custom-unit name.');
+    }
+    if (symbol.trim().isEmpty || symbol.length > 32) {
+      throw const FormatException('Invalid native bridge custom-unit symbol.');
+    }
+    if (description.length > 512) {
+      throw const FormatException('Invalid native bridge custom-unit description.');
+    }
+    if (aliases.length > 32 || aliases.any((alias) => alias.trim().isEmpty || alias.length > 64)) {
+      throw const FormatException('Invalid native bridge custom-unit aliases.');
+    }
+
+    final parsedScale = _requireCanonicalDecimal(scale, field: 'scale');
+    if (parsedScale.compareTo(ExactDecimal.zero) <= 0) {
+      throw const FormatException('Native bridge custom-unit scale must be positive.');
+    }
+    _requireCanonicalDecimal(offset, field: 'offset');
+
+    return <String, Object?>{
+      'id': id,
+      'category': categoryId,
+      'name': name.trim(),
+      'symbol': symbol.trim(),
+      'aliases': List<String>.unmodifiable(aliases.map((alias) => alias.trim())),
+      'description': description.trim(),
+      'scale': scale,
+      'offset': offset,
+    };
+  }
+}
+
 final class NativeBridgeConversionResponse {
   const NativeBridgeConversionResponse({
     required this.input,
@@ -248,6 +311,12 @@ abstract interface class NativeConversionBridge {
   );
 }
 
+/// Optional extension implemented by production bindings that can replace the
+/// user-defined portion of the active Rust catalog atomically.
+abstract interface class NativeCatalogSyncBridge implements NativeConversionBridge {
+  Future<void> replaceCustomUnits(List<NativeBridgeCustomUnit> customUnits);
+}
+
 void _validateCommonRequest({
   required String value,
   required String fromUnitId,
@@ -261,7 +330,7 @@ void _validateCommonRequest({
   }
 }
 
-void _requireCanonicalDecimal(String value, {required String field}) {
+ExactDecimal _requireCanonicalDecimal(String value, {required String field}) {
   if (value.isEmpty || value.length > 1024) {
     throw FormatException('Invalid native bridge decimal field: $field.');
   }
@@ -270,6 +339,7 @@ void _requireCanonicalDecimal(String value, {required String field}) {
     if (parsed.toCanonicalString() != value) {
       throw FormatException('Non-canonical native bridge decimal field: $field.');
     }
+    return parsed;
   } on FormatException {
     throw FormatException('Invalid native bridge decimal field: $field.');
   }
