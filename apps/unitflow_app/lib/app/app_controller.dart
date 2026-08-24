@@ -6,20 +6,29 @@ import '../core/persistence/user_state.dart';
 import '../core/persistence/user_state_repository.dart';
 import '../features/converter/data/unit_catalog.dart';
 import '../features/converter/domain/conversion_engine.dart';
+import '../features/converter/domain/conversion_session.dart';
 import '../features/converter/domain/unit_models.dart';
 
 final class AppController extends ChangeNotifier {
-  AppController({required UserStateRepository repository}) : _repository = repository;
+  AppController({
+    required UserStateRepository repository,
+    NativeConversionBridgeLoader? nativeBridgeLoader,
+  }) : _repository = repository,
+       _nativeBridgeLoader = nativeBridgeLoader ?? (() async => null);
 
   final UserStateRepository _repository;
+  final NativeConversionBridgeLoader _nativeBridgeLoader;
   UserState _state = UserState();
   ConversionEngine _engine = ExactConversionEngine();
+  ConversionSession _conversionSession = ConversionSession.select();
   bool _ready = false;
   String? _warning;
   Future<void> _writeChain = Future<void>.value();
+  int _sessionRefreshGeneration = 0;
 
   UserState get state => _state;
   ConversionEngine get engine => _engine;
+  ConversionSession get conversionSession => _conversionSession;
   bool get isReady => _ready;
   String? get warning => _warning;
 
@@ -29,6 +38,7 @@ final class AppController extends ChangeNotifier {
       final rebuilt = _buildEngine(loaded);
       _state = loaded;
       _engine = rebuilt;
+      await _refreshConversionSession(rebuilt, loaded, notify: false);
     } on Object catch (error) {
       _warning =
           'Saved preferences could not be loaded. Defaults are being used; existing saved data was not overwritten.';
@@ -38,6 +48,8 @@ final class AppController extends ChangeNotifier {
       );
       _state = UserState();
       _engine = ExactConversionEngine();
+      _conversionSession = ConversionSession.select(fallbackEngine: _engine);
+      _sessionRefreshGeneration += 1;
     } finally {
       _ready = true;
       notifyListeners();
@@ -204,6 +216,7 @@ final class AppController extends ChangeNotifier {
     _state = baseline;
     _engine = ExactConversionEngine();
     _warning = null;
+    final sessionRefresh = _refreshConversionSession(_engine, baseline);
     notifyListeners();
 
     final operation = _writeChain.then((_) async {
@@ -218,7 +231,7 @@ final class AppController extends ChangeNotifier {
       );
       notifyListeners();
     });
-    return operation;
+    return Future.wait<void>(<Future<void>>[operation, sessionRefresh]);
   }
 
   void clearWarning() {
@@ -265,10 +278,39 @@ final class AppController extends ChangeNotifier {
     }
   }
 
+  Future<void> _refreshConversionSession(
+    ConversionEngine engine,
+    UserState state, {
+    bool notify = true,
+  }) async {
+    final generation = ++_sessionRefreshGeneration;
+
+    // Never leave an older native session active while a new catalog is being
+    // validated. The deterministic fallback is immediately aligned to the new
+    // engine, then may be promoted to a fresh native session below.
+    _conversionSession = ConversionSession.select(fallbackEngine: engine);
+
+    final session = await ConversionSession.bootstrap(
+      loadNativeBridge: _nativeBridgeLoader,
+      fallbackEngine: engine,
+      initialCustomUnits: state.customUnits.map((item) => item.toUnitDefinition()),
+    );
+    if (generation != _sessionRefreshGeneration) {
+      return;
+    }
+
+    _conversionSession = session;
+    if (notify) {
+      notifyListeners();
+    }
+  }
+
   Future<void> _update(UserState state, {ConversionEngine? engine}) {
     _state = state;
+    Future<void>? sessionRefresh;
     if (engine != null) {
       _engine = engine;
+      sessionRefresh = _refreshConversionSession(engine, state);
     }
     notifyListeners();
 
@@ -280,6 +322,9 @@ final class AppController extends ChangeNotifier {
         metadata: <String, Object?>{'errorType': error.runtimeType.toString()},
       );
     });
-    return operation;
+    if (sessionRefresh == null) {
+      return operation;
+    }
+    return Future.wait<void>(<Future<void>>[operation, sessionRefresh]);
   }
 }
