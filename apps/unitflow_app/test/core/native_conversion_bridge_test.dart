@@ -217,6 +217,69 @@ void main() {
     expect(oversizedBatch.toMap, throwsFormatException);
   });
 
+  test('custom catalog snapshot keeps exact canonical decimal strings', () {
+    const unit = NativeBridgeCustomUnit(
+      id: 'double_meter',
+      categoryId: 'length',
+      name: 'Double meter',
+      symbol: 'dm2',
+      scale: '2',
+      offset: '0',
+      aliases: <String>['double metre'],
+      description: 'Synthetic test unit.',
+    );
+
+    final encoded = unit.toMap();
+
+    expect(nativeBridgeMaxCustomUnits, 200);
+    expect(encoded['id'], 'double_meter');
+    expect(encoded['category'], 'length');
+    expect(encoded['scale'], '2');
+    expect(encoded['offset'], '0');
+    expect(encoded['aliases'], <String>['double metre']);
+  });
+
+  test('custom catalog snapshot rejects invalid scale and identifiers', () {
+    const invalidScale = NativeBridgeCustomUnit(
+      id: 'double_meter',
+      categoryId: 'length',
+      name: 'Double meter',
+      symbol: 'dm2',
+      scale: '2.0',
+      offset: '0',
+      aliases: <String>[],
+      description: '',
+    );
+    const invalidId = NativeBridgeCustomUnit(
+      id: '../double_meter',
+      categoryId: 'length',
+      name: 'Double meter',
+      symbol: 'dm2',
+      scale: '2',
+      offset: '0',
+      aliases: <String>[],
+      description: '',
+    );
+
+    expect(invalidScale.toMap, throwsFormatException);
+    expect(invalidId.toMap, throwsFormatException);
+  });
+
+  test('custom catalog snapshot rejects non-positive scale', () {
+    const unit = NativeBridgeCustomUnit(
+      id: 'zero_scale',
+      categoryId: 'length',
+      name: 'Zero scale',
+      symbol: 'zs',
+      scale: '0',
+      offset: '0',
+      aliases: <String>[],
+      description: '',
+    );
+
+    expect(unit.toMap, throwsFormatException);
+  });
+
   test('bridge response validates stable unit identifiers', () {
     final response = NativeBridgeConversionResponse.fromMap(
       const <String, Object?>{
