@@ -333,4 +333,155 @@ void main() {
     expect(failure.toString(), 'NativeBridgeFailure(invalid_decimal)');
     expect(failure.toString(), isNot(contains(failure.message)));
   });
+
+  test('generated adapter caches startup metadata and forwards exact request maps', () async {
+    final api = _GeneratedApiFake();
+    final adapter = GeneratedNativeConversionBridge(api);
+    const request = NativeBridgeConversionRequest(
+      value: '2',
+      fromUnitId: 'meter',
+      toUnitId: 'centimeter',
+      decimalPlaces: 12,
+      roundMode: NativeBridgeRoundMode.nearestEven,
+    );
+
+    expect(adapter.info.backendId, 'rust-core');
+    expect(adapter.info.protocolVersion, 1);
+    expect(api.infoReads, 1);
+
+    final response = await adapter.convert(request);
+    expect(api.lastSingleRequest?['value'], '2');
+    expect(api.lastSingleRequest?['fromUnitId'], 'meter');
+    expect(api.lastSingleRequest?['toUnitId'], 'centimeter');
+    expect(response.output, '200');
+    expect(api.infoReads, 1);
+  });
+
+  test('generated adapter preserves batch order and validates returned maps', () async {
+    final api = _GeneratedApiFake();
+    final adapter = GeneratedNativeConversionBridge(api);
+    const request = NativeBridgeBatchConversionRequest(
+      value: '2',
+      fromUnitId: 'meter',
+      targetUnitIds: <String>['centimeter', 'millimeter'],
+      decimalPlaces: null,
+      roundMode: NativeBridgeRoundMode.nearestEven,
+    );
+
+    final responses = await adapter.batchConvert(request);
+
+    expect(api.lastBatchRequest?['targetUnitIds'], <String>['centimeter', 'millimeter']);
+    expect(responses.map((item) => item.toUnitId), <String>['centimeter', 'millimeter']);
+    expect(responses.map((item) => item.output), <String>['200', '2000']);
+  });
+
+  test('generated adapter classifies malformed response map as invalid response', () async {
+    final api = _GeneratedApiFake(malformedSingleResponse: true);
+    final adapter = GeneratedNativeConversionBridge(api);
+    const request = NativeBridgeConversionRequest(
+      value: '2',
+      fromUnitId: 'meter',
+      toUnitId: 'centimeter',
+      decimalPlaces: null,
+      roundMode: NativeBridgeRoundMode.nearestEven,
+    );
+
+    await expectLater(
+      adapter.convert(request),
+      throwsA(
+        isA<NativeBridgeFailure>().having(
+          (failure) => failure.code,
+          'code',
+          'invalid_response',
+        ),
+      ),
+    );
+  });
+
+  test('generated adapter validates and forwards custom catalog snapshots', () async {
+    final api = _GeneratedApiFake();
+    final adapter = GeneratedNativeConversionBridge(api);
+    const unit = NativeBridgeCustomUnit(
+      id: 'double_meter',
+      categoryId: 'length',
+      name: 'Double meter',
+      symbol: 'dm2',
+      scale: '2',
+      offset: '0',
+      aliases: <String>[],
+      description: '',
+    );
+
+    await adapter.replaceCustomUnits(const <NativeBridgeCustomUnit>[unit]);
+
+    expect(api.lastCustomUnits, hasLength(1));
+    expect(api.lastCustomUnits.single['id'], 'double_meter');
+    expect(api.lastCustomUnits.single['scale'], '2');
+  });
+}
+
+const _adapterInfo = NativeBridgeInfo(
+  protocolVersion: nativeBridgeProtocolVersion,
+  backendId: 'rust-core',
+  capabilities: <String>{
+    nativeBridgeCapabilityConvert,
+    nativeBridgeCapabilityBatchConvert,
+    nativeBridgeCapabilityCanonicalDecimalText,
+  },
+);
+
+final class _GeneratedApiFake implements GeneratedNativeBridgeApi {
+  _GeneratedApiFake({this.malformedSingleResponse = false});
+
+  final bool malformedSingleResponse;
+  int infoReads = 0;
+  Map<String, Object?>? lastSingleRequest;
+  Map<String, Object?>? lastBatchRequest;
+  List<Map<String, Object?>> lastCustomUnits = const <Map<String, Object?>>[];
+
+  @override
+  NativeBridgeInfo get info {
+    infoReads += 1;
+    return _adapterInfo;
+  }
+
+  @override
+  Future<Map<String, Object?>> convert(Map<String, Object?> request) async {
+    lastSingleRequest = request;
+    if (malformedSingleResponse) {
+      return <String, Object?>{
+        'input': request['value'],
+        'output': '02.0',
+        'fromUnitId': request['fromUnitId'],
+        'toUnitId': request['toUnitId'],
+      };
+    }
+    return <String, Object?>{
+      'input': request['value'],
+      'output': '200',
+      'fromUnitId': request['fromUnitId'],
+      'toUnitId': request['toUnitId'],
+    };
+  }
+
+  @override
+  Future<List<Map<String, Object?>>> batchConvert(Map<String, Object?> request) async {
+    lastBatchRequest = request;
+    final targets = (request['targetUnitIds']! as List<String>);
+    return List<Map<String, Object?>>.generate(
+      targets.length,
+      (index) => <String, Object?>{
+        'input': request['value'],
+        'output': index == 0 ? '200' : '2000',
+        'fromUnitId': request['fromUnitId'],
+        'toUnitId': targets[index],
+      },
+      growable: false,
+    );
+  }
+
+  @override
+  Future<void> replaceCustomUnits(List<Map<String, Object?>> customUnits) async {
+    lastCustomUnits = List<Map<String, Object?>>.unmodifiable(customUnits);
+  }
 }
