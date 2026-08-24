@@ -51,7 +51,13 @@ final class ConversionSession {
       final customUnits = initialCustomUnits
           .take(nativeBridgeMaxCustomUnits + 1)
           .toList(growable: false);
-      if (customUnits.isEmpty) {
+
+      // A sync-capable native service receives the authoritative snapshot even
+      // when it is empty. This clears stale custom units when a platform loader
+      // reuses a long-lived native service across app-side session refreshes.
+      // Legacy bridges without catalog synchronization remain compatible only
+      // while there is no custom catalog that needs to cross the boundary.
+      if (customUnits.isEmpty && !session.supportsCatalogSync) {
         return session;
       }
 
