@@ -317,6 +317,88 @@ abstract interface class NativeCatalogSyncBridge implements NativeConversionBrid
   Future<void> replaceCustomUnits(List<NativeBridgeCustomUnit> customUnits);
 }
 
+/// Minimal generator-agnostic API shape implemented by the eventual generated
+/// FFI/binding package. The app-facing adapter below keeps generated DTO details
+/// from leaking into presentation/domain code.
+abstract interface class GeneratedNativeBridgeApi {
+  /// Startup metadata is captured once by [GeneratedNativeConversionBridge].
+  NativeBridgeInfo get info;
+
+  Future<Map<String, Object?>> convert(Map<String, Object?> request);
+
+  Future<List<Map<String, Object?>>> batchConvert(Map<String, Object?> request);
+
+  Future<void> replaceCustomUnits(List<Map<String, Object?>> customUnits);
+}
+
+/// Production-facing adapter between generated binding calls and UnitFlow's
+/// stable application bridge contract.
+///
+/// A platform-specific loader may asynchronously create a generated API object,
+/// then wrap it in this adapter. Startup metadata is read exactly once and is
+/// revalidated again by [ConversionSession] before native selection.
+final class GeneratedNativeConversionBridge implements NativeCatalogSyncBridge {
+  GeneratedNativeConversionBridge(GeneratedNativeBridgeApi api)
+    : _api = api,
+      _info = api.info;
+
+  final GeneratedNativeBridgeApi _api;
+  final NativeBridgeInfo _info;
+
+  @override
+  NativeBridgeInfo get info => _info;
+
+  @override
+  Future<NativeBridgeConversionResponse> convert(
+    NativeBridgeConversionRequest request,
+  ) async {
+    final response = await _api.convert(request.toMap());
+    try {
+      return NativeBridgeConversionResponse.fromMap(response);
+    } on FormatException {
+      throw const NativeBridgeFailure(
+        code: 'invalid_response',
+        message: 'The native conversion backend returned an invalid response.',
+      );
+    }
+  }
+
+  @override
+  Future<List<NativeBridgeConversionResponse>> batchConvert(
+    NativeBridgeBatchConversionRequest request,
+  ) async {
+    final responses = await _api.batchConvert(request.toMap());
+    if (responses.length > nativeBridgeMaxBatchTargets) {
+      throw const NativeBridgeFailure(
+        code: 'invalid_response',
+        message: 'The native conversion backend returned an invalid batch response.',
+      );
+    }
+    try {
+      return responses
+          .map(NativeBridgeConversionResponse.fromMap)
+          .toList(growable: false);
+    } on FormatException {
+      throw const NativeBridgeFailure(
+        code: 'invalid_response',
+        message: 'The native conversion backend returned an invalid batch response.',
+      );
+    }
+  }
+
+  @override
+  Future<void> replaceCustomUnits(List<NativeBridgeCustomUnit> customUnits) async {
+    if (customUnits.length > nativeBridgeMaxCustomUnits) {
+      throw const NativeBridgeFailure(
+        code: 'invalid_catalog_snapshot',
+        message: 'The custom-unit snapshot exceeds the supported unit limit.',
+      );
+    }
+    final encoded = customUnits.map((unit) => unit.toMap()).toList(growable: false);
+    await _api.replaceCustomUnits(encoded);
+  }
+}
+
 void _validateCommonRequest({
   required String value,
   required String fromUnitId,
