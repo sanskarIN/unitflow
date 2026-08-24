@@ -105,6 +105,68 @@ final class ConversionSession {
   final String? fallbackReasonCode;
 
   bool get usesNative => backend == ConversionSessionBackend.rustNative;
+  bool get supportsCatalogSync => _nativeBridge is NativeCatalogSyncBridge;
+
+  /// Replaces the user-defined portion of a selected native backend's catalog.
+  ///
+  /// The Dart engine remains the authority for validating and constructing the
+  /// custom units. Only canonicalized, already-validated definitions are sent
+  /// across the native boundary. Fallback sessions need no native sync.
+  Future<void> synchronizeCustomUnits(Iterable<UnitDefinition> customUnits) async {
+    final units = customUnits.take(nativeBridgeMaxCustomUnits + 1).toList(growable: false);
+    if (units.length > nativeBridgeMaxCustomUnits) {
+      throw const NativeBridgeFailure(
+        code: 'invalid_catalog_snapshot',
+        message: 'The custom-unit snapshot exceeds the supported unit limit.',
+      );
+    }
+    if (units.any((unit) => unit.isBuiltIn)) {
+      throw const NativeBridgeFailure(
+        code: 'invalid_catalog_snapshot',
+        message: 'Only user-defined units may be synchronized to the native catalog.',
+      );
+    }
+
+    final payload = units
+        .map(
+          (unit) => NativeBridgeCustomUnit(
+            id: unit.id,
+            categoryId: unit.category.id,
+            name: unit.name,
+            symbol: unit.symbol,
+            scale: unit.scale.toCanonicalString(),
+            offset: unit.offset.toCanonicalString(),
+            aliases: List<String>.unmodifiable(unit.aliases),
+            description: unit.description,
+          ),
+        )
+        .toList(growable: false);
+    for (final unit in payload) {
+      unit.toMap();
+    }
+
+    final bridge = _nativeBridge;
+    if (bridge == null) {
+      return;
+    }
+    if (bridge is! NativeCatalogSyncBridge) {
+      throw const NativeBridgeFailure(
+        code: 'catalog_sync_unsupported',
+        message: 'The selected native backend cannot synchronize custom units.',
+      );
+    }
+
+    try {
+      await bridge.replaceCustomUnits(payload);
+    } on NativeBridgeFailure {
+      rethrow;
+    } on Object {
+      throw const NativeBridgeFailure(
+        code: 'catalog_sync_failed',
+        message: 'The native conversion backend could not synchronize the custom-unit catalog.',
+      );
+    }
+  }
 
   Future<ConversionResult> convert({
     required ExactDecimal value,
