@@ -46,11 +46,14 @@ The roadmap is milestone-oriented. Items are checked only when repository eviden
 - [x] Source-level Rust/Flutter startup protocol + capability negotiation contract with fail-closed compatibility checks.
 - [x] Source-level bounded native batch bridge contract with a shared 256-target limit and stable unit-ID validation.
 - [x] Source-level one-shot native loader/session-selection seam with immutable backend choice, adapter-error containment, response validation, and no mid-session fallback.
-- [x] Source-level stale asynchronous conversion result suppression gate for future controller/native wiring.
-- [ ] Generate and commit the production Rust↔Flutter binding adapter implementing `NativeConversionBridge`.
+- [x] Source-level stale asynchronous conversion result suppression gate.
+- [x] Generator-agnostic app-facing adapter boundary implementing `NativeConversionBridge`/catalog synchronization over a future generated API.
+- [ ] Generate the concrete Rust↔Flutter FFI/binding implementation behind `GeneratedNativeBridgeApi`.
 - [ ] Implement real platform native-library loading/packaging and connect it to `ConversionSession.bootstrap()`.
-- [ ] Migrate Converter and Batch presentation/controller flows to the selected asynchronous `ConversionSession` without breaking synchronous state semantics or custom-unit catalog authority.
-- [ ] Define and implement native custom-unit/catalog snapshot synchronization so Rust and Flutter cannot diverge after user catalog changes.
+- [x] Migrate Converter and Batch presentation/controller flows to the selected asynchronous `ConversionSession` while preserving immediate deterministic Dart previews.
+- [x] Define and implement bounded atomic native custom-unit/catalog snapshot synchronization so Rust and Flutter cannot diverge after user catalog changes.
+- [x] App-owned session refresh invalidates stale catalog sessions and suppresses late asynchronous refresh results.
+- [x] App-controller initialization/disposal lifecycle suppresses late native-loader completions and coalesces concurrent initialization.
 - [x] Six-target Flutter generation contract for Android, iOS, Web, Windows, Linux, and macOS.
 - [x] Automated all-or-nothing platform materialization workflow with generated-file inventory support.
 - [x] Committed-first six-platform release build matrix with uploaded build artifacts and generation fallback.
@@ -71,10 +74,11 @@ The roadmap is milestone-oriented. Items are checked only when repository eviden
 - [x] Core Flutter unit/widget smoke tests for converter-adjacent state, navigation, backup, batch export, safe logging, and accessibility behavior.
 - [x] Persistence race/reference/import-bound regression tests for identified state defects.
 - [x] Controller/repository persisted-journey coverage across restart, settings, favorites, pins, history, custom units, backup/import, conversion reuse, and reset.
-- [x] Repository validation locks bridge protocol, required capabilities, and native batch bounds across docs/Rust/Flutter.
-- [x] Repository validation locks one-shot native loading, sticky backend selection, adapter-error containment, response validation/identity/order, no runtime fallback, stale async result suppression, and verification wiring.
+- [x] Repository validation locks bridge protocol, required capabilities, native batch bounds, and native custom-unit snapshot bounds across docs/Rust/Flutter.
+- [x] Repository validation locks one-shot native loading, sticky backend selection, adapter-error containment, response validation/identity/order, no runtime fallback, stale async result suppression, controller integration, and verification wiring.
 - [x] Repository validation locks reduced-motion, converter/batch semantic context, and representative large-text accessibility smoke coverage.
-- [ ] Generated-boundary Rust↔Dart parity tests through the production adapter, including startup failures and stale async completion behavior.
+- [x] Generated-adapter boundary tests cover startup metadata caching, request forwarding, catalog forwarding, response parsing, and malformed generated payload rejection.
+- [ ] Generated-boundary Rust↔Dart parity tests through the concrete production FFI implementation, including startup failures and stale async completion behavior.
 - [ ] Full integration tests for persisted primary UI journeys.
 - [ ] Native end-to-end primary journeys.
 - [x] Deterministic property-style tests for exact-decimal behavior plus catalog-wide Rust invariants.
@@ -93,7 +97,7 @@ The roadmap is milestone-oriented. Items are checked only when repository eviden
 - [x] Release workflow rejects a `v*` tag that does not exactly match the Cargo workspace version.
 - [ ] Native platform packaging guidance and binary artifacts validated per platform.
 - [x] Release checklist, changelog, data-migration notes, and platform-support documentation baseline.
-- [ ] Tag and verify `2.0.12` only after the blocking items below pass.
+- [ ] Tag and verify `2.18.12` only after the blocking items below pass.
 
 ## Phase 6 — Final audit
 
@@ -105,14 +109,28 @@ The roadmap is milestone-oriented. Items are checked only when repository eviden
 - [ ] Secret scan and dependency/security findings reviewed.
 - [ ] Release-candidate verification on every platform claimed as supported.
 
-## Current release blockers
+## Current `2.18.12` release blockers
 
-1. The repository has deterministic six-platform generation, materialization automation, release-build jobs, artifact upload, and cross-platform contract validation. However, the generated Android/iOS/Web/Windows/Linux/macOS directories are not yet present on the currently inspected `main` tree, so committed-project build evidence is still required before calling the native projects release-verified.
-2. Rust and Flutter now share protocol/capability/batch contracts plus a Flutter source-level one-shot loader, sticky `ConversionSession`, structural metadata/response validation, adapter-error containment, explicit failure classification, and stale async completion gate. Production generated bindings, a real `NativeConversionBridge` adapter, native library loading/packaging, `main.dart`/controller integration, custom-unit catalog synchronization, generated-boundary parity execution, and per-platform packaging are still not implemented; source seams/tests do not substitute for executing the production native bridge.
-3. This execution environment does not provide the Rust/Flutter/Dart/native toolchains needed to compile the current repository changes locally, and direct GitHub cloning is unavailable because external DNS is blocked in the execution container. No local full verification result is claimed for this checkpoint.
-4. A successful full GitHub Actions and six-platform release-build matrix for the final candidate commit has not yet been established/reviewed in this continuation.
-5. Automated source/widget accessibility safeguards now cover reduced motion, converter pin state, converter and batch selector semantic context, and representative compact 200% text-scaling smoke checks. Real-platform large-text rendering, contrast, screen-reader behavior, keyboard/focus traversal, touch targets, and modal focus/dismissal still require manual release-candidate review.
+1. The repository has deterministic six-platform generation, materialization automation, release-build jobs, artifact upload, and cross-platform contract validation. However, the generated Android/iOS/Web/Windows/Linux/macOS directories are still absent from the currently inspected `main` tree, so committed-project build evidence is required before native projects can be called release-verified.
+2. The source-level app now owns a sticky `ConversionSession`, routes Converter/Batch through it, synchronizes custom-unit snapshots, suppresses stale async results, and exposes a generator-agnostic `GeneratedNativeConversionBridge`. The concrete generated Rust↔Flutter API implementation, real native library loader, native packaging, and generated-boundary parity execution remain incomplete.
+3. The current execution environment does not provide the Rust/Flutter/Dart/native toolchains needed to compile all current repository changes locally. No local full verification result is claimed for this checkpoint.
+4. A successful full GitHub Actions and six-platform release-build matrix for the final candidate commit has not yet been established and reviewed.
+5. Automated source/widget accessibility safeguards cover reduced motion, converter pin state, converter and batch selector semantic context, and representative compact 200% text-scaling smoke checks. Real-platform large-text rendering, contrast, screen-reader behavior, keyboard/focus traversal, touch targets, and modal focus/dismissal still require manual release-candidate review.
 6. Real release media/assets, production signing/notarization, and store-ready distributable artifacts remain intentionally deferred until verified native builds exist.
+
+## Next patch target — `2.18.13`
+
+`2.18.13` is the next hardening target after `2.18.12` is verified/tagged. Do not bump package metadata early; the active source version stays `2.18.12` until its release evidence is complete.
+
+Planned `2.18.13` scope:
+
+- Complete or harden the concrete generated native binding/API implementation once the binding toolchain is selected and executable.
+- Add platform-native loader implementations with explicit Web fallback behavior and no silent runtime backend switching.
+- Add generated-boundary parity tests for single conversion, batch conversion, custom units, malformed payloads, startup negotiation, and rounding modes.
+- Add controller/session lifecycle stress tests for disposal, overlapping catalog refreshes, and persistence/native-loader races.
+- Review and fix every issue surfaced by clean GitHub Actions and the six-platform release matrix.
+- Improve release diagnostics so backend selection/fallback reasons can be inspected safely without exposing raw native errors.
+- Continue accessibility, performance, packaging, and release-documentation hardening based on real platform evidence.
 
 ## Post-1.0 ideas
 
