@@ -108,6 +108,57 @@ void main() {
     expect(unit.toUnitDefinition, throwsFormatException);
   });
 
+  test('custom units reject aliases that become blank after trimming', () {
+    const unit = CustomUnitData(
+      id: 'blank_alias',
+      category: UnitCategory.length,
+      name: 'Blank alias',
+      symbol: 'ba',
+      scale: '1',
+      offset: '0',
+      aliases: <String>['   '],
+    );
+
+    expect(unit.toUnitDefinition, throwsFormatException);
+  });
+
+  test('custom aliases trim and deduplicate case-insensitively like Rust', () {
+    const unit = CustomUnitData(
+      id: 'alias_parity',
+      category: UnitCategory.length,
+      name: 'Alias parity',
+      symbol: 'ap',
+      scale: '1',
+      offset: '0',
+      aliases: <String>[' metre ', 'METRE', 'meter alias'],
+    );
+
+    final definition = unit.toUnitDefinition();
+    expect(definition.aliases, <String>['metre', 'meter alias']);
+  });
+
+  test('backup rejects custom unit with whitespace-only alias', () {
+    final repository = MemoryUserStateRepository();
+    final backup = _emptyBackup()
+      ..['customUnits'] = <Object?>[
+        <String, Object?>{
+          'id': 'blank_alias',
+          'category': 'length',
+          'name': 'Blank alias',
+          'symbol': 'ba',
+          'scale': '1',
+          'offset': '0',
+          'aliases': <Object?>['   '],
+          'description': '',
+        },
+      ];
+
+    expect(
+      () => repository.importJson(jsonEncode(backup)),
+      throwsFormatException,
+    );
+  });
+
   test('memory repository rejects oversized backup payloads', () {
     final repository = MemoryUserStateRepository();
     final oversized = List<String>.filled(1_000_001, 'x').join();
