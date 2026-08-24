@@ -22,8 +22,10 @@ final class AppController extends ChangeNotifier {
   ConversionEngine _engine = ExactConversionEngine();
   ConversionSession _conversionSession = ConversionSession.select();
   bool _ready = false;
+  bool _disposed = false;
   String? _warning;
   Future<void> _writeChain = Future<void>.value();
+  Future<void>? _initialization;
   int _sessionRefreshGeneration = 0;
 
   UserState get state => _state;
@@ -32,14 +34,27 @@ final class AppController extends ChangeNotifier {
   bool get isReady => _ready;
   String? get warning => _warning;
 
-  Future<void> initialize() async {
+  Future<void> initialize() {
+    if (_disposed || _ready) {
+      return Future<void>.value();
+    }
+    return _initialization ??= _initialize();
+  }
+
+  Future<void> _initialize() async {
     try {
       final loaded = await _repository.load();
+      if (_disposed) {
+        return;
+      }
       final rebuilt = _buildEngine(loaded);
       _state = loaded;
       _engine = rebuilt;
       await _refreshConversionSession(rebuilt, loaded, notify: false);
     } on Object catch (error) {
+      if (_disposed) {
+        return;
+      }
       _warning =
           'Saved preferences could not be loaded. Defaults are being used; existing saved data was not overwritten.';
       AppLog.error(
@@ -51,8 +66,10 @@ final class AppController extends ChangeNotifier {
       _conversionSession = ConversionSession.select(fallbackEngine: _engine);
       _sessionRefreshGeneration += 1;
     } finally {
-      _ready = true;
-      notifyListeners();
+      if (!_disposed) {
+        _ready = true;
+        notifyListeners();
+      }
     }
   }
 
@@ -212,6 +229,10 @@ final class AppController extends ChangeNotifier {
   }
 
   Future<void> resetLocalData() {
+    if (_disposed) {
+      return Future<void>.error(StateError('AppController has been disposed.'));
+    }
+
     final baseline = UserState(onboardingComplete: true);
     _state = baseline;
     _engine = ExactConversionEngine();
@@ -224,6 +245,9 @@ final class AppController extends ChangeNotifier {
       await _repository.save(baseline);
     });
     _writeChain = operation.catchError((Object error) {
+      if (_disposed) {
+        return;
+      }
       _warning = 'Local data could not be cleared from storage. Please try again.';
       AppLog.error(
         'state_reset_failed',
@@ -235,6 +259,9 @@ final class AppController extends ChangeNotifier {
   }
 
   void clearWarning() {
+    if (_disposed) {
+      return;
+    }
     _warning = null;
     notifyListeners();
   }
@@ -283,6 +310,9 @@ final class AppController extends ChangeNotifier {
     UserState state, {
     bool notify = true,
   }) async {
+    if (_disposed) {
+      return;
+    }
     final generation = ++_sessionRefreshGeneration;
 
     // Never leave an older native session active while a new catalog is being
@@ -295,7 +325,7 @@ final class AppController extends ChangeNotifier {
       fallbackEngine: engine,
       initialCustomUnits: state.customUnits.map((item) => item.toUnitDefinition()),
     );
-    if (generation != _sessionRefreshGeneration) {
+    if (_disposed || generation != _sessionRefreshGeneration) {
       return;
     }
 
@@ -306,6 +336,10 @@ final class AppController extends ChangeNotifier {
   }
 
   Future<void> _update(UserState state, {ConversionEngine? engine}) {
+    if (_disposed) {
+      return Future<void>.error(StateError('AppController has been disposed.'));
+    }
+
     _state = state;
     Future<void>? sessionRefresh;
     if (engine != null) {
@@ -326,5 +360,15 @@ final class AppController extends ChangeNotifier {
       return operation;
     }
     return Future.wait<void>(<Future<void>>[operation, sessionRefresh]).then<void>((_) {});
+  }
+
+  @override
+  void dispose() {
+    if (_disposed) {
+      return;
+    }
+    _disposed = true;
+    _sessionRefreshGeneration += 1;
+    super.dispose();
   }
 }
