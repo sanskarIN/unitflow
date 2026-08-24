@@ -16,9 +16,10 @@ pub mod notation;
 
 pub use bridge::{
     BridgeBatchConversionRequest, BridgeConversionRequest, BridgeConversionResponse,
-    BridgeFailure, BridgeInfo, BridgeService, BRIDGE_BACKEND_ID, BRIDGE_CAPABILITIES,
-    BRIDGE_CAPABILITY_BATCH_CONVERT, BRIDGE_CAPABILITY_CANONICAL_DECIMAL_TEXT,
-    BRIDGE_CAPABILITY_CONVERT, BRIDGE_MAX_BATCH_TARGETS, BRIDGE_PROTOCOL_VERSION,
+    BridgeCustomUnit, BridgeFailure, BridgeInfo, BridgeService, BRIDGE_BACKEND_ID,
+    BRIDGE_CAPABILITIES, BRIDGE_CAPABILITY_BATCH_CONVERT,
+    BRIDGE_CAPABILITY_CANONICAL_DECIMAL_TEXT, BRIDGE_CAPABILITY_CONVERT,
+    BRIDGE_MAX_BATCH_TARGETS, BRIDGE_MAX_CUSTOM_UNITS, BRIDGE_PROTOCOL_VERSION,
 };
 pub use catalog::UnitCatalog;
 pub use converter::{convert_between, ConversionRequest, ConversionResult, Converter, RoundMode};
