@@ -300,7 +300,7 @@ final class AppController extends ChangeNotifier {
 
     for (final pair in state.pinnedPairs) {
       final from = engine.catalog.byId(pair.fromUnitId);
-      final to = engine.catalog.byId(pair.toUnitUnitId);
+      final to = engine.catalog.byId(pair.toUnitId);
       if (from == null || to == null || from.category != pair.category || to.category != pair.category) {
         throw const FormatException('Pinned pair references invalid units.');
       }
