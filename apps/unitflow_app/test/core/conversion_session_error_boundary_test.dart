@@ -139,6 +139,31 @@ void main() {
     );
     expect(bridge.syncCalls, 0);
   });
+
+  test('bootstrap synchronizes custom units before exposing native session', () async {
+    final bridge = _CatalogSyncBridge();
+
+    final session = await ConversionSession.bootstrap(
+      loadNativeBridge: () async => bridge,
+      initialCustomUnits: <UnitDefinition>[_doubleMeter],
+    );
+
+    expect(session.usesNative, isTrue);
+    expect(session.supportsCatalogSync, isTrue);
+    expect(bridge.syncCalls, 1);
+    expect(bridge.lastSnapshot.single.id, 'double_meter');
+  });
+
+  test('bootstrap fails closed when selected native backend cannot sync catalog', () async {
+    final session = await ConversionSession.bootstrap(
+      loadNativeBridge: () async => const _ThrowingRuntimeBridge(throwInBatch: false),
+      initialCustomUnits: <UnitDefinition>[_doubleMeter],
+    );
+
+    expect(session.usesNative, isFalse);
+    expect(session.backendId, 'dart-fallback');
+    expect(session.fallbackReasonCode, 'catalog_sync_unsupported');
+  });
 }
 
 final _doubleMeter = UnitDefinition(
