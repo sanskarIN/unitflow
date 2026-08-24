@@ -3,6 +3,9 @@ use std::str::FromStr;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 
+use crate::catalog::UnitCatalog;
+use crate::custom_unit::{merged_catalog, CustomUnitDraft};
+use crate::model::{Category, UnitDefinition};
 use crate::{ConversionRequest, ConversionResult, Converter, RoundMode, UnitFlowError};
 
 /// Stable application-level protocol version shared with Flutter bridge DTOs.
@@ -27,6 +30,9 @@ pub const BRIDGE_CAPABILITIES: [&str; 3] = [
 
 /// Maximum number of target units accepted by one bridge batch request.
 pub const BRIDGE_MAX_BATCH_TARGETS: usize = 256;
+
+/// Maximum custom units accepted in one authoritative catalog snapshot.
+pub const BRIDGE_MAX_CUSTOM_UNITS: usize = 200;
 
 const MAX_DECIMAL_TEXT_LENGTH: usize = 1024;
 const MAX_UNIT_ID_LENGTH: usize = 64;
@@ -73,6 +79,40 @@ pub struct BridgeBatchConversionRequest {
     pub target_unit_ids: Vec<String>,
     pub decimal_places: Option<u32>,
     pub round_mode: RoundMode,
+}
+
+/// Generator-friendly custom-unit definition used to replace the native
+/// session's user catalog snapshot atomically.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BridgeCustomUnit {
+    pub id: String,
+    pub category: Category,
+    pub name: String,
+    pub symbol: String,
+    pub aliases: Vec<String>,
+    pub description: String,
+    pub scale: String,
+    pub offset: String,
+}
+
+impl BridgeCustomUnit {
+    fn into_definition(self) -> Result<UnitDefinition, BridgeFailure> {
+        let scale = parse_canonical_decimal(&self.scale)?;
+        let offset = parse_canonical_decimal(&self.offset)?;
+        CustomUnitDraft {
+            id: self.id,
+            category: self.category,
+            name: self.name,
+            symbol: self.symbol,
+            aliases: self.aliases,
+            description: self.description,
+            scale,
+            offset,
+        }
+        .validate()
+        .map_err(BridgeFailure::from_domain)
+    }
 }
 
 /// Safe bridge failure with a stable machine-readable code.
@@ -166,6 +206,37 @@ impl BridgeService {
                 .map(|capability| (*capability).to_owned())
                 .collect(),
         }
+    }
+
+    /// Atomically replaces the user-defined portion of the active catalog.
+    ///
+    /// Built-in definitions always come from the Rust version shipped with the
+    /// library. The caller sends only user-defined units, and the replacement is
+    /// committed only after every definition and the merged catalog validate.
+    pub fn replace_custom_units(
+        &mut self,
+        custom_units: Vec<BridgeCustomUnit>,
+    ) -> Result<(), BridgeFailure> {
+        if custom_units.len() > BRIDGE_MAX_CUSTOM_UNITS {
+            return Err(BridgeFailure::new(
+                "invalid_catalog_snapshot",
+                "The custom-unit snapshot exceeds the supported unit limit.",
+            ));
+        }
+
+        let custom_definitions = custom_units
+            .into_iter()
+            .map(BridgeCustomUnit::into_definition)
+            .collect::<Result<Vec<_>, _>>()?;
+        let built_in = UnitCatalog::built_in().map_err(BridgeFailure::from_domain)?;
+        let catalog = merged_catalog(
+            built_in.all().iter().cloned(),
+            custom_definitions,
+        )
+        .map_err(BridgeFailure::from_domain)?;
+
+        self.converter = Converter::new(catalog);
+        Ok(())
     }
 
     /// Performs one conversion while preserving the bridge string contract.
