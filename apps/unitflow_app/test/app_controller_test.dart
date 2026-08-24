@@ -166,6 +166,42 @@ void main() {
     expect(controller.isReady, isTrue);
     controller.dispose();
   });
+
+  test('ordinary write failure is contained and later writes still run', () async {
+    final repository = _FailOnceSaveRepository();
+    final controller = AppController(repository: repository);
+    addTearDown(controller.dispose);
+    await controller.initialize();
+
+    await expectLater(controller.setTheme(ThemePreference.dark), completes);
+    expect(
+      controller.warning,
+      'Changes could not be saved to local storage. Please try again.',
+    );
+
+    controller.clearWarning();
+    await controller.setTheme(ThemePreference.light);
+    final restored = await repository.load();
+    expect(restored.theme, ThemePreference.light);
+    expect(controller.warning, isNull);
+  });
+
+  test('backup import still propagates a persistence failure', () async {
+    final repository = _AlwaysFailSaveRepository();
+    final controller = AppController(repository: repository);
+    addTearDown(controller.dispose);
+    await controller.initialize();
+    final payload = MemoryUserStateRepository().exportJson(
+      UserState(onboardingComplete: true, theme: ThemePreference.dark),
+    );
+
+    await expectLater(controller.importState(payload), throwsStateError);
+    expect(controller.state.theme, ThemePreference.dark);
+    expect(
+      controller.warning,
+      'Changes could not be saved to local storage. Please try again.',
+    );
+  });
 }
 
 const _validInfo = NativeBridgeInfo(
@@ -214,4 +250,51 @@ final class _CatalogSyncBridge implements NativeCatalogSyncBridge {
         ),
       )
       .toList(growable: false);
+}
+
+final class _FailOnceSaveRepository implements UserStateRepository {
+  final MemoryUserStateRepository _delegate = MemoryUserStateRepository();
+  bool _shouldFail = true;
+
+  @override
+  Future<UserState> load() => _delegate.load();
+
+  @override
+  Future<void> save(UserState state) async {
+    if (_shouldFail) {
+      _shouldFail = false;
+      throw StateError('simulated first save failure');
+    }
+    await _delegate.save(state);
+  }
+
+  @override
+  Future<void> clear() => _delegate.clear();
+
+  @override
+  String exportJson(UserState state) => _delegate.exportJson(state);
+
+  @override
+  UserState importJson(String content) => _delegate.importJson(content);
+}
+
+final class _AlwaysFailSaveRepository implements UserStateRepository {
+  final MemoryUserStateRepository _delegate = MemoryUserStateRepository();
+
+  @override
+  Future<UserState> load() => _delegate.load();
+
+  @override
+  Future<void> save(UserState state) async {
+    throw StateError('simulated save failure');
+  }
+
+  @override
+  Future<void> clear() => _delegate.clear();
+
+  @override
+  String exportJson(UserState state) => _delegate.exportJson(state);
+
+  @override
+  UserState importJson(String content) => _delegate.importJson(content);
 }
