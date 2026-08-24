@@ -24,20 +24,56 @@ final class ConversionSession {
   }) : _fallbackEngine = fallbackEngine,
        _nativeBridge = nativeBridge;
 
-  /// Loads a candidate native bridge exactly once, then performs the same
-  /// fail-closed selection as [select]. Native library/binding load failures
-  /// are converted into a deterministic Dart fallback before a session starts.
+  /// Loads a candidate native bridge exactly once, performs fail-closed
+  /// compatibility selection, and synchronizes the initial custom-unit catalog
+  /// before exposing a native session.
+  ///
+  /// Native library/binding load failures and initial catalog synchronization
+  /// failures become deterministic Dart fallback selection before a session
+  /// starts. Once a native session is returned, runtime failures never trigger a
+  /// silent mid-session fallback.
   static Future<ConversionSession> bootstrap({
     required NativeConversionBridgeLoader loadNativeBridge,
     ConversionEngine? fallbackEngine,
+    Iterable<UnitDefinition> initialCustomUnits = const <UnitDefinition>[],
   }) async {
     final fallback = fallbackEngine ?? ExactConversionEngine();
     try {
       final bridge = await loadNativeBridge();
-      return ConversionSession.select(
+      final session = ConversionSession.select(
         nativeBridge: bridge,
         fallbackEngine: fallback,
       );
+      if (!session.usesNative) {
+        return session;
+      }
+
+      final customUnits = initialCustomUnits
+          .take(nativeBridgeMaxCustomUnits + 1)
+          .toList(growable: false);
+      if (customUnits.isEmpty) {
+        return session;
+      }
+
+      try {
+        await session.synchronizeCustomUnits(customUnits);
+        return session;
+      } on NativeBridgeFailure catch (failure) {
+        return ConversionSession._fallback(
+          fallbackEngine: fallback,
+          reasonCode: failure.code,
+        );
+      } on FormatException {
+        return ConversionSession._fallback(
+          fallbackEngine: fallback,
+          reasonCode: 'invalid_catalog_snapshot',
+        );
+      } on Object {
+        return ConversionSession._fallback(
+          fallbackEngine: fallback,
+          reasonCode: 'catalog_sync_failed',
+        );
+      }
     } on Object {
       return ConversionSession._fallback(
         fallbackEngine: fallback,
