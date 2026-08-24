@@ -56,6 +56,7 @@ class ConversionSessionContractTests(unittest.TestCase):
         self.assertIn("code: 'invalid_response'", source)
         self.assertIn("code: 'response_mismatch'", source)
         self.assertIn("code: 'backend_failure'", source)
+        self.assertIn("code: 'catalog_sync_failed'", source)
 
     def test_regression_suite_covers_no_mid_session_fallback(self) -> None:
         tests = validator.TEST_PATH.read_text(encoding="utf-8")
@@ -64,6 +65,20 @@ class ConversionSessionContractTests(unittest.TestCase):
             tests,
         )
         self.assertIn("expect(fallback.convertCalls, 0);", tests)
+
+    def test_bootstrap_catalog_sync_is_fail_closed(self) -> None:
+        source = validator.SOURCE_PATH.read_text(encoding="utf-8")
+        self.assertIn("initialCustomUnits", source)
+        self.assertIn("await session.synchronizeCustomUnits(customUnits);", source)
+        tests = validator.ERROR_BOUNDARY_TEST_PATH.read_text(encoding="utf-8")
+        self.assertIn(
+            "bootstrap synchronizes custom units before exposing native session",
+            tests,
+        )
+        self.assertIn(
+            "bootstrap fails closed when selected native backend cannot sync catalog",
+            tests,
+        )
 
     def test_latest_request_source_rejects_stale_generations(self) -> None:
         source = validator.LATEST_SOURCE_PATH.read_text(encoding="utf-8")
@@ -78,6 +93,32 @@ class ConversionSessionContractTests(unittest.TestCase):
         self.assertIn("stale failure is ignored after a newer request starts", tests)
         self.assertIn(
             "success callback failures are not relabeled as operation failures",
+            tests,
+        )
+
+    def test_app_controller_replaces_stale_native_session_on_catalog_change(self) -> None:
+        source = validator.APP_CONTROLLER_PATH.read_text(encoding="utf-8")
+        self.assertIn("++_sessionRefreshGeneration", source)
+        self.assertIn("generation != _sessionRefreshGeneration", source)
+        self.assertIn(
+            "_conversionSession = ConversionSession.select(fallbackEngine: engine);",
+            source,
+        )
+        tests = validator.APP_CONTROLLER_TEST_PATH.read_text(encoding="utf-8")
+        self.assertIn(
+            "custom catalog changes start a fresh synchronized native session",
+            tests,
+        )
+
+    def test_converter_controller_routes_native_work_through_latest_request_gates(self) -> None:
+        source = validator.CONVERTER_CONTROLLER_PATH.read_text(encoding="utf-8")
+        self.assertIn("operation: () => session.convert", source)
+        self.assertIn("operation: () => session.batchConvert", source)
+        self.assertIn("_latestConversionRequest.invalidate();", source)
+        self.assertIn("_latestBatchRequest.invalidate();", source)
+        tests = validator.CONVERTER_CONTROLLER_TEST_PATH.read_text(encoding="utf-8")
+        self.assertIn(
+            "older native conversion completion cannot overwrite newer input",
             tests,
         )
 
