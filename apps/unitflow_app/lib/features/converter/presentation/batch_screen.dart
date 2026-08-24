@@ -70,6 +70,7 @@ final class _BatchScreenState extends State<BatchScreen> {
       final strings = AppLocalizations.of(context);
       final units = widget.controller.categoryUnits;
       final results = widget.controller.batchResults();
+      final batchError = widget.controller.batchError;
       return ListView(
         padding: const EdgeInsets.all(AppSpacing.lg),
         children: <Widget>[
@@ -203,7 +204,31 @@ final class _BatchScreenState extends State<BatchScreen> {
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.all(AppSpacing.md),
-                      child: results.isEmpty
+                      child: batchError != null
+                          ? Semantics(
+                              liveRegion: true,
+                              child: Padding(
+                                padding: const EdgeInsets.all(AppSpacing.xl),
+                                child: Column(
+                                  children: <Widget>[
+                                    Icon(
+                                      Icons.error_outline,
+                                      size: 42,
+                                      color: theme.colorScheme.error,
+                                    ),
+                                    const SizedBox(height: AppSpacing.sm),
+                                    Text(
+                                      batchError,
+                                      textAlign: TextAlign.center,
+                                      style: theme.textTheme.bodyLarge?.copyWith(
+                                        color: theme.colorScheme.error,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
+                          : results.isEmpty
                           ? Padding(
                               padding: const EdgeInsets.all(AppSpacing.xl),
                               child: Column(
