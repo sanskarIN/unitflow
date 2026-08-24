@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:unitflow/app/app_controller.dart';
 import 'package:unitflow/core/bridge/native_conversion_bridge.dart';
@@ -125,6 +127,44 @@ void main() {
     expect(loadCalls, 3);
     expect(controller.conversionSession.usesNative, isTrue);
     expect(bridges.last.syncCalls, 0);
+  });
+
+  test('dispose suppresses a late native-session initialization completion', () async {
+    final loader = Completer<NativeConversionBridge?>();
+    final controller = AppController(
+      repository: MemoryUserStateRepository(UserState(onboardingComplete: true)),
+      nativeBridgeLoader: () => loader.future,
+    );
+
+    final initialization = controller.initialize();
+    await Future<void>.delayed(Duration.zero);
+    controller.dispose();
+    loader.complete(null);
+
+    await expectLater(initialization, completes);
+    expect(controller.isReady, isFalse);
+  });
+
+  test('initialize coalesces concurrent callers into one native load', () async {
+    final loader = Completer<NativeConversionBridge?>();
+    var loadCalls = 0;
+    final controller = AppController(
+      repository: MemoryUserStateRepository(UserState(onboardingComplete: true)),
+      nativeBridgeLoader: () {
+        loadCalls += 1;
+        return loader.future;
+      },
+    );
+
+    final first = controller.initialize();
+    final second = controller.initialize();
+    await Future<void>.delayed(Duration.zero);
+    expect(loadCalls, 1);
+
+    loader.complete(null);
+    await Future.wait<void>(<Future<void>>[first, second]);
+    expect(controller.isReady, isTrue);
+    controller.dispose();
   });
 }
 
