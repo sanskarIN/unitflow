@@ -115,7 +115,8 @@ void main() {
     await controller.initialize();
     expect(loadCalls, 1);
     expect(controller.conversionSession.usesNative, isTrue);
-    expect(bridges.single.syncCalls, 0);
+    expect(bridges.single.syncCalls, 1);
+    expect(bridges.single.lastSnapshot, isEmpty);
 
     await controller.addCustomUnit(custom);
     expect(loadCalls, 2);
@@ -126,7 +127,8 @@ void main() {
     await controller.removeCustomUnit('double_meter');
     expect(loadCalls, 3);
     expect(controller.conversionSession.usesNative, isTrue);
-    expect(bridges.last.syncCalls, 0);
+    expect(bridges.last.syncCalls, 1);
+    expect(bridges.last.lastSnapshot, isEmpty);
   });
 
   test('dispose suppresses a late native-session initialization completion', () async {
