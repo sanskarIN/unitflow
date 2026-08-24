@@ -96,7 +96,8 @@ def main() -> int:
         ("code: 'catalog_sync_unsupported'", "stable unsupported catalog sync classification"),
         ("code: 'catalog_sync_failed'", "stable catalog sync adapter failure classification"),
         ("initialCustomUnits", "bootstrap custom catalog input"),
-        ("await session.synchronizeCustomUnits(customUnits);", "fail-closed startup catalog synchronization"),
+        ("if (customUnits.isEmpty && !session.supportsCatalogSync)", "legacy empty-catalog compatibility boundary"),
+        ("await session.synchronizeCustomUnits(customUnits);", "authoritative startup catalog synchronization including empty snapshots"),
         ("request.toMap();", "request boundary validation"),
         ("_requireValidResponse(rawResponse)", "single-response structural validation"),
         ("rawResponses.map(_requireValidResponse)", "batch response structural validation"),
@@ -167,6 +168,8 @@ def main() -> int:
         "single adapter Error is classified as backend failure",
         "batch adapter Error is classified as backend failure",
         "bootstrap synchronizes custom units before exposing native session",
+        "bootstrap sends authoritative empty snapshot to sync-capable backend",
+        "bootstrap keeps legacy no-sync backend when catalog is empty",
         "bootstrap fails closed when selected native backend cannot sync catalog",
     )
     for name in error_boundary_test_requirements:
@@ -226,6 +229,12 @@ def main() -> int:
         "application-controller catalog refresh regression",
         errors,
     )
+    require_contains(
+        app_controller_tests,
+        "expect(bridges.last.lastSnapshot, isEmpty);",
+        "application-controller empty catalog refresh regression",
+        errors,
+    )
 
     converter_controller_requirements = (
         ("LatestConversionRequest _latestConversionRequest", "single conversion stale-result gate"),
@@ -276,10 +285,10 @@ def main() -> int:
 
     print(
         "Conversion-session contract validation passed: one-shot native loading, sticky "
-        "startup routing, catalog synchronization, contained adapter Errors, structural "
-        "metadata/response validation, response identity checks, batch ordering, runtime "
-        "no-fallback behavior, app-owned session refresh, controller-level stale-result "
-        "suppression, and verification wiring are guarded."
+        "startup routing, authoritative catalog synchronization including empty snapshots, "
+        "contained adapter Errors, structural metadata/response validation, response identity "
+        "checks, batch ordering, runtime no-fallback behavior, app-owned session refresh, "
+        "controller-level stale-result suppression, and verification wiring are guarded."
     )
     return 0
 
