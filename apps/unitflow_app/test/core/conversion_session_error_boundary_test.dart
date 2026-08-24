@@ -124,7 +124,7 @@ void main() {
       category: UnitCategory.length,
       name: 'Synthetic built in',
       symbol: 'sb',
-      scale: ExactDecimal.one,
+      scale: ExactDecimal.parse('1'),
     );
 
     await expectLater(
