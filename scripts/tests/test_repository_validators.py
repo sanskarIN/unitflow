@@ -114,6 +114,16 @@ class ReleaseConsistencyHelperTests(unittest.TestCase):
         self.assertEqual(flutter_fallback, 256)
         self.assertEqual(documented, 256)
 
+    def test_custom_unit_limits_match_rust_bridge_persistence_and_local_creation(self) -> None:
+        rust, flutter_bridge, persistence, local_creation, documented = (
+            release_consistency.declared_custom_unit_limits()
+        )
+        self.assertEqual(rust, 200)
+        self.assertEqual(flutter_bridge, 200)
+        self.assertEqual(persistence, 200)
+        self.assertEqual(local_creation, 200)
+        self.assertEqual(documented, 200)
+
     def test_release_consistency_accepts_current_tree(self) -> None:
         self.assertEqual(release_consistency.main(), 0)
 
