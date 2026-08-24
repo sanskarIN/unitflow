@@ -85,8 +85,19 @@ final class CustomUnitData {
     if (symbol.trim().isEmpty || symbol.length > 32) {
       throw const FormatException('Custom unit symbol is invalid.');
     }
-    if (aliases.length > 32 || aliases.any((value) => value.isEmpty || value.length > 64)) {
+    if (aliases.length > 32) {
       throw const FormatException('Custom unit aliases are invalid.');
+    }
+    final normalizedAliases = <String>[];
+    final seenAliases = <String>{};
+    for (final value in aliases) {
+      final alias = value.trim();
+      if (alias.isEmpty || alias.length > 64) {
+        throw const FormatException('Custom unit aliases are invalid.');
+      }
+      if (seenAliases.add(alias.toLowerCase())) {
+        normalizedAliases.add(alias);
+      }
     }
     if (description.length > 512) {
       throw const FormatException('Custom unit description is too long.');
@@ -102,7 +113,7 @@ final class CustomUnitData {
       symbol: symbol.trim(),
       scale: parsedScale,
       offset: ExactDecimal.parse(offset),
-      aliases: List<String>.unmodifiable(aliases),
+      aliases: List<String>.unmodifiable(normalizedAliases),
       description: description.trim(),
       isBuiltIn: false,
     );
