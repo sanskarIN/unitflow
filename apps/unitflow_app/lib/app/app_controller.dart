@@ -228,14 +228,35 @@ final class AppController extends ChangeNotifier {
 
   String exportState() => _repository.exportJson(_state);
 
-  Future<void> importState(String content) {
+  Future<void> importState(String content) async {
+    if (_disposed) {
+      throw StateError('AppController has been disposed.');
+    }
+
     final imported = _repository.importJson(content);
     final importedEngine = _buildEngine(imported);
-    return _update(
-      imported,
-      engine: importedEngine,
-      propagatePersistenceFailure: true,
-    );
+    final previousState = _state;
+    final previousEngine = _engine;
+
+    try {
+      await _update(
+        imported,
+        engine: importedEngine,
+        propagatePersistenceFailure: true,
+      );
+    } on Object catch (error, stackTrace) {
+      // Roll back only when this failed import is still the active mutation.
+      // A newer user action must never be overwritten by an older failed save.
+      if (!_disposed && identical(_state, imported)) {
+        _state = previousState;
+        _engine = previousEngine;
+        await _refreshConversionSession(previousEngine, previousState, notify: false);
+        if (!_disposed) {
+          notifyListeners();
+        }
+      }
+      Error.throwWithStackTrace(error, stackTrace);
+    }
   }
 
   Future<void> resetLocalData() {
