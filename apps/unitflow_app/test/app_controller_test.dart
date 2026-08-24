@@ -186,7 +186,7 @@ void main() {
     expect(controller.warning, isNull);
   });
 
-  test('backup import still propagates a persistence failure', () async {
+  test('backup import persistence failure rolls back active state and propagates', () async {
     final repository = _AlwaysFailSaveRepository();
     final controller = AppController(repository: repository);
     addTearDown(controller.dispose);
@@ -196,7 +196,7 @@ void main() {
     );
 
     await expectLater(controller.importState(payload), throwsStateError);
-    expect(controller.state.theme, ThemePreference.dark);
+    expect(controller.state.theme, ThemePreference.system);
     expect(
       controller.warning,
       'Changes could not be saved to local storage. Please try again.',
