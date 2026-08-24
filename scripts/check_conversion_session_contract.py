@@ -16,6 +16,12 @@ LATEST_SOURCE_PATH = (
     ROOT / "apps/unitflow_app/lib/features/converter/domain/latest_conversion_request.dart"
 )
 LATEST_TEST_PATH = ROOT / "apps/unitflow_app/test/core/latest_conversion_request_test.dart"
+APP_CONTROLLER_PATH = ROOT / "apps/unitflow_app/lib/app/app_controller.dart"
+APP_CONTROLLER_TEST_PATH = ROOT / "apps/unitflow_app/test/app_controller_test.dart"
+CONVERTER_CONTROLLER_PATH = (
+    ROOT / "apps/unitflow_app/lib/features/converter/presentation/converter_controller.dart"
+)
+CONVERTER_CONTROLLER_TEST_PATH = ROOT / "apps/unitflow_app/test/converter_controller_test.dart"
 VALIDATOR_COMMAND = "check_conversion_session_contract.py"
 
 
@@ -50,6 +56,26 @@ def main() -> int:
         "latest-conversion request regression test",
         errors,
     )
+    app_controller = read_required(
+        APP_CONTROLLER_PATH,
+        "application controller conversion-session integration",
+        errors,
+    )
+    app_controller_tests = read_required(
+        APP_CONTROLLER_TEST_PATH,
+        "application controller conversion-session regression test",
+        errors,
+    )
+    converter_controller = read_required(
+        CONVERTER_CONTROLLER_PATH,
+        "converter controller session routing",
+        errors,
+    )
+    converter_controller_tests = read_required(
+        CONVERTER_CONTROLLER_TEST_PATH,
+        "converter controller native routing regression test",
+        errors,
+    )
 
     source_requirements = (
         ("static Future<ConversionSession> bootstrap", "one-shot native bridge bootstrap"),
@@ -65,6 +91,12 @@ def main() -> int:
         ("final ConversionSessionBackend backend;", "immutable backend selection"),
         ("final String backendId;", "stable selected backend identifier"),
         ("final String? fallbackReasonCode;", "stable fallback reason code"),
+        ("Future<void> synchronizeCustomUnits", "native custom catalog synchronization"),
+        ("bridge is! NativeCatalogSyncBridge", "explicit catalog sync capability boundary"),
+        ("code: 'catalog_sync_unsupported'", "stable unsupported catalog sync classification"),
+        ("code: 'catalog_sync_failed'", "stable catalog sync adapter failure classification"),
+        ("initialCustomUnits", "bootstrap custom catalog input"),
+        ("await session.synchronizeCustomUnits(customUnits);", "fail-closed startup catalog synchronization"),
         ("request.toMap();", "request boundary validation"),
         ("_requireValidResponse(rawResponse)", "single-response structural validation"),
         ("rawResponses.map(_requireValidResponse)", "batch response structural validation"),
@@ -85,7 +117,7 @@ def main() -> int:
 
     if source.count("on Object {") < 4:
         errors.append(
-            "ConversionSession must contain loader, startup-adapter, single-route, and batch-route Error objects at the native boundary."
+            "ConversionSession must contain loader/startup, catalog-sync, single-route, and batch-route Error objects at native boundaries."
         )
 
     if source.count("_nativeBridge = nativeBridge") != 1:
@@ -134,6 +166,8 @@ def main() -> int:
         "startup adapter error fails closed before native selection",
         "single adapter Error is classified as backend failure",
         "batch adapter Error is classified as backend failure",
+        "bootstrap synchronizes custom units before exposing native session",
+        "bootstrap fails closed when selected native backend cannot sync catalog",
     )
     for name in error_boundary_test_requirements:
         require_contains(
@@ -174,6 +208,49 @@ def main() -> int:
             errors,
         )
 
+    app_controller_requirements = (
+        ("ConversionSession get conversionSession", "public active session accessor"),
+        ("NativeConversionBridgeLoader _nativeBridgeLoader", "injected native bridge loader"),
+        ("Future<void> _refreshConversionSession", "catalog-aware session refresh boundary"),
+        ("++_sessionRefreshGeneration", "monotonic session refresh generation"),
+        ("generation != _sessionRefreshGeneration", "stale session refresh suppression"),
+        ("_conversionSession = ConversionSession.select(fallbackEngine: engine);", "immediate catalog-matched fallback replacement"),
+        ("initialCustomUnits: state.customUnits.map", "persisted custom catalog bootstrap synchronization"),
+    )
+    for needle, label in app_controller_requirements:
+        require_contains(app_controller, needle, label, errors)
+
+    require_contains(
+        app_controller_tests,
+        "custom catalog changes start a fresh synchronized native session",
+        "application-controller catalog refresh regression",
+        errors,
+    )
+
+    converter_controller_requirements = (
+        ("LatestConversionRequest _latestConversionRequest", "single conversion stale-result gate"),
+        ("LatestConversionRequest _latestBatchRequest", "batch conversion stale-result gate"),
+        ("_latestConversionRequest.invalidate();", "single request invalidation on recompute"),
+        ("_latestBatchRequest.invalidate();", "batch request invalidation on recompute"),
+        ("final session = _appController.conversionSession;", "active session routing"),
+        ("if (session.usesNative)", "native authoritative async routing boundary"),
+        ("operation: () => session.convert", "native single conversion execution"),
+        ("operation: () => session.batchConvert", "native batch conversion execution"),
+        ("_result = null;", "native single failure preview invalidation"),
+        ("_batchResults = const <ConversionResult>[];", "native batch failure preview invalidation"),
+        ("_latestConversionRequest.dispose();", "single gate lifecycle disposal"),
+        ("_latestBatchRequest.dispose();", "batch gate lifecycle disposal"),
+    )
+    for needle, label in converter_controller_requirements:
+        require_contains(converter_controller, needle, label, errors)
+
+    require_contains(
+        converter_controller_tests,
+        "older native conversion completion cannot overwrite newer input",
+        "controller stale-native-completion regression",
+        errors,
+    )
+
     verification_wiring = (
         ("scripts/verify.sh", "Bash verification"),
         ("scripts/verify.ps1", "PowerShell verification"),
@@ -199,10 +276,10 @@ def main() -> int:
 
     print(
         "Conversion-session contract validation passed: one-shot native loading, sticky "
-        "startup routing, contained adapter Errors, structural metadata/response validation, "
-        "fail-closed negotiation, response identity checks, batch ordering, runtime "
-        "no-fallback behavior, latest-request race suppression, and verification wiring "
-        "are guarded."
+        "startup routing, catalog synchronization, contained adapter Errors, structural "
+        "metadata/response validation, response identity checks, batch ordering, runtime "
+        "no-fallback behavior, app-owned session refresh, controller-level stale-result "
+        "suppression, and verification wiring are guarded."
     )
     return 0
 
