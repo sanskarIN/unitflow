@@ -117,7 +117,7 @@ def declared_bridge_batch_limits() -> tuple[int, int, int, int]:
     return rust_limit, flutter_bridge_limit, flutter_fallback_limit, documented_limit
 
 
-def declared_custom_unit_limits() -> tuple[int, int, int, int]:
+def declared_custom_unit_limits() -> tuple[int, int, int, int, int]:
     rust_limit = int(
         require(
             r"BRIDGE_MAX_CUSTOM_UNITS:\s*usize\s*=\s*(\d+)",
@@ -139,6 +139,15 @@ def declared_custom_unit_limits() -> tuple[int, int, int, int]:
             "Flutter persistence custom-unit limit",
         )
     )
+    app_controller_source = text("apps/unitflow_app/lib/app/app_controller.dart")
+    if not re.search(
+        r"_state\.customUnits\.length\s*>=\s*UserState\.maxImportedCustomUnits",
+        app_controller_source,
+    ):
+        raise ValueError(
+            "AppController local custom-unit creation does not enforce UserState.maxImportedCustomUnits."
+        )
+    local_creation_limit = persistence_limit
     documented_limit = int(
         require(
             r"Current maximum custom units:\s*`(\d+)`",
@@ -146,7 +155,13 @@ def declared_custom_unit_limits() -> tuple[int, int, int, int]:
             "documented bridge custom-unit limit",
         )
     )
-    return rust_limit, flutter_bridge_limit, persistence_limit, documented_limit
+    return (
+        rust_limit,
+        flutter_bridge_limit,
+        persistence_limit,
+        local_creation_limit,
+        documented_limit,
+    )
 
 
 def main() -> int:
@@ -303,6 +318,7 @@ def main() -> int:
         rust_custom_limit,
         flutter_bridge_custom_limit,
         persistence_custom_limit,
+        local_creation_custom_limit,
         documented_custom_limit,
     ) = declared_custom_unit_limits()
     if documented_custom_limit <= 0:
@@ -320,6 +336,11 @@ def main() -> int:
         errors.append(
             "Flutter persistence custom-unit limit "
             f"{persistence_custom_limit} does not match documentation {documented_custom_limit}."
+        )
+    if local_creation_custom_limit != documented_custom_limit:
+        errors.append(
+            "Flutter local-creation custom-unit limit "
+            f"{local_creation_custom_limit} does not match documentation {documented_custom_limit}."
         )
 
     if errors:
