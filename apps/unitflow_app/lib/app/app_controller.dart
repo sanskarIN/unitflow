@@ -231,7 +231,7 @@ final class AppController extends ChangeNotifier {
       );
       notifyListeners();
     });
-    return Future.wait<void>(<Future<void>>[operation, sessionRefresh]);
+    return Future.wait<void>(<Future<void>>[operation, sessionRefresh]).then<void>((_) {});
   }
 
   void clearWarning() {
@@ -325,6 +325,6 @@ final class AppController extends ChangeNotifier {
     if (sessionRefresh == null) {
       return operation;
     }
-    return Future.wait<void>(<Future<void>>[operation, sessionRefresh]);
+    return Future.wait<void>(<Future<void>>[operation, sessionRefresh]).then<void>((_) {});
   }
 }
