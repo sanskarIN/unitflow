@@ -117,6 +117,38 @@ def declared_bridge_batch_limits() -> tuple[int, int, int, int]:
     return rust_limit, flutter_bridge_limit, flutter_fallback_limit, documented_limit
 
 
+def declared_custom_unit_limits() -> tuple[int, int, int, int]:
+    rust_limit = int(
+        require(
+            r"BRIDGE_MAX_CUSTOM_UNITS:\s*usize\s*=\s*(\d+)",
+            text("crates/unitflow_core/src/bridge.rs"),
+            "Rust bridge custom-unit limit",
+        )
+    )
+    flutter_bridge_limit = int(
+        require(
+            r"nativeBridgeMaxCustomUnits\s*=\s*(\d+)",
+            text("apps/unitflow_app/lib/core/bridge/native_conversion_bridge.dart"),
+            "Flutter bridge custom-unit limit",
+        )
+    )
+    persistence_limit = int(
+        require(
+            r"maxImportedCustomUnits\s*=\s*(\d+)",
+            text("apps/unitflow_app/lib/core/persistence/user_state.dart"),
+            "Flutter persistence custom-unit limit",
+        )
+    )
+    documented_limit = int(
+        require(
+            r"Current maximum custom units:\s*`(\d+)`",
+            text("docs/bridge-protocol.md"),
+            "documented bridge custom-unit limit",
+        )
+    )
+    return rust_limit, flutter_bridge_limit, persistence_limit, documented_limit
+
+
 def main() -> int:
     errors: list[str] = []
     cargo = text("Cargo.toml")
@@ -267,6 +299,29 @@ def main() -> int:
             f"{flutter_fallback_batch_limit} does not match documentation {documented_batch_limit}."
         )
 
+    (
+        rust_custom_limit,
+        flutter_bridge_custom_limit,
+        persistence_custom_limit,
+        documented_custom_limit,
+    ) = declared_custom_unit_limits()
+    if documented_custom_limit <= 0:
+        errors.append("Bridge custom-unit limit must be positive.")
+    if rust_custom_limit != documented_custom_limit:
+        errors.append(
+            f"Rust bridge custom-unit limit {rust_custom_limit} does not match documentation {documented_custom_limit}."
+        )
+    if flutter_bridge_custom_limit != documented_custom_limit:
+        errors.append(
+            "Flutter bridge custom-unit limit "
+            f"{flutter_bridge_custom_limit} does not match documentation {documented_custom_limit}."
+        )
+    if persistence_custom_limit != documented_custom_limit:
+        errors.append(
+            "Flutter persistence custom-unit limit "
+            f"{persistence_custom_limit} does not match documentation {documented_custom_limit}."
+        )
+
     if errors:
         print("Release consistency validation failed:", file=sys.stderr)
         for error in errors:
@@ -278,7 +333,8 @@ def main() -> int:
         f"version={cargo_version}, rust={cargo_rust_version}, "
         f"schema={dart_schema}, bridge_protocol={documented_protocol}, "
         f"bridge_capabilities={','.join(sorted(documented_capabilities))}, "
-        f"bridge_batch_limit={documented_batch_limit}."
+        f"bridge_batch_limit={documented_batch_limit}, "
+        f"bridge_custom_unit_limit={documented_custom_limit}."
     )
     return 0
 
