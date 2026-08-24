@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../../../app/app_controller.dart';
@@ -6,6 +8,7 @@ import '../../../core/math/exact_decimal.dart';
 import '../../../core/persistence/user_state.dart';
 import '../domain/batch_export.dart';
 import '../domain/conversion_engine.dart';
+import '../domain/latest_conversion_request.dart';
 import '../domain/unit_models.dart';
 
 final class ConverterController extends ChangeNotifier {
@@ -20,6 +23,8 @@ final class ConverterController extends ChangeNotifier {
   final DecimalInputParser _parser = const DecimalInputParser();
   final DecimalDisplayFormatter _formatter = const DecimalDisplayFormatter();
   final BatchExportFormatter _batchExporter = const BatchExportFormatter();
+  final LatestConversionRequest _latestConversionRequest = LatestConversionRequest();
+  final LatestConversionRequest _latestBatchRequest = LatestConversionRequest();
 
   UnitCategory _category = UnitCategory.length;
   String _fromUnitId = 'meter';
@@ -27,7 +32,9 @@ final class ConverterController extends ChangeNotifier {
   String _input = '1';
   String _localeName = 'en';
   ConversionResult? _result;
+  List<ConversionResult> _batchResults = const <ConversionResult>[];
   String? _error;
+  String? _batchError;
 
   UnitCategory get category => _category;
   String get fromUnitId => _fromUnitId;
@@ -35,6 +42,8 @@ final class ConverterController extends ChangeNotifier {
   String get input => _input;
   ConversionResult? get result => _result;
   String? get error => _error;
+  String? get batchError => _batchError;
+  bool get usesNativeSession => _appController.conversionSession.usesNative;
 
   List<UnitDefinition> get categoryUnits =>
       _appController.engine.catalog.forCategory(_category);
@@ -114,55 +123,118 @@ final class ConverterController extends ChangeNotifier {
   }
 
   void recompute() {
+    _latestConversionRequest.invalidate();
+    _latestBatchRequest.invalidate();
     _ensureValidPair();
     if (_input.trim().isEmpty) {
       _result = null;
+      _batchResults = const <ConversionResult>[];
       _error = null;
+      _batchError = null;
       notifyListeners();
       return;
     }
 
     try {
       final value = _parser.parse(_input, localeName: _localeName);
+      final decimalPlaces = _appController.state.decimalPlaces;
+      final rounding = _appController.state.roundingMode;
+      final targets = categoryUnits
+          .where((unit) => unit.id != _fromUnitId)
+          .map((unit) => unit.id)
+          .toList(growable: false);
+
+      // Preserve existing synchronous presentation semantics with an exact Dart
+      // preview. When a native session is selected, the async result below is
+      // authoritative; native failure removes the preview instead of silently
+      // continuing on a different backend.
       _result = _appController.engine.convert(
         value: value,
         fromUnitId: _fromUnitId,
         toUnitId: _toUnitId,
-        decimalPlaces: _appController.state.decimalPlaces,
-        rounding: _appController.state.roundingMode,
+        decimalPlaces: decimalPlaces,
+        rounding: rounding,
+      );
+      _batchResults = _appController.engine.batchConvert(
+        value: value,
+        fromUnitId: _fromUnitId,
+        toUnitIds: targets,
+        decimalPlaces: decimalPlaces,
+        rounding: rounding,
       );
       _error = null;
+      _batchError = null;
+
+      final session = _appController.conversionSession;
+      if (session.usesNative) {
+        final fromUnitId = _fromUnitId;
+        final toUnitId = _toUnitId;
+        unawaited(
+          _latestConversionRequest.run<ConversionResult>(
+            operation: () => session.convert(
+              value: value,
+              fromUnitId: fromUnitId,
+              toUnitId: toUnitId,
+              decimalPlaces: decimalPlaces,
+              rounding: rounding,
+            ),
+            onSuccess: (result) {
+              _result = result;
+              _error = null;
+              notifyListeners();
+            },
+            onFailure: (_, _) {
+              _result = null;
+              _error = 'The selected conversion engine could not complete this conversion.';
+              notifyListeners();
+            },
+          ),
+        );
+        unawaited(
+          _latestBatchRequest.run<List<ConversionResult>>(
+            operation: () => session.batchConvert(
+              value: value,
+              fromUnitId: fromUnitId,
+              toUnitIds: targets,
+              decimalPlaces: decimalPlaces,
+              rounding: rounding,
+            ),
+            onSuccess: (results) {
+              _batchResults = List<ConversionResult>.unmodifiable(results);
+              _batchError = null;
+              notifyListeners();
+            },
+            onFailure: (_, _) {
+              _batchResults = const <ConversionResult>[];
+              _batchError = 'The selected conversion engine could not complete the batch conversion.';
+              notifyListeners();
+            },
+          ),
+        );
+      }
     } on FormatException {
       _result = null;
+      _batchResults = const <ConversionResult>[];
       _error = 'Enter a valid number for the selected locale.';
+      _batchError = null;
     } on ConversionFailure catch (failure) {
       _result = null;
+      _batchResults = const <ConversionResult>[];
       _error = failure.message;
+      _batchError = null;
     } on Object {
       _result = null;
+      _batchResults = const <ConversionResult>[];
       _error = 'This value cannot be converted with the current settings.';
+      _batchError = null;
     }
     notifyListeners();
   }
 
-  List<ConversionResult> batchResults() {
-    final value = _result?.input;
-    if (value == null) {
-      return const <ConversionResult>[];
-    }
-    return _appController.engine.batchConvert(
-      value: value,
-      fromUnitId: _fromUnitId,
-      toUnitIds: categoryUnits
-          .where((unit) => unit.id != _fromUnitId)
-          .map((unit) => unit.id),
-      decimalPlaces: _appController.state.decimalPlaces,
-      rounding: _appController.state.roundingMode,
-    );
-  }
+  List<ConversionResult> batchResults() => _batchResults;
 
   String exportBatch({BatchExportFormat format = BatchExportFormat.csv}) =>
-      _batchExporter.encode(batchResults(), format: format);
+      _batchExporter.encode(_batchResults, format: format);
 
   String formatBatchValue(ExactDecimal value) => _formatter.format(
     value,
@@ -238,6 +310,8 @@ final class ConverterController extends ChangeNotifier {
 
   @override
   void dispose() {
+    _latestConversionRequest.dispose();
+    _latestBatchRequest.dispose();
     _appController.removeListener(_onAppChanged);
     super.dispose();
   }
