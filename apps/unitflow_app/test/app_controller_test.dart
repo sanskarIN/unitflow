@@ -202,6 +202,46 @@ void main() {
       'Changes could not be saved to local storage. Please try again.',
     );
   });
+
+  test('custom units cannot exceed the persisted and native snapshot limit', () async {
+    final customUnits = List<CustomUnitData>.generate(
+      UserState.maxImportedCustomUnits,
+      (index) => CustomUnitData(
+        id: 'custom_$index',
+        category: UnitCategory.length,
+        name: 'Custom $index',
+        symbol: 'u$index',
+        scale: '1',
+        offset: '0',
+      ),
+      growable: false,
+    );
+    final repository = MemoryUserStateRepository(
+      UserState(onboardingComplete: true, customUnits: customUnits),
+    );
+    final controller = AppController(repository: repository);
+    addTearDown(controller.dispose);
+    await controller.initialize();
+
+    expect(controller.state.customUnits, hasLength(UserState.maxImportedCustomUnits));
+    await expectLater(
+      controller.addCustomUnit(
+        const CustomUnitData(
+          id: 'custom_overflow',
+          category: UnitCategory.length,
+          name: 'Overflow',
+          symbol: 'ov',
+          scale: '1',
+          offset: '0',
+        ),
+      ),
+      throwsStateError,
+    );
+    expect(controller.state.customUnits, hasLength(UserState.maxImportedCustomUnits));
+
+    final roundTrip = repository.importJson(controller.exportState());
+    expect(roundTrip.customUnits, hasLength(UserState.maxImportedCustomUnits));
+  });
 }
 
 const _validInfo = NativeBridgeInfo(
