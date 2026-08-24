@@ -41,7 +41,7 @@ final class _LibraryScreenState extends State<LibraryScreen> {
       final results = widget.appController.engine.catalog.search(
         _query,
         category: _category,
-        limit: 200,
+        limit: widget.appController.engine.catalog.units.length,
       );
       results.sort((left, right) {
         final leftFavorite = widget.appController.state.favoriteUnitIds.contains(left.id);
