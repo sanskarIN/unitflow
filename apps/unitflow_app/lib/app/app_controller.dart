@@ -192,6 +192,12 @@ final class AppController extends ChangeNotifier {
   }
 
   Future<void> addCustomUnit(CustomUnitData customUnit) {
+    if (_state.customUnits.length >= UserState.maxImportedCustomUnits) {
+      return Future<void>.error(
+        StateError('The maximum number of custom units has been reached.'),
+      );
+    }
+
     final definition = customUnit.toUnitDefinition();
     if (_engine.catalog.byId(definition.id) != null) {
       throw ArgumentError.value(definition.id, 'id', 'unit identifier already exists');
@@ -294,7 +300,7 @@ final class AppController extends ChangeNotifier {
 
     for (final pair in state.pinnedPairs) {
       final from = engine.catalog.byId(pair.fromUnitId);
-      final to = engine.catalog.byId(pair.toUnitId);
+      final to = engine.catalog.byId(pair.toUnitUnitId);
       if (from == null || to == null || from.category != pair.category || to.category != pair.category) {
         throw const FormatException('Pinned pair references invalid units.');
       }
