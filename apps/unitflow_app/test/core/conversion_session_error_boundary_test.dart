@@ -154,6 +154,29 @@ void main() {
     expect(bridge.lastSnapshot.single.id, 'double_meter');
   });
 
+  test('bootstrap sends authoritative empty snapshot to sync-capable backend', () async {
+    final bridge = _CatalogSyncBridge();
+
+    final session = await ConversionSession.bootstrap(
+      loadNativeBridge: () async => bridge,
+    );
+
+    expect(session.usesNative, isTrue);
+    expect(session.supportsCatalogSync, isTrue);
+    expect(bridge.syncCalls, 1);
+    expect(bridge.lastSnapshot, isEmpty);
+  });
+
+  test('bootstrap keeps legacy no-sync backend when catalog is empty', () async {
+    final session = await ConversionSession.bootstrap(
+      loadNativeBridge: () async => const _ThrowingRuntimeBridge(throwInBatch: false),
+    );
+
+    expect(session.usesNative, isTrue);
+    expect(session.supportsCatalogSync, isFalse);
+    expect(session.fallbackReasonCode, isNull);
+  });
+
   test('bootstrap fails closed when selected native backend cannot sync catalog', () async {
     final session = await ConversionSession.bootstrap(
       loadNativeBridge: () async => const _ThrowingRuntimeBridge(throwInBatch: false),
