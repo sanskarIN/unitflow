@@ -4,7 +4,7 @@ All notable changes to UnitFlow are documented here. The format is based on Keep
 
 ## [Unreleased]
 
-No changes are queued beyond the active `2.18.12` release-candidate development snapshot documented below.
+- `2.18.13` is the planned next hardening patch after `2.18.12` is fully verified and tagged. Package/application metadata remains on `2.18.12` until that evidence exists.
 
 ## [2.18.12] - 2026-08-24
 
@@ -16,7 +16,8 @@ No changes are queued beyond the active `2.18.12` release-candidate development 
 - `AppController` ownership of the sticky conversion session, including safe session regeneration whenever custom units, imports, or reset operations replace the active catalog.
 - Real Converter-controller use of the asynchronous conversion session for single and batch conversions while retaining an immediate exact-Dart preview for synchronous presentation compatibility.
 - Controller-level stale native completion suppression through `LatestConversionRequest` for both single and batch results.
-- Regression coverage for Rust catalog snapshot replacement, Flutter snapshot validation, startup synchronization failure, catalog-driven session refresh, and stale native result races.
+- Generator-agnostic `GeneratedNativeBridgeApi`/`GeneratedNativeConversionBridge` adapter boundary with startup metadata caching, typed request forwarding, custom-catalog forwarding, and response revalidation for a future concrete generated FFI implementation.
+- Regression coverage for Rust catalog snapshot replacement, Flutter snapshot validation, startup synchronization failure, catalog-driven session refresh, stale native result races, generated-adapter payload validation, controller disposal/initialization races, persistence failures, and the shared 200-custom-unit ceiling.
 
 ### Changed
 
@@ -24,17 +25,28 @@ No changes are queued beyond the active `2.18.12` release-candidate development 
 - Custom-catalog mutations immediately invalidate any older native session and expose a catalog-matched Dart fallback while a fresh native backend is loaded and validated.
 - Native conversion results are authoritative after native selection; a native runtime failure clears the synchronous preview instead of silently switching engines mid-session.
 - Batch results are cached by the controller so the rendered Batch workspace and exports consume the same session-routed result set rather than recomputing directly on every build.
+- Routine local-state write failures are contained behind the existing safe warning banner and no longer leak as unhandled asynchronous UI callback errors; the serialized write chain remains usable for later saves.
+- Backup import still propagates durable-save failure to the explicit import UI, but now restores the previous state/catalog/session when the failed import has not already been superseded by a newer mutation.
+- Release-consistency validation now locks the 200-custom-unit ceiling across Rust, Flutter bridge DTOs, persisted-state import bounds, local custom-unit creation, and bridge documentation.
+- Batch backend failures now render a dedicated accessible error state instead of being indistinguishable from an empty batch result.
+- The roadmap now distinguishes the implemented generator-agnostic adapter boundary from the still-missing concrete FFI implementation and defines `2.18.13` as the next patch target without prematurely bumping active version metadata.
 
 ### Fixed
 
 - Prevented an older native conversion result from overwriting newer user input or selections after asynchronous completion.
 - Prevented a native backend from starting with a stale custom-unit catalog after persisted state load or user catalog mutation.
 - Corrected combined persistence/session-refresh futures so `AppController` methods continue to return `Future<void>`.
+- Prevented late native-session/bootstrap completions from mutating or notifying a disposed `AppController`.
+- Coalesced concurrent `AppController.initialize()` callers so one startup cannot load/select the native bridge multiple times.
+- Prevented native batch failures from silently appearing as a generic empty Batch workspace.
+- Prevented routine preference/favorite/history persistence failures from surfacing as unhandled futures when UI callbacks intentionally do not await them.
+- Prevented creation of custom unit 201 from producing a saved state that UnitFlow's own 200-unit persistence/native contract would reject on a later launch.
+- Prevented a valid-but-unpersisted backup import from remaining active after its durable save fails, while preserving any newer state mutation that superseded the import.
 
 ### Release status
 
 - `2.18.12` is prepared as the active source version, but it is not yet declared a fully verified native/store release.
-- Generated production Rust↔Flutter bindings, real native-library loading/packaging, committed six-platform Flutter projects, full platform build evidence, native E2E/accessibility/performance verification, signing/notarization, release media, and final tag verification remain required before the release can be called complete.
+- Concrete generated Rust↔Flutter bindings, real native-library loading/packaging, committed six-platform Flutter projects, full platform build evidence, native E2E/accessibility/performance verification, signing/notarization, release media, and final tag verification remain required before the release can be called complete.
 
 ## [2.0.12] - 2026-08-20
 
