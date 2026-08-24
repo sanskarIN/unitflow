@@ -225,7 +225,11 @@ final class AppController extends ChangeNotifier {
   Future<void> importState(String content) {
     final imported = _repository.importJson(content);
     final importedEngine = _buildEngine(imported);
-    return _update(imported, engine: importedEngine);
+    return _update(
+      imported,
+      engine: importedEngine,
+      propagatePersistenceFailure: true,
+    );
   }
 
   Future<void> resetLocalData() {
@@ -335,7 +339,11 @@ final class AppController extends ChangeNotifier {
     }
   }
 
-  Future<void> _update(UserState state, {ConversionEngine? engine}) {
+  Future<void> _update(
+    UserState state, {
+    ConversionEngine? engine,
+    bool propagatePersistenceFailure = false,
+  }) {
     if (_disposed) {
       return Future<void>.error(StateError('AppController has been disposed.'));
     }
@@ -350,16 +358,28 @@ final class AppController extends ChangeNotifier {
 
     final snapshot = state;
     final operation = _writeChain.then((_) => _repository.save(snapshot));
-    _writeChain = operation.catchError((Object error) {
-      AppLog.error(
-        'state_save_failed',
-        metadata: <String, Object?>{'errorType': error.runtimeType.toString()},
-      );
-    });
+    final handled = operation.then<void>(
+      (_) {},
+      onError: (Object error, StackTrace stackTrace) {
+        if (!_disposed) {
+          _warning = 'Changes could not be saved to local storage. Please try again.';
+          AppLog.error(
+            'state_save_failed',
+            metadata: <String, Object?>{'errorType': error.runtimeType.toString()},
+          );
+          notifyListeners();
+        }
+        if (propagatePersistenceFailure) {
+          Error.throwWithStackTrace(error, stackTrace);
+        }
+      },
+    );
+    _writeChain = handled.catchError((Object _) {});
+
     if (sessionRefresh == null) {
-      return operation;
+      return handled;
     }
-    return Future.wait<void>(<Future<void>>[operation, sessionRefresh]).then<void>((_) {});
+    return Future.wait<void>(<Future<void>>[handled, sessionRefresh]).then<void>((_) {});
   }
 
   @override
