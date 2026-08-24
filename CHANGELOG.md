@@ -4,7 +4,37 @@ All notable changes to UnitFlow are documented here. The format is based on Keep
 
 ## [Unreleased]
 
-No changes are queued beyond the active `2.0.12` development snapshot documented below.
+No changes are queued beyond the active `2.18.12` release-candidate development snapshot documented below.
+
+## [2.18.12] - 2026-08-24
+
+### Added
+
+- Atomic Rust bridge custom-unit catalog snapshot replacement with a shared 200-unit ceiling, canonical decimal validation, duplicate-ID protection, and all-or-nothing catalog activation.
+- Flutter native custom-unit snapshot DTOs and an optional `NativeCatalogSyncBridge` contract for generated production adapters.
+- `ConversionSession` custom-unit synchronization with fail-closed startup behavior so a native session is exposed only after its user catalog matches the validated Flutter catalog.
+- `AppController` ownership of the sticky conversion session, including safe session regeneration whenever custom units, imports, or reset operations replace the active catalog.
+- Real Converter-controller use of the asynchronous conversion session for single and batch conversions while retaining an immediate exact-Dart preview for synchronous presentation compatibility.
+- Controller-level stale native completion suppression through `LatestConversionRequest` for both single and batch results.
+- Regression coverage for Rust catalog snapshot replacement, Flutter snapshot validation, startup synchronization failure, catalog-driven session refresh, and stale native result races.
+
+### Changed
+
+- Rust workspace, Flutter package metadata, and About screen version are aligned at `2.18.12` with Flutter build number `12`.
+- Custom-catalog mutations immediately invalidate any older native session and expose a catalog-matched Dart fallback while a fresh native backend is loaded and validated.
+- Native conversion results are authoritative after native selection; a native runtime failure clears the synchronous preview instead of silently switching engines mid-session.
+- Batch results are cached by the controller so the rendered Batch workspace and exports consume the same session-routed result set rather than recomputing directly on every build.
+
+### Fixed
+
+- Prevented an older native conversion result from overwriting newer user input or selections after asynchronous completion.
+- Prevented a native backend from starting with a stale custom-unit catalog after persisted state load or user catalog mutation.
+- Corrected combined persistence/session-refresh futures so `AppController` methods continue to return `Future<void>`.
+
+### Release status
+
+- `2.18.12` is prepared as the active source version, but it is not yet declared a fully verified native/store release.
+- Generated production Rust↔Flutter bindings, real native-library loading/packaging, committed six-platform Flutter projects, full platform build evidence, native E2E/accessibility/performance verification, signing/notarization, release media, and final tag verification remain required before the release can be called complete.
 
 ## [2.0.12] - 2026-08-20
 
@@ -117,4 +147,4 @@ No changes are queued beyond the active `2.0.12` development snapshot documented
 
 ## [0.1.0-alpha.1] - Historical planning baseline
 
-The repository began with a planned first runnable development preview at `0.1.0-alpha.1`. That planning baseline was superseded by the requested `2.0.12` development version. Native release verification requirements remain evidence-based and are not implied by the version number alone.
+The repository began with a planned first runnable development preview at `0.1.0-alpha.1`. That planning baseline was superseded by the `2.0.12` development line, which is now superseded by the active `2.18.12` release-candidate development version. Native release verification requirements remain evidence-based and are not implied by the version number alone.
