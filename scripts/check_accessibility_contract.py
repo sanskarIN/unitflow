@@ -140,6 +140,12 @@ def validate() -> list[str]:
         errors.append("batch labeled dropdowns do not expose explicit semantic context")
     if "value: value == null ? null : labelFor(value as T)," not in batch:
         errors.append("batch labeled dropdowns do not expose their selected semantic value")
+    if "final batchError = widget.controller.batchError;" not in batch:
+        errors.append("batch screen does not read the dedicated asynchronous backend error state")
+    if "child: batchError != null" not in batch:
+        errors.append("batch screen can hide backend failures behind the generic empty state")
+    if "liveRegion: true" not in batch:
+        errors.append("batch backend failure state is not announced as an accessibility live region")
 
     onboarding = text(ONBOARDING_SCREEN)
     for token, message in (
