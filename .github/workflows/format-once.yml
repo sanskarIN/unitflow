@@ -1,0 +1,120 @@
+name: Normalize source formatting once
+
+on:
+  push:
+    branches: [chore/2.18.12-ci-hardening]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  normalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: chore/2.18.12-ci-hardening
+          fetch-depth: 0
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Normalize metadata and inventory
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          root = Path.cwd()
+
+          readme = root / 'README.md'
+          text = readme.read_text(encoding='utf-8')
+          text = text.replace('Current source version: `2.0.12`.', 'Current source version: `2.18.12`.')
+          readme.write_text(text, encoding='utf-8')
+
+          inventory = root / 'docs/repository-inventory.md'
+          text = inventory.read_text(encoding='utf-8')
+          text = text.replace('2.0.12', '2.18.12')
+          marker = '- `docs/platform-smoke.md` — six-platform release-build evidence and its limits.\n'
+          entry = '- `docs/platform-file-inventory.md` — machine-maintained inventory for committed Flutter-generated platform scaffold files.\n'
+          if entry not in text:
+              text = text.replace(marker, marker + entry)
+          inventory.write_text(text, encoding='utf-8')
+
+          platform_inventory = root / 'docs/platform-file-inventory.md'
+          text = platform_inventory.read_text(encoding='utf-8')
+          old = '''## Platform support infrastructure\n\n- `docs/platform-file-inventory.md` — machine-maintained inventory for committed Flutter platform scaffold files.\n- `scripts/update_platform_inventory.py` — regenerates the platform scaffold inventory from the staged/tracked Git index.\n- `scripts/check_platform_support.py` — validates the six-target generation/build contract, partial-scaffold state, and Web-safe shared Dart imports.\n- `.github/workflows/materialize-platforms.yml` — generates, validates, inventories, and commits all six Flutter platform projects using stable Flutter.\n\n'''
+          new = '''## Platform support infrastructure\n\nThe platform-materialization workflow, validator, inventory generator, and this inventory are documented in the main repository inventory. This file intentionally contains only generated platform paths in its machine-maintained section so each tracked path is documented exactly once.\n\n'''
+          if old not in text:
+              raise SystemExit('platform inventory infrastructure block did not match expected source')
+          platform_inventory.write_text(text.replace(old, new), encoding='utf-8')
+
+          l10n = root / 'apps/unitflow_app/l10n.yaml'
+          text = l10n.read_text(encoding='utf-8')
+          text = text.replace('synthetic-package: false\n', '')
+          l10n.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Format Rust
+        run: cargo fmt --all
+
+      - name: Resolve Flutter dependencies and generate localizations
+        working-directory: apps/unitflow_app
+        run: |
+          flutter pub get
+          flutter gen-l10n
+
+      - name: Format Dart
+        working-directory: apps/unitflow_app
+        run: dart format lib test
+
+      - name: Run repository validators
+        run: |
+          python3 -m unittest discover -s scripts/tests -p 'test_*.py'
+          python3 scripts/check_repository_inventory.py
+          python3 scripts/check_platform_support.py
+          python3 scripts/check_accessibility_contract.py
+          python3 scripts/check_conversion_session_contract.py
+          python3 scripts/check_markdown_links.py
+          python3 scripts/check_release_consistency.py
+          python3 scripts/check_repository_hygiene.py
+
+      - name: Verify Rust and Flutter quality
+        run: |
+          cargo clippy --workspace --all-targets --all-features -- -D warnings
+          cargo test --workspace --all-features
+        
+      - name: Verify Flutter quality
+        working-directory: apps/unitflow_app
+        run: |
+          flutter analyze --fatal-infos --fatal-warnings
+          flutter test
+
+      - name: Remove one-time workflow
+        run: rm .github/workflows/format-once.yml
+
+      - name: Commit normalized source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add -A
+          if git diff --cached --quiet; then
+            echo 'No normalization changes were necessary.'
+            exit 0
+          fi
+          git config user.name 'Sanskar'
+          git config user.email 'sanskarin@outlook.in'
+          git commit -m 'chore: normalize source formatting and release metadata'
+          git push origin HEAD:chore/2.18.12-ci-hardening
